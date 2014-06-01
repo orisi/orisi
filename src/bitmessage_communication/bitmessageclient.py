@@ -50,17 +50,19 @@ class BitmessageClient:
     self.get_addresses()
 
   def send_message(self, address, subject, message):
-    self.api.sendMessage(
-        address, 
-        self.default_address.address, 
-        subject,
-        message)
+    message_id = self.api.sendMessage(
+                    address, 
+                    self.default_address.address, 
+                    base64.encodestring(subject),
+                    base64.encodestring(message))
+    return message_id
 
   def send_broadcast(self, subject, message):
-    self.api.sendBroadcast(
-        self.default_address,
-        subject,
-        message)
+    message_id = self.api.sendBroadcast(
+                    self.default_address,
+                    base64.encodestring(subject),
+                    base64.encodestring(message))
+    return message_id
 
   def delete_address(self, address):
     self.api.deleteAddress(address)

@@ -2,3 +2,6 @@ BITMESSAGE_USERNAME = "test"
 BITMESSAGE_PASSWORD = "test"
 BITMESSAGE_HOST = "127.0.0.1"
 BITMESSAGE_PORT = "8442"
+
+# Says which address should be used as default for sending
+DEFAULT_ADDRESS_LABEL = "main"

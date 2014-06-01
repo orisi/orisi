@@ -1,4 +1,4 @@
-import xmljsonrpc
+import xmlrpclib
 import json
 import base64
 

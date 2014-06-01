@@ -8,7 +8,7 @@ from settings_local import (
   BITMESSAGE_HOST,
   BITMESSAGE_PORT)
 
-api = xmljsonrpc.ServerProxy("http://%s:%s@%s:%s" % 
+api = xmlrpclib.ServerProxy("http://%s:%s@%s:%s" % 
     (
       BITMESSAGE_USERNAME, 
       BITMESSAGE_PASSWORD, 

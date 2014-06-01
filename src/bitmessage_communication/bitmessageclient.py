@@ -59,7 +59,7 @@ class BitmessageClient:
 
   def send_broadcast(self, subject, message):
     message_id = self.api.sendBroadcast(
-                    self.default_address,
+                    self.default_address.address,
                     base64.encodestring(subject),
                     base64.encodestring(message))
     return message_id

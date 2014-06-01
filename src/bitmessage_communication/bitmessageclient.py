@@ -1,14 +1,11 @@
 from bitmessageaddress import BitmessageAddress
-from settings_local import (
-    BITMESSAGE_USERNAME,
-    BITMESSAGE_PASSWORD,
-    BITMESSAGE_HOST,
-    BITMESSAGE_PORT,
-    DEFAULT_ADDRESS_LABEL)
+from bitmessageserver import BitmessageServer
+from settings_local import DEFAULT_ADDRESS_LABEL
 
 import xmlrpclib
 import json
 import base64
+import re
 
 class BitmessageClient:
 
@@ -18,11 +15,7 @@ class BitmessageClient:
     self.update_address_if_empty()
 
   def connect(self):
-    self.api = xmlrpclib.ServerProxy("http://{0}:{1}@{2}:{3}".format(
-        BITMESSAGE_USERNAME,
-        BITMESSAGE_PASSWORD,
-        BITMESSAGE_HOST,
-        BITMESSAGE_PORT))
+    self.api = BitmessageServer()
 
   def create_random_address(self, label="main"):
     label_base64 = base64.encodestring(label)
@@ -55,14 +48,16 @@ class BitmessageClient:
                   self.default_address.address, 
                   base64.encodestring(subject),
                   base64.encodestring(message))
-    return message_id
+    return ack_data
 
   def send_broadcast(self, subject, message):
     ack_data = self.api.sendBroadcast(
                   self.default_address.address,
                   base64.encodestring(subject),
                   base64.encodestring(message))
-    return message_id
+    return ack_data
 
   def delete_address(self, address):
     self.api.deleteAddress(address)
+
+bmc = BitmessageClient()

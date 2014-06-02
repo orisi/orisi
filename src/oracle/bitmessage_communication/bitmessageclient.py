@@ -10,7 +10,8 @@ import re
 
 class BitmessageClient:
 
-  def __init__(self):
+  def __init__(self, default_address_label=DEFAULT_ADDRESS_LABEL):
+    self.default_address_label = default_address_label
     self.connect()
     self.get_addresses()
     self.update_address_if_empty()
@@ -18,7 +19,9 @@ class BitmessageClient:
   def connect(self):
     self.api = BitmessageServer()
 
-  def create_random_address(self, label=DEFAULT_ADDRESS_LABEL):
+  def create_random_address(self, label=None):
+    if not label:
+      label = self.default_address_label
     label_base64 = base64.encodestring(label)
     self.api.createRandomAddress(label_base64)
     self.get_addresses()
@@ -32,13 +35,22 @@ class BitmessageClient:
     self.enabled_addresses = \
         [addr for addr in self.addresses if addr.enabled]
 
-    if len(self.enabled_addresses) > 0:
-      self.default_address = self.enabled_addresses[0]
+    self.default_address = self.find_default_address()
+    if not self.default_address:
+      self.create_random_address()
 
+    self.default_address = self.find_default_address()
+    # if none - raise exception? it will happen eventually
+
+
+  def find_default_address(self):
+    default_address = None
     for address in self.enabled_addresses:
-      if address.label == DEFAULT_ADDRESS_LABEL:
-        self.default_address = address
+      if address.label == self.default_address_label:
+        default_address = address
         break
+    return default_address
+
 
   def update_address_if_empty(self):
     if len(self.addresses) > 0:

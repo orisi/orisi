@@ -69,5 +69,16 @@ class BitmessageClient:
 
     return messages_inbox
 
+  def get_unread_messages(self):
+    messages = self.get_inbox()
+    unread_messages = [msg for msg in messages if not msg.read]
+    return unread_messages
+
+  def mark_message_as_read(self, msgid):
+    self.api.getInboxMessageByID(msgid, True)
+
+  def mark_message_as_unread(self, msgid):
+    self.api.getInboxMessageByID(msgid, False)
+
   def delete_address(self, address):
     self.api.deleteAddress(address)

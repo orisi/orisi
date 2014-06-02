@@ -59,5 +59,3 @@ class BitmessageClient:
 
   def delete_address(self, address):
     self.api.deleteAddress(address)
-
-bmc = BitmessageClient()

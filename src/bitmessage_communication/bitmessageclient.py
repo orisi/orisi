@@ -80,5 +80,8 @@ class BitmessageClient:
   def mark_message_as_unread(self, msgid):
     self.api.getInboxMessageByID(msgid, False)
 
+  def trash_message(self, msgid):
+    self.api.trashMessage(msgid)
+
   def delete_address(self, address):
     self.api.deleteAddress(address)

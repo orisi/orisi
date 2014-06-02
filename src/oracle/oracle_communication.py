@@ -1,24 +1,19 @@
 from bitmessage_communication.bitmessageclient import BitmessageClient
 
+from oracle_protocol import PROTOCOL_ORACLE_IDENTITY
+
 class OracleCommunication:
 
   def __init__(self):
     self.client = BitmessageClient()
-    self.default_address = self.get_default_address()
 
-  def get_default_address(self):
-    # We want to get default address with label 'oracle'
-    default_address = self.find_default_address()
+    # Do we really need it here?
+    self.default_address = self.client.default_address
 
-    if not default_address:
-      self.client.create_random_address()
-      default_address = self.find_default_address()
-    return default_address
+  def broadcast_identity(self):
+    subject = PROTOCOL_ORACLE_IDENTITY
 
-  def find_default_address(self):
-    default_address = None
-    for address in self.client.addresses:
-      if address.label == 'oracle':
-        default_address = address
-        break
-    return default_address
+    # TODO - what should we add to Identity Broadcast? Maybe public key for verifications?
+    # or maybe list of known other oracles?
+    message = PROTOCOL_ORACLE_IDENTITY
+    self.client.send_broadcast(subject, message)

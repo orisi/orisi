@@ -18,9 +18,10 @@ class BitmessageClient:
   def connect(self):
     self.api = BitmessageServer()
 
-  def create_random_address(self, label="main"):
+  def create_random_address(self, label=DEFAULT_ADDRESS_LABEL):
     label_base64 = base64.encodestring(label)
     self.api.createRandomAddress(label_base64)
+    self.get_addresses()
 
   def get_addresses(self):
     addresses_json = self.api.listAddresses2()
@@ -43,7 +44,6 @@ class BitmessageClient:
     if len(self.addresses) > 0:
       return
     self.create_random_address()
-    self.get_addresses()
 
   def send_message(self, address, subject, message):
     ack_data = self.api.sendMessage(

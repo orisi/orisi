@@ -1,3 +1,5 @@
+# File responsible for sending messages according to protocol
+
 from bitmessage_communication.bitmessageclient import BitmessageClient
 
 from oracle_protocol import PROTOCOL_ORACLE_IDENTITY

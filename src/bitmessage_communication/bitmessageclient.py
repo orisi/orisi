@@ -1,4 +1,5 @@
 from bitmessageaddress import BitmessageAddress
+from bitmessagemessage import BitmessageMessage
 from bitmessageserver import BitmessageServer
 from settings_local import DEFAULT_ADDRESS_LABEL
 
@@ -27,11 +28,13 @@ class BitmessageClient:
 
     self.addresses = \
         [BitmessageAddress(address_dict) for address_dict in address_list]
+    self.enabled_addresses = \
+        [addr for addr in self.addresses if addr.enabled]
 
-    if len(self.addresses) > 0:
-      self.default_address = self.addresses[0]
+    if len(self.enabled_addresses) > 0:
+      self.default_address = self.enabled_addresses[0]
 
-    for address in self.addresses:
+    for address in self.enabled_addresses:
       if address.label == DEFAULT_ADDRESS_LABEL:
         self.default_address = address
         break
@@ -56,6 +59,15 @@ class BitmessageClient:
                   base64.encodestring(subject),
                   base64.encodestring(message))
     return ack_data
+
+  def get_inbox(self):
+    messages_json = self.api.getAllInboxMessages()
+    messages_list = json.loads(messages_json)['inboxMessages']
+
+    messages_inbox = \
+        [BitmessageMessage(msg) for msg in messages_list]
+
+    return messages_inbox
 
   def delete_address(self, address):
     self.api.deleteAddress(address)

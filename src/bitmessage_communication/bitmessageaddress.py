@@ -11,3 +11,5 @@ class BitmessageAddress:
 
   def __repr__(self):
     return "{0} - {1}".format(self.label, self.address)
+
+  __str__ = __repr__

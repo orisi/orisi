@@ -86,10 +86,18 @@ class BitmessageClient:
     unread_messages = [msg for msg in messages if not msg.read]
     return unread_messages
 
-  def mark_message_as_read(self, msgid):
+  def mark_message_as_read(self, msg):
+    if isinstance(msg, BitmessageMessage):
+      msgid = msg.msgid
+    else:
+      msgid = msg
     self.api.getInboxMessageByID(msgid, True)
 
-  def mark_message_as_unread(self, msgid):
+  def mark_message_as_unread(self, msg):
+    if isinstance(msg, BitmessageMessage):
+      msgid = msg.msgid
+    else:
+      msgid = msg
     self.api.getInboxMessageByID(msgid, False)
 
   def trash_message(self, msgid):

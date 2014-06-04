@@ -3,6 +3,7 @@ from oracle_communication import OracleCommunication
 from db_connection import OracleDb
 
 import time
+import logging
 
 class Oracle:
   def __init__(self):
@@ -29,6 +30,7 @@ class Oracle:
   def run(self):
     while True:
       # Proceed all requests
+      logging.debug("Oracle Run")
       requests = self.communication.get_new_requests()
       for request in requests:
         self.handle_request(request)

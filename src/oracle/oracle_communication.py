@@ -6,9 +6,11 @@ from oracle_protocol import (
     PING_MESSAGE,
     IDENTITY_SUBJECT,
     IDENTITY_MESSAGE,
-    PROTOCOL_REGEX)
+    VALID_OPERATIONS,
+    OPERATION_REQUIRED_FIELDS)
 
-import re
+import json
+import logging
 
 class OracleCommunication:
 
@@ -19,12 +21,29 @@ class OracleCommunication:
     self.default_address = self.client.default_address
 
   def corresponds_to_protocol(self, message):
-    for pattern, operation in PROTOCOL_REGEX:
-      if re.match(pattern, message.message):
-        return operation
-      if re.match(pattern, message.subject):
-        return operation
-    return False
+    try:
+      body = json.loads(message.message)
+    except ValueError:
+      logging.info('message is not a valid json')
+      return False
+    if not 'operation' in body:
+      logging.info('message has no operation')
+      return False
+
+    if not body['operation'] in VALID_OPERATIONS.iterkeys():
+      logging.info('operation not supported')
+      return False
+
+    operation = VALID_OPERATIONS[body['operation']]
+
+    required_fields = OPERATION_REQUIRED_FIELDS[operation]
+    for field in required_fields:
+      if not field in body:
+        logging.info('required field {0} for operation {1} missing'.format(field, operation))
+        return False
+
+    logging.info('operation {0}'.format(operation))
+    return operation
 
   def get_new_requests(self):
     messages = self.client.get_unread_messages()

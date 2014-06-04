@@ -1,8 +1,16 @@
-import re
+import json
 
-PROTOCOL_REGEX = [
-    (r'^ping', 'PingRequest')
-]
+class OPERATION:
+  PING = 'PingRequest'
+
+
+VALID_OPERATIONS = {
+    'ping': OPERATION.PING,
+}
+
+OPERATION_REQUIRED_FIELDS = {
+    OPERATION.PING: [],  
+}
 
 
 PROTOCOL_VERSION = '0.1'
@@ -14,13 +22,16 @@ Version {0}
 """.format(PROTOCOL_VERSION)
 
 PING_SUBJECT = 'PingResponse'
-PING_MESSAGE = \
-"""
-Hello, I'm active!
-""" + PROTOCOL_FOOTER
+PING_MESSAGE_RAW = {
+  "response": "active",
+  "version": PROTOCOL_VERSION,
+}
+PING_MESSAGE = json.dumps(PING_MESSAGE_RAW)
+
 
 IDENTITY_SUBJECT = 'IdentityBroadcast'
-IDENTITY_MESSAGE = \
-"""
-IdentityBroadcast: Active Oracle
-""" + PROTOCOL_FOOTER
+IDENTITY_MESSAGE_RAW = {
+  "response": "active",
+  "version": PROTOCOL_VERSION 
+}
+IDENTITY_MESSAGE = json.dumps(IDENTITY_MESSAGE_RAW)

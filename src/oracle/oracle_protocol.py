@@ -1,7 +1,7 @@
 import re
 
 PROTOCOL_REGEX = [
-    (r'^ping.*$', 'PingRequest')
+    (r'^ping', 'PingRequest')
 ]
 
 

@@ -29,7 +29,6 @@ class Oracle:
   def run(self):
     while True:
       # Proceed all requests
-      print "Oracle run"
       requests = self.communication.get_new_requests()
       for request in requests:
         self.handle_request(request)

@@ -2,7 +2,9 @@
 
 from bitmessage_communication.bitmessageclient import BitmessageClient
 
-from oracle_protocol import PROTOCOL_ORACLE_IDENTITY
+from oracle_protocol import (
+    PING_SUBJECT,
+    PING_MESSAGE)
 
 class OracleCommunication:
 
@@ -12,3 +14,8 @@ class OracleCommunication:
     # Do we really need it here?
     self.default_address = self.client.default_address
 
+  def ping_response(self, address):
+    self.client.send_message(
+        address, 
+        PING_SUBJECT, 
+        PING_MESSAGE)

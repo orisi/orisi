@@ -18,3 +18,9 @@ PING_MESSAGE = \
 """
 Hello, I'm active!
 """ + PROTOCOL_FOOTER
+
+IDENTITY_SUBJECT = 'IdentityBroadcast'
+IDENTITY_MESSAGE = \
+"""
+IdentityBroadcast: Active Oracle
+""" + PROTOCOL_FOOTER

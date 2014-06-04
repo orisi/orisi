@@ -4,6 +4,8 @@ from bitmessage_communication.bitmessageclient import BitmessageClient
 from oracle_protocol import (
     PING_SUBJECT,
     PING_MESSAGE,
+    IDENTITY_SUBJECT,
+    IDENTITY_MESSAGE,
     PROTOCOL_REGEX)
 
 import re
@@ -46,3 +48,8 @@ class OracleCommunication:
         address, 
         PING_SUBJECT, 
         PING_MESSAGE)
+
+  def broadcast_identity(self):
+    self.client.send_broadcast(
+        IDENTITY_SUBJECT,
+        IDENTITY_MESSAGE)

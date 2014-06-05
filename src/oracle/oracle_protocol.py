@@ -22,7 +22,7 @@ VALID_OPERATIONS = {
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.TRANSACTION: ['raw_transaction', 'check_time', 'condition', 'original_sender'],
+    OPERATION.TRANSACTION: ['raw_transaction', 'check_time', 'condition'],
 }
 
 

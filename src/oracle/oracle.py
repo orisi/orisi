@@ -86,8 +86,8 @@ class Oracle:
   def run(self):
     while True:
       # Proceed all requests
-      logging.debug("Oracle Run")
       requests = self.communication.get_new_requests()
+      logging.debug("{0} new requests".format(len(requests)))
       for request in requests:
         self.handle_request(request)
         self.communication.mark_request_done(request)

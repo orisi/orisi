@@ -127,6 +127,49 @@ class TaskQueue(TableDb):
     result = dict(row)
     return result
 
+class UsedAddress(TableDb):
+  """
+  Class that adds what transaction we want to sign. When new transaction comes through with
+  same address, but different inputs and outputs we won't sign it!
+  """
+  table_name = "transaction_history"
+  """
+  json_in_out format:
+  {
+    "inputs": [
+        {
+            "prev_out": {
+                "hash": "a3e2bcc9a5f776112497a32b05f4b9e5b2405ed9",
+                "value": "100000000",
+                "tx_index": "12554260",
+                "n": "2"
+            },
+            "script": "76a914641ad5051edd97029a003fe9efb29359fcee409d88ac"
+        }
+    ],
+    "out": [
+        {
+            "value": "98000000",
+            "hash": "29d6a3540acfa0a950bef2bfdc75cd51c24390fd",
+            "script": "76a914641ad5051edd97029a003fe9efb29359fcee409d88ac"
+        },
+        {
+            "value": "2000000",
+            "hash": "17b5038a413f5c5ee288caa64cfab35a0c01914e",
+            "script": "76a914641ad5051edd97029a003fe9efb29359fcee409d88ac"
+        }
+    ]
+  }
+  """
+  create_sql = "create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      multisig_address text unique, \
+      json_in_out text not null);"
+  insert_sql = "insert into {0} (multisig_address, json_in_out) values (?, ?)"
+  def args_for_obj(self, obj):
+    return [obj["multisig_address"], obj["json_in_out"]]
+
 
 
 

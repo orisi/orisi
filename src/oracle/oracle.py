@@ -1,7 +1,9 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from db_connection import OracleDb, TaskQueue
+from db_connection import OracleDb, TaskQueue, UsedAddress
 from oracle_protocol import RESPONSE, SUBJECT
+
+from bitcoind_client.bitcoinclient import BitcoinClient
 
 import time
 import logging
@@ -11,36 +13,46 @@ class Oracle:
   def __init__(self):
     self.communication = OracleCommunication()
     self.db = OracleDb()
+    self.btc = BitcoinClient()
 
     self.operations = {
-      'TransactionRequest': self.transaction,
+      'TransactionRequest': self.add_transaction,
     }
 
   def condition_invalid(self, condition):
+    # TODO (is condition correct according to our protocol, not if it evaluates correctly)
     return False 
 
-  def transaction_invalid(self, transaction):
-    return False
+  def transaction_valid(self, transaction):
+    return self.btc.is_valid_transaction()
 
-  def transaction(self, message):
+  def add_transaction(self, message):
     body = json.loads(message.message)
 
     condition = body['condition']
+    reply_address = body['origin_address']
     # Future reference - add parsing condition. Now assumed true
     if self.condition_invalid(condition):
-      self.communication.response(
-          message, 
+      self.communication.response_to_address(
+          origin_address, 
           SUBJECT.INVALID_CONDITION, 
           RESPONSE.INVALID_CONDITION)
       return
 
     transaction = body['raw_transaction']
-    if self.transaction_invalid(transaction):
-      self.communication.response(
-          message, 
+    if self.transaction_valid(transaction):
+      self.communication.response_to_address(
+          origin_address, 
           SUBJECT.INVALID_TRANSACTION, 
           RESPONSE.INVALID_TRANSACTION)
       return
+
+    transaction_json = self.btc.get_inputs_outputs(transaction)
+    multisig_address = self.btc.get_multisig_sender_address(transaction)
+
+    used_address_db = UsedAddress(self.db)
+    used_address = used_address_db.get_address(multisig_address)
+    #TODO parsing and deciding wether to use or not
 
     check_time = int(body['check_time'])
     task_queue = TaskQueue(self.db).save({
@@ -49,7 +61,10 @@ class Oracle:
         "done": 0,
         "next_check": check_time
     })
-    self.communication.response(message, SUBJECT.CONFIRMED, RESPONSE.CONFIRMED)
+    self.communication.response_to_address(
+        origin_address, 
+        SUBJECT.CONFIRMED, 
+        RESPONSE.CONFIRMED)
 
   def handle_request(self, request):
     operation, message = request
@@ -62,11 +77,11 @@ class Oracle:
       db_class(self.db).save(message)
 
   def sign_transaction(self, transaction):
-    # Placeholder for signing transactions
-    return transaction
+    signed_transaction = self.btc.sign_transaction()
+    return signed_transaction
 
   def check_condition(self, condition):
-    # Placeholder for checking condition
+    # TODO: CHECK_CONDITION (evaluate it)
     return True
 
   def handle_task(self, task):

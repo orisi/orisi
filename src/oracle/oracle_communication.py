@@ -5,7 +5,9 @@ from oracle_protocol import (
     IDENTITY_SUBJECT,
     IDENTITY_MESSAGE,
     VALID_OPERATIONS,
-    OPERATION_REQUIRED_FIELDS)
+    OPERATION_REQUIRED_FIELDS,
+    SUBJECT,
+    RESPONSE)
 
 import json
 import logging
@@ -47,6 +49,9 @@ class OracleCommunication:
     messages = self.client.get_unread_messages()
     requests = []
     for msg in messages:
+      if msg.direct:
+        self.response(msg, SUBJECT.DIRECT, RESPONSE.DIRECT)
+        continue
       operation = self.corresponds_to_protocol(msg)
       if operation:
         requests.append((operation, msg))

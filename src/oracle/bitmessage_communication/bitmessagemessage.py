@@ -3,7 +3,7 @@ import datetime
 
 class BitmessageMessage:
 
-  def __init__(self, message_dict):
+  def __init__(self, message_dict, direct=True):
     self.encoding_type = message_dict['encodingType']
 
     self.from_address = message_dict['fromAddress']
@@ -20,6 +20,7 @@ class BitmessageMessage:
 
     self.message_encoded = message_dict['message']
     self.message = base64.decodestring(self.message_encoded)
+    self.direct = direct
 
   def __repr__(self):
     return "BitmessageMessage(id:{0})".format(self.msgid)

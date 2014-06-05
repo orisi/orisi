@@ -3,9 +3,6 @@ import json
 class OPERATION:
   PING = 'PingRequest'
   TRANSACTION = 'TransactionRequest'
-  INVALID_CONDITION = 'ConditionInvalid'
-  INVALID_TRANSACTION = 'TransactionInvalid'
-  TRANSACTION_SIGNED = 'TransactionSigned'
 
 class RESPONSE:
   CONFIRMED = 'transaction accepted and added to queue'
@@ -13,10 +10,15 @@ class RESPONSE:
   INVALID_CONDITION = 'invalid condition'
   INVALID_TRANSACTION = 'invalid transaction'
   TRANSACTION_SIGNED = 'transaction signed'
+  DIRECT = 'direct message unsupported'
 
 class SUBJECT:
   CONFIRMED = 'TransactionResponse'
   PING = 'PingResponse'
+  INVALID_CONDITION = 'ConditionInvalid'
+  INVALID_TRANSACTION = 'TransactionInvalid'
+  TRANSACTION_SIGNED = 'TransactionSigned'
+  DIRECT = 'DirectMessage'
 
 VALID_OPERATIONS = {
     'ping': OPERATION.PING,

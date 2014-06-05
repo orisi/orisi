@@ -19,7 +19,7 @@ class Oracle:
     }
 
   def condition_invalid(self, condition):
-    return False
+    return False 
 
   def transaction_invalid(self, transaction):
     return False

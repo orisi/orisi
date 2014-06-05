@@ -34,6 +34,7 @@ class OracleDb:
       self.connect()
       return self.conn.cursor()
 
+
 class TableDb:
   table_name = "TableDB"
   exist_sql = "select name from sqlite_master where type='table' and name='{0}'"
@@ -49,9 +50,17 @@ class TableDb:
     return len(results) > 0
 
   def create_table(self):
-    raise NotImplementedError()
+    cursor = self.db.get_cursor()
+    sql = self.create_sql.format(self.table_name)
+    cursor.execute(sql)
+    self.db.commit()
 
   def insert_object(self, obj):
+    sql = self.insert_sql.format(self.table_name)
+    args = self.args_for_obj(obj)
+    self.insert_with_sql(sql, args)
+
+  def args_for_obj(self, obj):
     raise NotImplementedError()
 
   def insert_with_sql(self, sql, args):
@@ -73,22 +82,23 @@ class PingRequestDb(TableDb):
       ts datetime default current_timestamp);"
   insert_sql = "insert into {0} (from_address) values (?)"
 
-  def create_table(self):
-    cursor = self.db.get_cursor()
-    sql = self.create_sql.format(self.table_name)
-    cursor.execute(sql)
-    self.db.commit()
-
-  def insert_object(self, obj):
-    sql = self.insert_sql.format(self.table_name)
-    args = [obj.from_address, ]
-    self.insert_with_sql(sql, args)
+  def args_for_obj(self, obj):
+    return [obj.from_address, ]
 
 
+class TaskQueue(TableDb):
+  table_name = "task_queue"
+  
+  create_sql = "create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      json_data text not null \
+      next_check integer not null \
+      done integer default 0)"
+  insert_sql = "insert into {0} (json_data, next_check, done) values (?,?,?)"
 
-
-
-
+  def args_for_obj(self, obj):
+    return [obj.json_data, obj.next_check, obj.done]
 
 
 

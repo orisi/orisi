@@ -36,6 +36,10 @@ class OracleDb:
 
 
 class TableDb:
+  """
+  TableDb is class designed as wrapper for new tables and database requests.
+  It creates table when needed, so no need to worry about it
+  """
   table_name = "TableDB"
   exist_sql = "select name from sqlite_master where type='table' and name='{0}'"
 

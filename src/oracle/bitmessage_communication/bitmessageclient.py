@@ -1,12 +1,18 @@
 from bitmessageaddress import BitmessageAddress
 from bitmessagemessage import BitmessageMessage
 from bitmessageserver import BitmessageServer
-from settings_local import DEFAULT_ADDRESS_LABEL
+from bitmessageexceptions import ChanAlreadySubscribedException
+from settings_local import (
+    DEFAULT_ADDRESS_LABEL,
+    CHAN_NAME,
+    CHAN_ADDRESS)
+
 
 import xmlrpclib
 import json
 import base64
 import re
+import logging
 
 class BitmessageClient:
 
@@ -15,6 +21,8 @@ class BitmessageClient:
     self.connect()
     self.get_addresses()
     self.update_address_if_empty()
+    self.chan_address = CHAN_ADDRESS
+    self.join_chan(CHAN_NAME, CHAN_ADDRESS)
 
   def connect(self):
     self.api = BitmessageServer()
@@ -105,3 +113,10 @@ class BitmessageClient:
 
   def delete_address(self, address):
     self.api.deleteAddress(address)
+
+  def join_chan(self, name, address):
+    name_encoded = base64.encodestring(name)
+    try:
+      self.api.joinChan(name_encoded, address)
+    except ChanAlreadySubscribedException:
+      logging.info('subscribed to chan')

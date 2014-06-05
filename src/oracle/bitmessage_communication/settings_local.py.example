@@ -5,3 +5,7 @@ BITMESSAGE_PORT = "8442"
 
 # Says which address should be used as default for sending
 DEFAULT_ADDRESS_LABEL = "oracle"
+
+# On what chan should your oracle work?
+CHAN_NAME = 'olist'
+CHAN_ADDRESS = 'BM-2cXemdJibdXtifKfTHR4somZbbCGAHRG4H'

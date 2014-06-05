@@ -2,8 +2,6 @@
 
 from bitmessage_communication.bitmessageclient import BitmessageClient
 from oracle_protocol import (
-    PING_SUBJECT,
-    PING_MESSAGE,
     IDENTITY_SUBJECT,
     IDENTITY_MESSAGE,
     VALID_OPERATIONS,

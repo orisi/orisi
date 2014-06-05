@@ -2,14 +2,17 @@ import json
 
 class OPERATION:
   PING = 'PingRequest'
+  TRANSACTION = 'TransactionRequest'
 
 
 VALID_OPERATIONS = {
     'ping': OPERATION.PING,
+    'transaction': OPERATION.TRANSACTION
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.PING: [],  
+    OPERATION.PING: [],
+    OPERATION.TRANSACTION: ['raw_transaction', 'check_time', 'condition'],
 }
 
 

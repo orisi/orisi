@@ -1,9 +1,10 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from db_connection import OracleDb
+from db_connection import OracleDb, TaskQueue
 
 import time
 import logging
+import json
 
 class Oracle:
   def __init__(self):
@@ -12,7 +13,17 @@ class Oracle:
 
     self.operations = {
       'PingRequest': self.ping,
+      'TransactionRequest': self.transaction,
     }
+
+  def transaction(self, message):
+    body = json.loads(message.message)
+    check_time = int(body['check_time'])
+    task_queue = TaskQueue(self.db).save({
+        "json_data": message.message,
+        "done": 0,
+        "next_check": check_time
+    })
 
   def ping(self, message):
     self.communication.ping_response(message.from_address)

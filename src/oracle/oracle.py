@@ -53,7 +53,8 @@ class Oracle:
     self.communication.response(message, SUBJECT.CONFIRMED, RESPONSE.CONFIRMED)
 
   def ping(self, message):
-    self.communication.response(message, SUBJECT.PING, RESPONSE.PING)
+    if message.to_address == self.communication.default_address:
+      self.communication.response(message, SUBJECT.PING, RESPONSE.PING)
 
   def handle_request(self, request):
     operation, message = request

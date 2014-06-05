@@ -62,11 +62,14 @@ class OracleCommunication:
     operation, message = request
     self.client.mark_message_as_read(message)
 
-  def ping_response(self, address):
+  def response(self, message, subject, response):
+    body = RAW_RESPONSE
+    body['response'] = response
+    body_json = json.dumps(body)
     self.client.send_message(
-        address, 
-        PING_SUBJECT, 
-        PING_MESSAGE)
+        message.from_address,
+        subject,
+        body_json)
 
   def broadcast_identity(self):
     self.client.send_broadcast(

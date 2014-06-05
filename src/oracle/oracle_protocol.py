@@ -3,7 +3,18 @@ import json
 class OPERATION:
   PING = 'PingRequest'
   TRANSACTION = 'TransactionRequest'
+  INVALID_CONDITION = 'ConditionInvalid'
+  INVALID_TRANSACTION = 'TransactionInvalid'
 
+class RESPONSE:
+  CONFIRMED = 'transaction accepted and added to queue'
+  PING = 'active'
+  INVALID_CONDITION = 'invalid condition'
+  INVALID_TRANSACTION = 'invalid transaction'
+
+class SUBJECT:
+  CONFIRMED = 'TransactionResponse'
+  PING = 'PingResponse'
 
 VALID_OPERATIONS = {
     'ping': OPERATION.PING,
@@ -17,20 +28,10 @@ OPERATION_REQUIRED_FIELDS = {
 
 
 PROTOCOL_VERSION = '0.1'
-PROTOCOL_FOOTER = \
-"""
---
-Distributed Oracle
-Version {0}
-""".format(PROTOCOL_VERSION)
 
-PING_SUBJECT = 'PingResponse'
-PING_MESSAGE_RAW = {
-  "response": "active",
-  "version": PROTOCOL_VERSION,
+RAW_RESPONSE = {
+  'version': PROTOCOL_VERSION
 }
-PING_MESSAGE = json.dumps(PING_MESSAGE_RAW)
-
 
 IDENTITY_SUBJECT = 'IdentityBroadcast'
 IDENTITY_MESSAGE_RAW = {

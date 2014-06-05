@@ -1,6 +1,7 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
 from db_connection import OracleDb, TaskQueue
+from oracle_protocol import RESPONSE, SUBJECT
 
 import time
 import logging
@@ -16,17 +17,42 @@ class Oracle:
       'TransactionRequest': self.transaction,
     }
 
+  def condition_invalid(self, condition):
+    return False
+
+  def transaction_invalid(self, transaction):
+    return False
+
   def transaction(self, message):
     body = json.loads(message.message)
+
+    condition = body['condition']
+    # Future reference - add parsing condition. Now assumed true
+    if self.condition_invalid(condition):
+      self.communication.response(
+          message, 
+          SUBJECT.INVALID_CONDITION, 
+          RESPONSE.INVALID_CONDITION)
+      return
+
+    transaction = body['raw_transaction']
+    if self.transaction_invalid(transaction):
+      self.communication.response(
+          message, 
+          SUBJECT.INVALID_TRANSACTION, 
+          RESPONSE.INVALID_TRANSACTION)
+      return
+
     check_time = int(body['check_time'])
     task_queue = TaskQueue(self.db).save({
         "json_data": message.message,
         "done": 0,
         "next_check": check_time
     })
+    self.communication.response(message, SUBJECT.CONFIRMED, RESPONSE.CONFIRMED)
 
   def ping(self, message):
-    self.communication.ping_response(message.from_address)
+    self.communication.response(message, SUBJECT.PING, RESPONSE.PING)
 
   def handle_request(self, request):
     operation, message = request

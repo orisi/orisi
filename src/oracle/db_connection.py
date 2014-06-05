@@ -110,14 +110,14 @@ class TaskQueue(TableDb):
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
       json_data text not null, \
-      from_address text not null, \
+      origin_address text not null, \
       next_check integer not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (from_address, json_data, next_check, done) values (?,?,?)"
+  insert_sql = "insert into {0} (origin_address, json_data, next_check, done) values (?,?,?)"
   oldest_sql = "select * from {0} where next_check<? order by ts limit 1"
 
   def args_for_obj(self, obj):
-    return [obj["from_address"], obj["json_data"], obj["next_check"], obj["done"]]
+    return [obj["origin_address"], obj["json_data"], obj["next_check"], obj["done"]]
 
   def get_oldest_task(self):
     cursor = self.db.get_cursor()

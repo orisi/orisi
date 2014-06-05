@@ -44,7 +44,7 @@ class Oracle:
 
     check_time = int(body['check_time'])
     task_queue = TaskQueue(self.db).save({
-        "from_address": message.from_address,
+        "origin_address": body['origin_address'],
         "json_data": message.message,
         "done": 0,
         "next_check": check_time
@@ -78,7 +78,7 @@ class Oracle:
     signed_transaction = self.sign_transaction(transaction)
 
     self.communication.response_to_address(
-        task["from_adderss"], 
+        task["from_address"], 
         SUBJECT.TRANSACTION_SIGNED, 
         RESPONSE.TRANSACTION_SIGNED)
     self.communication.broadcast_signed_transaction(signed_transaction)

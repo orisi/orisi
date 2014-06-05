@@ -54,6 +54,7 @@ class Oracle:
     used_address = used_address_db.get_address(multisig_address)
     if used_address:
       #DANGER! SHOULD BE TESTED AND PREPARED OMG!
+      #checking equality should be done key by key, json object does not preserve order, json list does
       if used_address["json_in_out"] != inputs_outputs:
         self.communication.response_to_address(
             origin_address,

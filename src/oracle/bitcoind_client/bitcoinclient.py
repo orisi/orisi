@@ -18,6 +18,7 @@ class BitcoinClient:
 
   def get_inputs_outputs(self, transaction):
     #TODO: Assumes to get inputs and outputs for transaction
+    #PLS GIMME JSON
     return json.dumps({"placeholder":"hehe"})
 
   def get_multisig_sender_address(self, transaction):

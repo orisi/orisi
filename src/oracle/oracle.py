@@ -47,12 +47,24 @@ class Oracle:
           RESPONSE.INVALID_TRANSACTION)
       return
 
-    transaction_json = self.btc.get_inputs_outputs(transaction)
+    inputs_outputs = self.btc.get_inputs_outputs(transaction)
     multisig_address = self.btc.get_multisig_sender_address(transaction)
 
     used_address_db = UsedAddress(self.db)
     used_address = used_address_db.get_address(multisig_address)
-    #TODO parsing and deciding wether to use or not
+    if used_address:
+      #DANGER! SHOULD BE TESTED AND PREPARED OMG!
+      if used_address["json_in_out"] != inputs_outputs:
+        self.communication.response_to_address(
+            origin_address,
+            SUBJECT.ADDRESS_DUPLICATE,
+            RESPONSE.ADDRESS_DUPLICATE)
+        return
+    else:
+      used_address_db.save({
+          "multisig_address": multisig_address,
+          "json_in_out": inputs_outputs,
+      })
 
     check_time = int(body['check_time'])
     task_queue = TaskQueue(self.db).save({

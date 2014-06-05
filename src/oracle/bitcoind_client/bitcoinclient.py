@@ -14,6 +14,7 @@ class BitcoinClient:
 
   def is_valid_transaction(self, transaction):
     #TODO: if transaction is valid (it is in fact a transaction and not a stupid string or so)
+    # Especially: check wether current signatures on transaction are valid
     return True
 
   def get_inputs_outputs(self, transaction):

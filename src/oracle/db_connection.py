@@ -10,7 +10,7 @@ class OracleDb:
   def __init__(self):
     self.connect()
     operations = {
-      'PingRequest': PingRequestDb,
+      'TransactionRequest': TransactionRequestDb
     }
     self.operations = defaultdict(lambda: False, operations)
 
@@ -81,19 +81,6 @@ class TableDb:
     self.insert_object(obj)
 
 # XRequestDb - are classes for saving requests in history
-class PingRequestDb(TableDb):
-  """
-  Used for saving ping requests to DB. Just in order to remember them
-  """
-  table_name = "ping_requests"
-  create_sql = "create table {0} ( \
-      id integer primary key autoincrement, \
-      from_address text not null, \
-      ts datetime default current_timestamp);"
-  insert_sql = "insert into {0} (from_address) values (?)"
-
-  def args_for_obj(self, obj):
-    return [obj.from_address, ]
 
 class TransactionRequestDb(TableDb):
   """

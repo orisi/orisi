@@ -2,7 +2,6 @@
 from oracle_communication import OracleCommunication
 from db_connection import OracleDb, TaskQueue
 from oracle_protocol import RESPONSE, SUBJECT
-from settings import PING_ENABLED
 
 import time
 import logging
@@ -14,7 +13,6 @@ class Oracle:
     self.db = OracleDb()
 
     self.operations = {
-      'PingRequest': self.ping,
       'TransactionRequest': self.transaction,
     }
 
@@ -52,10 +50,6 @@ class Oracle:
         "next_check": check_time
     })
     self.communication.response(message, SUBJECT.CONFIRMED, RESPONSE.CONFIRMED)
-
-  def ping(self, message):
-    if message.to_address == self.communication.default_address and PING_ENABLED:
-      self.communication.response(message, SUBJECT.PING, RESPONSE.PING)
 
   def handle_request(self, request):
     operation, message = request

@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import sqlite3
+import time
 
 ORACLE_FILE = 'oracle.db'
 
@@ -15,6 +16,7 @@ class OracleDb:
 
   def connect(self):
     self.conn = sqlite3.connect(ORACLE_FILE)
+    self.conn.row_factory = sqlite3.Row
 
   def commit(self):
     self.conn.commit()
@@ -120,13 +122,23 @@ class TaskQueue(TableDb):
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      json_data text not null \
-      next_check integer not null \
+      json_data text not null, \
+      from_address text not null, \
+      next_check integer not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (json_data, next_check, done) values (?,?,?)"
+  insert_sql = "insert into {0} (from_address, json_data, next_check, done) values (?,?,?)"
+  oldest_sql = "select * from {0} where next_check<? order by ts limit 1"
 
   def args_for_obj(self, obj):
-    return [obj["json_data"], obj["next_check"], obj["done"]]
+    return [obj["from_address"], obj["json_data"], obj["next_check"], obj["done"]]
+
+  def get_oldest_task(self):
+    cursor = self.db.get_cursor()
+    sql = self.oldest_sql.format(self.table_name)
+
+    row = cursor.execute(sql, int(time.time())).fetchone()
+    result = dict(row)
+    return result
 
 
 

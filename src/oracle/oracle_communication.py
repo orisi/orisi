@@ -63,13 +63,17 @@ class OracleCommunication:
     self.client.mark_message_as_read(message)
 
   def response(self, message, subject, response):
+    self.response_to_address(message.from_address, subject, response)
+
+  def response_to_address(self, address, subject, response):
     body = RAW_RESPONSE
     body['response'] = response
     body_json = json.dumps(body)
     self.client.send_message(
-        message.from_address,
+        address,
         subject,
         body_json)
+
 
   def broadcast_identity(self):
     self.client.send_broadcast(

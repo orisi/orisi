@@ -5,12 +5,14 @@ class OPERATION:
   TRANSACTION = 'TransactionRequest'
   INVALID_CONDITION = 'ConditionInvalid'
   INVALID_TRANSACTION = 'TransactionInvalid'
+  TRANSACTION_SIGNED = 'TransactionSigned'
 
 class RESPONSE:
   CONFIRMED = 'transaction accepted and added to queue'
   PING = 'active'
   INVALID_CONDITION = 'invalid condition'
   INVALID_TRANSACTION = 'invalid transaction'
+  TRANSACTION_SIGNED = 'transaction signed'
 
 class SUBJECT:
   CONFIRMED = 'TransactionResponse'

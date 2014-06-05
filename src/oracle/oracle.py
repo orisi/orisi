@@ -45,6 +45,7 @@ class Oracle:
 
     check_time = int(body['check_time'])
     task_queue = TaskQueue(self.db).save({
+        "from_address": message.from_address,
         "json_data": message.message,
         "done": 0,
         "next_check": check_time
@@ -64,6 +65,28 @@ class Oracle:
     if db_class:
       db_class(self.db).save(message)
 
+  def sign_transaction(self, transaction):
+    # Placeholder for signing transactions
+    return transaction
+
+  def check_condition(self, condition):
+    # Placeholder for checking condition
+    return True
+
+  def handle_task(self, task):
+    body = json.loads(task["json_data"])
+    condition = body["condition"]
+    transaction = body["raw_transaction"]
+    if not self.check_condition(condition):
+      return
+    signed_transaction = self.sign_transaction(transaction)
+
+    self.communication.response_to_address(
+        task["from_adderss"], 
+        SUBJECT.TRANSACTION_SIGNED, 
+        RESPONSE.TRANSACTION_SIGNED)
+    self.communication.broadcast_signed_transaction(signed_transaction)
+
   def run(self):
     while True:
       # Proceed all requests
@@ -72,5 +95,8 @@ class Oracle:
       for request in requests:
         self.handle_request(request)
         self.communication.mark_request_done(request)
+
+      task = self.db.get_oldest_task()
+      self.handle_task(task)
 
       time.sleep(1)

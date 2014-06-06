@@ -95,10 +95,6 @@ class Oracle:
     if db_class:
       db_class(self.db).save(message)
 
-  def sign_transaction(self, transaction):
-    signed_transaction = self.btc.sign_transaction()
-    return signed_transaction
-
   def check_condition(self, condition):
     return self.evaluator.evaluate(condition)
 
@@ -109,7 +105,7 @@ class Oracle:
     if not self.check_condition(condition):
       self.task_queue.done(task)
       return
-    signed_transaction = self.sign_transaction(transaction)
+    signed_transaction = self.btc.sign_transaction(transaction)
     body["raw_transaction"] = signed_transaction
 
     self.communication.broadcast_signed_transaction(json.dumps(body))

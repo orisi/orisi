@@ -100,7 +100,7 @@ class BitmessageClient:
     messages_list = json.loads(messages_json)['inboxMessages']
 
     messages_inbox = \
-        [BitmessageMessage(msg, direct = (self.default_address == msg.to_address)) for msg in messages_list]
+        [BitmessageMessage(msg, self.default_address) for msg in messages_list]
 
     return messages_inbox
 

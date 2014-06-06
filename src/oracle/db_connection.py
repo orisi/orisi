@@ -47,6 +47,8 @@ class TableDb:
 
   def __init__(self, db):
     self.db = db
+    if not self.table_exists():
+      self.create_table()
   
   def table_exists(self):
     cursor = self.db.get_cursor()
@@ -61,11 +63,6 @@ class TableDb:
     cursor.execute(sql)
     self.db.commit()
 
-  def insert_object(self, obj):
-    sql = self.insert_sql.format(self.table_name)
-    args = self.args_for_obj(obj)
-    self.insert_with_sql(sql, args)
-
   def args_for_obj(self, obj):
     raise NotImplementedError()
 
@@ -75,10 +72,9 @@ class TableDb:
     self.db.commit()
 
   def save(self, obj):
-    if not self.table_exists():
-      self.create_table()
-
-    self.insert_object(obj)
+    sql = self.insert_sql.format(self.table_name)
+    args = self.args_for_obj(obj)
+    self.insert_with_sql(sql, args)
 
 # XRequestDb - are classes for saving requests in history
 

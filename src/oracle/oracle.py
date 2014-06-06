@@ -2,7 +2,7 @@
 from oracle_communication import OracleCommunication
 from db_connection import OracleDb, TaskQueue, UsedAddress
 from oracle_protocol import RESPONSE, SUBJECT
-from condition_evaluation.evaluator import Evaluator
+from condition_evaluator.evaluator import Evaluator
 
 from bitcoind_client.bitcoinclient import BitcoinClient
 

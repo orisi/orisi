@@ -7,6 +7,17 @@ from settings_local import (
 import json
 import jsonrpclib
 
+import decimal
+import jsonrpclib
+
+BITCOIND_RPC_USERNAME = 'foo'
+BITCOIND_RPC_PASSWORD = 'bar'
+BITCOIND_HOST = 'localhost'
+BITCOIND_PORT = 8332
+
+#TODO
+ORACLE_PRIVATE_KEY = 'placeholder'
+
 class BitcoinClient:
 
   def __init__(self):
@@ -30,20 +41,19 @@ class BitcoinClient:
 
   @keep_alive
   def sign_transaction(self, transaction):
-    #TODO: SIGN_TRANSACTION RETURN: NEW SIGNED TRANSACTION
-    return transaction
+    result = self._server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
+    return result['complete'] == 1
 
   @keep_alive
   def is_valid_transaction(self, transaction):
-    #TODO: if transaction is valid (it is in fact a transaction and not a stupid string or so)
-    # Especially: check wether current signatures on transaction are valid
-    return True
+    result = self._server.signrawtransaction(transaction, [], [])
+    return result['complete'] == 1
 
   @keep_alive
   def get_inputs_outputs(self, transaction):
-    #TODO: Assumes to get inputs and outputs for transaction
-    #PLS GIMME JSON
-    return json.dumps({"placeholder":"hehe"})
+    result = self._server.decoderawtransaction(transaction)
+    #TODO: Does this work well for comparing?
+    return json.dumps([result['in'], result['out']])
 
   @keep_alive
   def get_multisig_sender_address(self, transaction):

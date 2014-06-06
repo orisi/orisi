@@ -2,6 +2,7 @@
 from oracle_communication import OracleCommunication
 from db_connection import OracleDb, TaskQueue, UsedAddress
 from oracle_protocol import RESPONSE, SUBJECT
+from condition_evaluation.evaluator import Evaluator
 
 from bitcoind_client.bitcoinclient import BitcoinClient
 
@@ -14,14 +15,14 @@ class Oracle:
     self.communication = OracleCommunication()
     self.db = OracleDb()
     self.btc = BitcoinClient()
+    self.evaluator = Evaluator()
 
     self.operations = {
       'TransactionRequest': self.add_transaction,
     }
 
-  def condition_invalid(self, condition):
-    # TODO (is condition correct according to our protocol, not if it evaluates correctly)
-    return False 
+  def condition_valid(self, condition):
+    return self.evaluator.valid(condition) 
 
   def transaction_valid(self, transaction):
     return self.btc.is_valid_transaction()
@@ -32,7 +33,7 @@ class Oracle:
     condition = body['condition']
     reply_address = body['origin_address']
     # Future reference - add parsing condition. Now assumed true
-    if self.condition_invalid(condition):
+    if not self.condition_valid(condition):
       self.communication.response_to_address(
           origin_address, 
           SUBJECT.INVALID_CONDITION, 
@@ -94,8 +95,7 @@ class Oracle:
     return signed_transaction
 
   def check_condition(self, condition):
-    # TODO: CHECK_CONDITION (evaluate it)
-    return True
+    return self.evaluator.evaluate(condition)
 
   def handle_task(self, task):
     body = json.loads(task["json_data"])

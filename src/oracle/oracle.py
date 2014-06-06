@@ -17,6 +17,8 @@ class Oracle:
     self.btc = BitcoinClient()
     self.evaluator = Evaluator()
 
+    self.task_queue = TaskQueue(self.db)
+
     self.operations = {
       'TransactionRequest': self.add_transaction,
     }
@@ -105,13 +107,13 @@ class Oracle:
     condition = body["condition"]
     transaction = body["raw_transaction"]
     if not self.check_condition(condition):
-      self.db.TaskQueue().done(task)
+      self.task_queue.done(task)
       return
     signed_transaction = self.sign_transaction(transaction)
     body["raw_transaction"] = signed_transaction
 
     self.communication.broadcast_signed_transaction(json.dumps(body))
-    self.db.TaskQueue().done(task)
+    self.task_queue.done(task)
 
   def run(self):
     while True:
@@ -122,7 +124,7 @@ class Oracle:
         self.handle_request(request)
         self.communication.mark_request_done(request)
 
-      task = self.db.get_oldest_task()
+      task = self.task_queue.get_oldest_task()
       self.handle_task(task)
 
       time.sleep(1)

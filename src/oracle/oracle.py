@@ -33,7 +33,7 @@ class Oracle:
     body = json.loads(message.message)
 
     condition = body['condition']
-    reply_address = body['origin_address']
+    origin_address = body['origin_address']
     # Future reference - add parsing condition. Now assumed true
     if not self.condition_valid(condition):
       self.communication.response_to_address(

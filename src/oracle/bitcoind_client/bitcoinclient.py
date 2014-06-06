@@ -51,3 +51,9 @@ class BitcoinClient:
     # This method should get it (i tried to figure it out and don't know how)
     # http://bitcoin.stackexchange.com/questions/7838/why-does-gettransaction-report-me-only-the-receiving-address
     return "3aabb"
+
+  @keep_alive
+  def transaction_already_signed(self, transaction):
+    #TODO: IF I'VE ALREADY SIGNED THAT TRANSACTION AND NO MORE SIGNATURES ARE REQUIRED FROM ME
+    # RETURN FALSE, IN OTHER CASE RETURN TRUE
+    return False

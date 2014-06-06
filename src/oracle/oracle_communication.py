@@ -6,6 +6,7 @@ from oracle_protocol import (
     IDENTITY_MESSAGE,
     VALID_OPERATIONS,
     OPERATION_REQUIRED_FIELDS,
+    OPERATION,
     SUBJECT,
     RESPONSE)
 
@@ -77,6 +78,8 @@ class OracleCommunication:
         subject,
         body_json)
 
+  def broadcast_signed_transaction(self, message_body):
+    self.client.send_message(self.client.chan_address, OPERATION.TRANSACTION, message_body)
 
   def broadcast_identity(self):
     self.client.send_broadcast(

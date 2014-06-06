@@ -9,6 +9,7 @@ class RESPONSE:
   INVALID_TRANSACTION = 'invalid transaction'
   TRANSACTION_SIGNED = 'transaction signed'
   DIRECT = 'direct message unsupported'
+  SIGNED = 'transaction signed by {0}'
 
 class SUBJECT:
   CONFIRMED = 'TransactionResponse'
@@ -16,6 +17,7 @@ class SUBJECT:
   INVALID_TRANSACTION = 'TransactionInvalid'
   TRANSACTION_SIGNED = 'TransactionSigned'
   DIRECT = 'DirectMessage'
+  SIGNED = 'SignedTransaction'
 
 VALID_OPERATIONS = {
     'transaction': OPERATION.TRANSACTION

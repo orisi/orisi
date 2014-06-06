@@ -114,7 +114,8 @@ class TaskQueue(TableDb):
       next_check integer not null, \
       done integer default 0);"
   insert_sql = "insert into {0} (origin_address, json_data, next_check, done) values (?,?,?)"
-  oldest_sql = "select * from {0} where next_check<? order by ts limit 1"
+  oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
+  mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
     return [obj["origin_address"], obj["json_data"], obj["next_check"], obj["done"]]
@@ -126,6 +127,11 @@ class TaskQueue(TableDb):
     row = cursor.execute(sql, int(time.time())).fetchone()
     result = dict(row)
     return result
+
+  def done(self, task):
+    cursor = self.db.get_cursor()
+    sql = self.mark_done_sql.format(self.table_name)
+    cursor.execute(sql, int(task['id']))
 
 class UsedAddress(TableDb):
   """

@@ -48,6 +48,9 @@ class Oracle:
           RESPONSE.INVALID_TRANSACTION)
       return
 
+    if self.btc.transaction_already_signed(transaction):
+      return
+
     inputs_outputs = self.btc.get_inputs_outputs(transaction)
     multisig_address = self.btc.get_multisig_sender_address(transaction)
 
@@ -102,14 +105,13 @@ class Oracle:
     condition = body["condition"]
     transaction = body["raw_transaction"]
     if not self.check_condition(condition):
+      self.db.TaskQueue().done(task)
       return
     signed_transaction = self.sign_transaction(transaction)
+    body["raw_transaction"] = signed_transaction
 
-    self.communication.response_to_address(
-        task["from_address"], 
-        SUBJECT.TRANSACTION_SIGNED, 
-        RESPONSE.TRANSACTION_SIGNED)
-    self.communication.broadcast_signed_transaction(signed_transaction)
+    self.communication.broadcast_signed_transaction(json.dumps(body))
+    self.db.TaskQueue().done(task)
 
   def run(self):
     while True:

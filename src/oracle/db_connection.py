@@ -120,14 +120,14 @@ class TaskQueue(TableDb):
     cursor = self.db.get_cursor()
     sql = self.oldest_sql.format(self.table_name)
 
-    row = cursor.execute(sql, int(time.time())).fetchone()
+    row = cursor.execute(sql, (int(time.time()), )).fetchone()
     result = dict(row)
     return result
 
   def done(self, task):
     cursor = self.db.get_cursor()
     sql = self.mark_done_sql.format(self.table_name)
-    cursor.execute(sql, int(task['id']))
+    cursor.execute(sql, (int(task['id']), ))
 
 class UsedAddress(TableDb):
   """
@@ -148,7 +148,7 @@ class UsedAddress(TableDb):
   def get_address(self, address):
     sql = self.exists_sql.format(self.table_name)
     cursor = self.db.get_cursor()
-    row = cursor.execute(sql, adderss).fetchone()
+    row = cursor.execute(sql, (address, ) ).fetchone()
     if row:
       result = dict(row)
       return result

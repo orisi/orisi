@@ -121,8 +121,9 @@ class TaskQueue(TableDb):
     sql = self.oldest_sql.format(self.table_name)
 
     row = cursor.execute(sql, (int(time.time()), )).fetchone()
-    result = dict(row)
-    return result
+    if row:
+      row = dict(row)
+    return row
 
   def done(self, task):
     cursor = self.db.get_cursor()

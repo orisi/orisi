@@ -27,6 +27,17 @@ class BitmessageClient:
   def connect(self):
     self.api = BitmessageServer()
 
+  def keep_alive(fun):
+    def ping_and_reconnect(self, *args, **kwargs):
+      try:
+        response = self.api.helloWorld('x', 'y')
+        assert(response == "x-y")
+      except:
+        self.connect()
+      return fun(self, *args, **kwargs)
+    return ping_and_reconnect
+
+  @keep_alive
   def create_random_address(self, label=None):
     if not label:
       label = self.default_address_label
@@ -34,6 +45,7 @@ class BitmessageClient:
     self.api.createRandomAddress(label_base64)
     self.get_addresses()
 
+  @keep_alive
   def get_addresses(self):
     addresses_json = self.api.listAddresses2()
     address_list = json.loads(addresses_json)['addresses']
@@ -50,7 +62,7 @@ class BitmessageClient:
     self.default_address = self.find_default_address()
     # if none - raise exception? it will happen eventually
 
-
+  @keep_alive
   def find_default_address(self):
     default_address = None
     for address in self.enabled_addresses:
@@ -59,12 +71,13 @@ class BitmessageClient:
         break
     return default_address
 
-
+  @keep_alive
   def update_address_if_empty(self):
     if len(self.addresses) > 0:
       return
     self.create_random_address()
 
+  @keep_alive
   def send_message(self, address, subject, message):
     ack_data = self.api.sendMessage(
                   address, 
@@ -73,6 +86,7 @@ class BitmessageClient:
                   base64.encodestring(message))
     return ack_data
 
+  @keep_alive
   def send_broadcast(self, subject, message):
     ack_data = self.api.sendBroadcast(
                   self.default_address.address,
@@ -80,6 +94,7 @@ class BitmessageClient:
                   base64.encodestring(message))
     return ack_data
 
+  @keep_alive
   def get_inbox(self):
     messages_json = self.api.getAllInboxMessages()
     messages_list = json.loads(messages_json)['inboxMessages']
@@ -89,11 +104,13 @@ class BitmessageClient:
 
     return messages_inbox
 
+  @keep_alive
   def get_unread_messages(self):
     messages = self.get_inbox()
     unread_messages = [msg for msg in messages if not msg.read]
     return unread_messages
 
+  @keep_alive
   def mark_message_as_read(self, msg):
     if isinstance(msg, BitmessageMessage):
       msgid = msg.msgid
@@ -101,6 +118,7 @@ class BitmessageClient:
       msgid = msg
     self.api.getInboxMessageByID(msgid, True)
 
+  @keep_alive
   def mark_message_as_unread(self, msg):
     if isinstance(msg, BitmessageMessage):
       msgid = msg.msgid
@@ -108,12 +126,15 @@ class BitmessageClient:
       msgid = msg
     self.api.getInboxMessageByID(msgid, False)
 
+  @keep_alive
   def trash_message(self, msgid):
     self.api.trashMessage(msgid)
 
+  @keep_alive
   def delete_address(self, address):
     self.api.deleteAddress(address)
 
+  @keep_alive
   def join_chan(self, name, address):
     name_encoded = base64.encodestring(name)
     try:

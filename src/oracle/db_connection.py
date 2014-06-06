@@ -109,7 +109,7 @@ class TaskQueue(TableDb):
       origin_address text not null, \
       next_check integer not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (origin_address, json_data, next_check, done) values (?,?,?)"
+  insert_sql = "insert into {0} (origin_address, json_data, next_check, done) values (?,?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   mark_done_sql = "update {0} set done=1 where id=?"
 

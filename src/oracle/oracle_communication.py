@@ -8,7 +8,8 @@ from oracle_protocol import (
     OPERATION_REQUIRED_FIELDS,
     OPERATION,
     SUBJECT,
-    RESPONSE)
+    RESPONSE,
+    RAW_RESPONSE)
 
 import json
 import logging

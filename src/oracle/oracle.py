@@ -27,7 +27,7 @@ class Oracle:
     return self.evaluator.valid(condition) 
 
   def transaction_valid(self, transaction):
-    return self.btc.is_valid_transaction()
+    return self.btc.is_valid_transaction(transaction)
 
   def add_transaction(self, message):
     body = json.loads(message.message)

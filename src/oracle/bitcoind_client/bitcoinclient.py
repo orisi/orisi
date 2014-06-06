@@ -29,7 +29,7 @@ class BitcoinClient:
     return ping_and_reconnect
 
   @keep_alive
-  def sing_transaction(self, transaction):
+  def sign_transaction(self, transaction):
     #TODO: SIGN_TRANSACTION RETURN: NEW SIGNED TRANSACTION
     return transaction
 

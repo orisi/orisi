@@ -43,7 +43,7 @@ class Oracle:
       return
 
     transaction = body['raw_transaction']
-    if self.transaction_valid(transaction):
+    if not self.transaction_valid(transaction):
       self.communication.response_to_address(
           origin_address, 
           SUBJECT.INVALID_TRANSACTION, 

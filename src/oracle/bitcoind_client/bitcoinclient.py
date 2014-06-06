@@ -19,13 +19,13 @@ class BitcoinClient:
         BITCOIND_RPC_HOST,
         BITCOIND_RPC_PORT))
 
-  def keep_alive(self, fun):
-    def ping_and_reconnect(*args, **kwargs):
+  def keep_alive(fun):
+    def ping_and_reconnect(self, *args, **kwargs):
       try:
         self.server.ping()
       except:
         self.connect()
-      return fun(*args, **kwargs)
+      return fun(self, *args, **kwargs)
     return ping_and_reconnect
 
   @keep_alive

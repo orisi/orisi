@@ -125,6 +125,7 @@ class Oracle:
         self.communication.mark_request_done(request)
 
       task = self.task_queue.get_oldest_task()
-      self.handle_task(task)
+      if task:
+        self.handle_task(task)
 
       time.sleep(1)

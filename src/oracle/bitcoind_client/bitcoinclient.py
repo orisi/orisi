@@ -10,11 +10,6 @@ import jsonrpclib
 import decimal
 import jsonrpclib
 
-BITCOIND_RPC_USERNAME = 'foo'
-BITCOIND_RPC_PASSWORD = 'bar'
-BITCOIND_HOST = 'localhost'
-BITCOIND_PORT = 8332
-
 #TODO
 ORACLE_PRIVATE_KEY = 'placeholder'
 

@@ -1,0 +1,6 @@
+
+# Set your credentials to Bitcoind
+BITCOIND_RPC_USERNAME = "test"
+BITCOIND_RPC_PASSWORD = "test"
+BITCOIND_RPC_HOST = "127.0.0.1"
+BITCOIND_RPC_PORT = 8332

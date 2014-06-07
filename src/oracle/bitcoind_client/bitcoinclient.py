@@ -6,10 +6,8 @@ from settings_local import (
     ORACLE_FEE,
     ORACLE_ADDRESS)
 
-import json
-import jsonrpclib
-
 import decimal
+import json
 import jsonrpclib
 
 

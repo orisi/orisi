@@ -36,17 +36,17 @@ class BitcoinClient:
 
   @keep_alive
   def sign_transaction(self, transaction):
-    result = self._server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
+    result = self.server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
     return result['hex']
 
   @keep_alive
   def is_valid_transaction(self, transaction):
-    result = self._server.signrawtransaction(transaction, [], [])
+    result = self.server.signrawtransaction(transaction, [], [])
     return result['complete'] == 1
 
   @keep_alive
   def get_inputs_outputs(self, transaction):
-    result = self._server.decoderawtransaction(transaction)
+    result = self.server.decoderawtransaction(transaction)
     #TODO: Does this work well for comparing?
     return json.dumps([result['in'], result['out']])
 

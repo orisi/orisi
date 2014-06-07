@@ -12,10 +12,6 @@ import jsonrpclib
 import decimal
 import jsonrpclib
 
-BITCOIND_RPC_USERNAME = 'foo'
-BITCOIND_RPC_PASSWORD = 'bar'
-BITCOIND_HOST = 'localhost'
-BITCOIND_PORT = 8332
 
 class BitcoinClient:
 
@@ -41,7 +37,7 @@ class BitcoinClient:
   @keep_alive
   def sign_transaction(self, transaction):
     result = self._server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
-    return result['complete'] == 1
+    return result['hex']
 
   @keep_alive
   def is_valid_transaction(self, transaction):

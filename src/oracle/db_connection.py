@@ -130,26 +130,26 @@ class TaskQueue(TableDb):
     sql = self.mark_done_sql.format(self.table_name)
     cursor.execute(sql, (int(task['id']), ))
 
-class UsedAddress(TableDb):
+class UsedInput(TableDb):
   """
   Class that adds what transaction we want to sign. When new transaction comes through with
   same address, but different inputs and outputs we won't sign it!
   """
-  table_name = "transaction_history"
+  table_name = "used_input"
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      multisig_address text unique, \
-      json_in_out text not null);"
-  insert_sql = "insert into {0} (multisig_address, json_in_out) values (?, ?)"
-  exists_sql = "select * from {0} where multisig_address=?"
+      input_hash text unique, \
+      json_out text not null);"
+  insert_sql = "insert into {0} (input_hash, json_out) values (?, ?)"
+  exists_sql = "select * from {0} where input_hash=?"
   def args_for_obj(self, obj):
-    return [obj["multisig_address"], obj["json_in_out"]]
+    return [obj["input_hash"], obj["json_out"]]
 
-  def get_address(self, address):
+  def get_input(self, i):
     sql = self.exists_sql.format(self.table_name)
     cursor = self.db.get_cursor()
-    row = cursor.execute(sql, (address, ) ).fetchone()
+    row = cursor.execute(sql, (i, ) ).fetchone()
     if row:
       result = dict(row)
       return result

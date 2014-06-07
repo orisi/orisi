@@ -55,25 +55,21 @@ class BitcoinClient:
     transaction_dict = json.loads(transaction)
     vin = transaction_dict["vin"]
     vouts = transaction_dict["vout"]
-    result = {
-      "vin_txid": [tx_input["txid"] for tx_input in vin]
-      "vout": [
-        {
-          "value": vout["value"],
-          "addresses": vout["scriptPubKey"]["addresses"]
-        }
-        for vout in vouts
-      ]
-    }
+    result = (
+        [json.dumps({'txid': tx_input['txid'], 'vout':tx_input['vout']}) for tx_input in vin],
+        json.dumps(
+            {
+              'vout': [
+                {
+                  "value": vout["value"], 
+                  "addresses": vout["scriptPubKey"]["addresses"]
+                } for vout in vouts
+              ]
+            }
+        )
+    )
 
-    return json.dumps(results)
-
-  @keep_alive
-  def get_multisig_sender_address(self, transaction):
-    #TODO: transaction as it's input should have multisig transaction,
-    # This method should get it (i tried to figure it out and don't know how)
-    # http://bitcoin.stackexchange.com/questions/7838/why-does-gettransaction-report-me-only-the-receiving-address
-    return "3aabb"
+    return result
 
   @keep_alive
   def transaction_already_signed(self, transaction):

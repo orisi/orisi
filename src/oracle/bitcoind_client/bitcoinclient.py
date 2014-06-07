@@ -2,7 +2,9 @@ from settings_local import (
     BITCOIND_RPC_USERNAME,
     BITCOIND_RPC_PASSWORD,
     BITCOIND_RPC_HOST,
-    BITCOIND_RPC_PORT)
+    BITCOIND_RPC_PORT,
+    ORACLE_PUBLIC_KEY,
+    ORACLE_PRIVATE_KEY)
 
 import json
 import jsonrpclib
@@ -14,9 +16,6 @@ BITCOIND_RPC_USERNAME = 'foo'
 BITCOIND_RPC_PASSWORD = 'bar'
 BITCOIND_HOST = 'localhost'
 BITCOIND_PORT = 8332
-
-#TODO
-ORACLE_PRIVATE_KEY = 'placeholder'
 
 class BitcoinClient:
 

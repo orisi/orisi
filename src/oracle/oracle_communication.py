@@ -21,6 +21,8 @@ class OracleCommunication:
 
     # Do we really need it here?
     self.default_address = self.client.default_address
+    logging.info("my BM address: %r" % self.client.default_address)
+
 
   def corresponds_to_protocol(self, message):
     try:

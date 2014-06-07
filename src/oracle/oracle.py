@@ -4,6 +4,8 @@ from db_connection import OracleDb, TaskQueue, UsedAddress
 from oracle_protocol import RESPONSE, SUBJECT
 from condition_evaluator.evaluator import Evaluator
 
+from settings_local import ORACLE_ADDRESS
+
 from bitcoind_client.bitcoinclient import BitcoinClient
 from bitmessage_communication.bitmessageclient import BitmessageClient
 
@@ -113,10 +115,14 @@ class Oracle:
     self.task_queue.done(task)
 
   def run(self):
-    bm_client = BitmessageClient()
-    bm_client.get_addresses()
-    logging.debug("my BM address: %r" % bm_client.default_address)
+    
+    if not ORACLE_ADDRESS:
+      new_addr = self.btc.server.getnewaddress()
+      logging.error("first run? add '%s' to ORACLE_ADDRESS in settings_local.py" % new_addr)
+      exit()
 
+    logging.info("my multisig address is %s" % ORACLE_ADDRESS)
+    logging.debug("private key: %s" % self.btc.server.dumpprivkey(ORACLE_ADDRESS))
 
     while True:
       # Proceed all requests

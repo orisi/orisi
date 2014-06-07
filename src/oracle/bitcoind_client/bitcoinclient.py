@@ -34,20 +34,37 @@ class BitcoinClient:
     return ping_and_reconnect
 
   @keep_alive
-  def sign_transaction(self, transaction):
+  def _get_json_transaction(self, hex_transaction):
+    return self.server.decoderawtransaction(hex_transaction)
+
+  @keep_alive
+  def sign_transaction(self, raw_transaction):
 #    result = self.server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
     return result['hex']
 
   @keep_alive
-  def is_valid_transaction(self, transaction):
+  def is_valid_transaction(self, raw_transaction):
     result = self.server.signrawtransaction(transaction, [], [])
     return result['complete'] == 1
 
   @keep_alive
-  def get_inputs_outputs(self, transaction):
-    result = self.server.decoderawtransaction(transaction)
-    #TODO: Does this work well for comparing?
-    return json.dumps([result['in'], result['out']])
+  def get_inputs_outputs(self, raw_transaction):
+    transaction = self._get_json_transaction(raw_transaction)
+    transaction_dict = json.loads(transaction)
+    vin = transaction_dict["vin"]
+    vouts = transaction_dict["vout"]
+    result = {
+      "vin_txid": [tx_input["txid"] for tx_input in vin]
+      "vout": [
+        {
+          "value": vout["value"],
+          "addresses": vout["scriptPubKey"]["addresses"]
+        }
+        for vout in vouts
+      ]
+    }
+
+    return json.dumps(results)
 
   @keep_alive
   def get_multisig_sender_address(self, transaction):

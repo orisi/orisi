@@ -26,7 +26,8 @@ class BitcoinClient:
   def keep_alive(fun):
     def ping_and_reconnect(self, *args, **kwargs):
       try:
-        self.server.ping()
+        # Cheap API call that checks wether we're connected
+        self.server.help()
       except:
         self.connect()
       return fun(self, *args, **kwargs)

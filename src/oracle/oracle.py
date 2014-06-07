@@ -5,6 +5,7 @@ from oracle_protocol import RESPONSE, SUBJECT
 from condition_evaluator.evaluator import Evaluator
 
 from bitcoind_client.bitcoinclient import BitcoinClient
+from bitmessage_communication.bitmessageclient import BitmessageClient
 
 import time
 import logging
@@ -112,6 +113,11 @@ class Oracle:
     self.task_queue.done(task)
 
   def run(self):
+    bm_client = BitmessageClient()
+    bm_client.get_addresses()
+    logging.debug("my BM address: %r" % bm_client.default_address)
+
+
     while True:
       # Proceed all requests
       requests = self.communication.get_new_requests()

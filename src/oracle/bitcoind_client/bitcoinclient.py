@@ -54,15 +54,15 @@ class BitcoinClient:
     vin = transaction_dict["vin"]
     vouts = transaction_dict["vout"]
     result = (
-        [json.dumps({'txid': tx_input['txid'], 'vout':tx_input['vout']}) for tx_input in vin].sort(),
+        sorted([json.dumps({'txid': tx_input['txid'], 'vout':tx_input['vout']}) for tx_input in vin]),
         json.dumps(
             {
-              'vout': [
+              'vout': sorted([
                 {
                   "value": vout["value"], 
                   "addresses": vout["scriptPubKey"]["addresses"]
                 } for vout in vouts
-              ].sort()
+              ])
             }
         )
     )

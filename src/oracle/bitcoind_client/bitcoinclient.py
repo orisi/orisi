@@ -39,7 +39,7 @@ class BitcoinClient:
 
   @keep_alive
   def sign_transaction(self, raw_transaction):
-#    result = self.server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
+    result = self.server.signrawtransaction(transaction)
     return result['hex']
 
   @keep_alive

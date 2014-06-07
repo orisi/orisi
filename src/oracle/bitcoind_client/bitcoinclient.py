@@ -2,9 +2,7 @@ from settings_local import (
     BITCOIND_RPC_USERNAME,
     BITCOIND_RPC_PASSWORD,
     BITCOIND_RPC_HOST,
-    BITCOIND_RPC_PORT,
-    ORACLE_PUBLIC_KEY,
-    ORACLE_PRIVATE_KEY)
+    BITCOIND_RPC_PORT,)
 
 import json
 import jsonrpclib
@@ -36,7 +34,7 @@ class BitcoinClient:
 
   @keep_alive
   def sign_transaction(self, transaction):
-    result = self.server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
+#    result = self.server.signrawtransaction(transaction, [], ORACLE_PRIVATE_KEY)
     return result['hex']
 
   @keep_alive

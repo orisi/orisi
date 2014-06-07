@@ -10,6 +10,7 @@ class RESPONSE:
   TRANSACTION_SIGNED = 'transaction signed'
   DIRECT = 'direct message unsupported'
   SIGNED = 'transaction signed by {0}'
+  NO_FEE = 'transaction doesn\'t have oracle fee'
 
 class SUBJECT:
   CONFIRMED = 'TransactionResponse'
@@ -18,6 +19,7 @@ class SUBJECT:
   TRANSACTION_SIGNED = 'TransactionSigned'
   DIRECT = 'DirectMessage'
   SIGNED = 'SignedTransaction'
+  NO_FEE = 'MissingOracleFee'
 
 VALID_OPERATIONS = {
     'transaction': OPERATION.TRANSACTION

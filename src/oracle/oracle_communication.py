@@ -84,6 +84,9 @@ class OracleCommunication:
   def broadcast_signed_transaction(self, message_body):
     self.client.send_message(self.client.chan_address, OPERATION.TRANSACTION, message_body)
 
+  def broadcast(self, subject, message):
+    self.client.send_message(self.client.chan_address, subject, message)
+
   def broadcast_identity(self):
     self.client.send_broadcast(
         IDENTITY_SUBJECT,

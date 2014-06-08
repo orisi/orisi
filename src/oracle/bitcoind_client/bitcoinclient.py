@@ -1,10 +1,8 @@
-from .settings_local import (
-    BITCOIND_RPC_USERNAME,
-    BITCOIND_RPC_PASSWORD,
-    BITCOIND_RPC_HOST,
-    BITCOIND_RPC_PORT,
-    ORACLE_FEE,
-    ORACLE_ADDRESS)
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from settings_local import *
 
 import decimal
 import json

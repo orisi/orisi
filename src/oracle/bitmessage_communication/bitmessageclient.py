@@ -1,12 +1,14 @@
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from settings_local import *
+
 from bitmessageaddress import BitmessageAddress
 from bitmessagemessage import BitmessageMessage
 from bitmessageserver import BitmessageServer
 from bitmessageexceptions import ChanAlreadySubscribedException
-from .settings_local import (
-    DEFAULT_ADDRESS_LABEL,
-    CHAN_NAME,
-    CHAN_ADDRESS)
-
 
 import xmlrpclib
 import json

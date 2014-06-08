@@ -1,27 +1,16 @@
-BITMESSAGE_USERNAME = "test"
-BITMESSAGE_PASSWORD = "test"
-BITMESSAGE_HOST = "127.0.0.1"
-BITMESSAGE_PORT = "8442"
+DEFAULT_ADDRESS_LABEL = "this oracle"
 
-# Says which address should be used as default for sending
-DEFAULT_ADDRESS_LABEL = "oracle"
-
-# On what chan should your oracle work?
 CHAN_NAME = 'olist'
 CHAN_ADDRESS = 'BM-2cXemdJibdXtifKfTHR4somZbbCGAHRG4H'
+DEFAULT_ADDRESS_LABEL = "this oracle"
 
-# FUTURE REFERENCE: MORE CHANS?
+ORACLE_FEE = 0.00003 
+ORACLE_ADDRESS = "169coxx1uFytxT1njgDRwgew2s9Hma6j5z" # fill this in after the first oracle launch
 
+BITCOIND_RPC_PORT = '8332'
+BITCOIND_RPC_USERNAME = 'bitcoinrpc'
+BITCOIND_RPC_HOST = '127.0.0.1'
 
-
-# Set your credentials to Bitcoind
-BITCOIND_RPC_USERNAME = "test"
-BITCOIND_RPC_PASSWORD = "test"
-BITCOIND_RPC_HOST = "127.0.0.1"
-BITCOIND_RPC_PORT = 8332
-
-#PRIVATE/PUBLIC KEY PAIR
-ORACLE_PRIVATE_KEY = ''
-ORACLE_PUBLIC_KEY = ''
-
-ORACLE_FEE = "0.0002"
+BITMESSAGE_PORT = 8442
+BITMESSAGE_HOST = "127.0.0.1"
+BITMESSAGE_USERNAME = "bitrpc"

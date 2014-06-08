@@ -80,6 +80,19 @@ class BitcoinClient:
     return False
 
   @keep_alive
+  def transaction_need_signature(self, raw_transaction):
+    """
+    This is shameful ugly function. It tries to send transaction to network
+    (even though we're working locally) and if it fails we know it still needs
+    some signatures.
+    """
+    try:
+      self.server.sendrawtransaction(raw_transaction)
+      return False
+    except ProtocolError:
+      return True
+
+  @keep_alive
   def transaction_contains_oracle_fee(self, raw_transaction):
     transaction = self._get_json_transaction(raw_transaction)
     transaction_dict = json.dumps(transaction)

@@ -53,6 +53,13 @@ class Oracle:
           RESPONSE.INVALID_TRANSACTION)
       return
 
+    if not self.btc.transaction_need_signature(transaction):
+      return
+
+    if not self.btc.transaction_contains_oracle_fee(transaction):
+      self.communication.broadcast(SUBJECT.NO_FEE, RESPONSE.NO_FEE)
+      return
+
     if self.btc.transaction_already_signed(transaction):
       return
 

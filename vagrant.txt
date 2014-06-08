@@ -4,6 +4,8 @@ Download & install virtualbox: https://www.virtualbox.org/wiki/Downloads
 in the main orisi folder:
 
 vagrant box add orisi http://oracles.li/orisi.box
+^ this is ~1GB download, sorry about that
+
 vagrant init orisi
 vagrant up
 

@@ -75,9 +75,10 @@ class BitcoinClient:
     return result
 
   @keep_alive
-  def transaction_already_signed(self, transaction):
-    #TODO: IF I'VE ALREADY SIGNED THAT TRANSACTION AND NO MORE SIGNATURES ARE REQUIRED FROM ME
-    # RETURN FALSE, IN OTHER CASE RETURN TRUE
+  def transaction_already_signed(self, raw_transaction):
+    signed_transaction = self.sign_transaction(raw_transaction)
+    if signed_transaction['hex'] == raw_transaction:
+      return True
     return False
 
   @keep_alive

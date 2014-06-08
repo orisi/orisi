@@ -1,4 +1,4 @@
-from settings_local import (
+from .settings_local import (
     BITCOIND_RPC_USERNAME,
     BITCOIND_RPC_PASSWORD,
     BITCOIND_RPC_HOST,

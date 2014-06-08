@@ -53,28 +53,27 @@ class Oracle:
           RESPONSE.INVALID_TRANSACTION)
       return
 
-    if not self.btc.transaction_contains_oracle_fee(transaction):
-      self.communication.broadcast(SUBJECT.NO_FEE, RESPONSE.NO_FEE)
-      return
-
     if self.btc.transaction_already_signed(transaction):
       return
 
-    inputs, output = self.btc.get_inputs_outputs(transaction)
+    inputs_outputs = self.btc.get_inputs_outputs(transaction)
+    multisig_address = self.btc.get_multisig_sender_address(transaction)
 
-    used_input_db = UsedInput(self.db)
-    for i in inputs:
-      used_input = used_input_db.get_input(i)
-      if used_input:
-        if used_addres["json_out"] != output:
-          self.broadcast(
-              SUBJECT.ADDRESS_DUPLICATE,
-              RESPONSE.ADDRESS_DUPLICATE)
-          return
-    for i in inputs:
-      used_input_db.save({
-          'input_hash': i,
-          'json_out': output
+    used_address_db = UsedAddress(self.db)
+    used_address = used_address_db.get_address(multisig_address)
+    if used_address:
+      #DANGER! SHOULD BE TESTED AND PREPARED OMG!
+      #checking equality should be done key by key, json object does not preserve order, json list does
+      if used_address["json_in_out"] != inputs_outputs:
+        self.communication.response_to_address(
+            origin_address,
+            SUBJECT.ADDRESS_DUPLICATE,
+            RESPONSE.ADDRESS_DUPLICATE)
+        return
+    else:
+      used_address_db.save({
+          "multisig_address": multisig_address,
+          "json_in_out": inputs_outputs,
       })
 
     check_time = int(body['check_time'])

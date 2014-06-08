@@ -2,7 +2,7 @@ from bitmessageaddress import BitmessageAddress
 from bitmessagemessage import BitmessageMessage
 from bitmessageserver import BitmessageServer
 from bitmessageexceptions import ChanAlreadySubscribedException
-from settings_local import (
+from .settings_local import (
     DEFAULT_ADDRESS_LABEL,
     CHAN_NAME,
     CHAN_ADDRESS)
@@ -48,6 +48,7 @@ class BitmessageClient:
   @keep_alive
   def get_addresses(self):
     addresses_json = self.api.listAddresses2()
+    logging.debug(addresses_json)
     address_list = json.loads(addresses_json)['addresses']
 
     self.addresses = \

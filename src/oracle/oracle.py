@@ -83,10 +83,6 @@ class Oracle:
         "done": 0,
         "next_check": check_time
     })
-    self.communication.response_to_address(
-        origin_address, 
-        SUBJECT.CONFIRMED, 
-        RESPONSE.CONFIRMED)
 
   def handle_request(self, request):
     operation, message = request

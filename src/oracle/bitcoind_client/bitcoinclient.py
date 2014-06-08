@@ -9,6 +9,7 @@ from settings_local import (
 import decimal
 import json
 import jsonrpclib
+from xmlrpclib import ProtocolError
 
 
 class BitcoinClient:
@@ -44,8 +45,12 @@ class BitcoinClient:
 
   @keep_alive
   def is_valid_transaction(self, raw_transaction):
-    result = self.server.signrawtransaction(transaction, [], [])
-    return result['complete'] == 1
+    # Is raw transaction valid and decodable?
+    try:
+      transaction = self._get_json_transaction(raw_transaction)
+    except ProtocolError:
+      return False
+    return True
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):

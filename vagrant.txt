@@ -1,0 +1,28 @@
+Download & install Vagrant from vagrantup.com
+Download & install virtualbox: https://www.virtualbox.org/wiki/Downloads
+
+in the main orisi folder:
+
+vagrant box add orisi http://oracles.li/orisi.box
+vagrant init orisi
+vagrant up
+
+the above initiates a vagrant box containing bitcoind, bitmessage, and current oracle repo mapped onto /vagrant/
+
+now ssh into the box:
+
+vagrant ssh
+
+after the first login, run:
+./secrets.sh
+
+this will generate API passwords for bitcoind & bitmessage.
+
+then, run:
+./runbitcoin
+./runbitmessage
+cd /vagrant/src/oracle/
+python main.py
+
+this should start the bitoin & bitmessage daemons, switch you into the main oracle folder, and run the oracle.
+after the first oracle run a private bitcoin address will be generated, and you'll be asked to put it into your settings file

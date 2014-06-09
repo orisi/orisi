@@ -1,4 +1,9 @@
 # Main Oracle file
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from oracle_communication import OracleCommunication
 from db_connection import OracleDb, TaskQueue, UsedInput
 from oracle_protocol import RESPONSE, SUBJECT

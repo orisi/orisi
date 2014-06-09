@@ -38,7 +38,7 @@ class BitcoinClient:
 
   @keep_alive
   def sign_transaction(self, raw_transaction, prevtx = "[]"):
-    result = self.server.signrawtransaction(transaction, prevtx)
+    result = self.server.signrawtransaction(raw_transaction, prevtx)
     return result['hex']
 
   @keep_alive

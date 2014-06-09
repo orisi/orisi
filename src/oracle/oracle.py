@@ -1,6 +1,6 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from db_connection import OracleDb, TaskQueue, UsedInput
+from db_connection import OracleDb, TaskQueue, UsedInput, SignedTransaction
 from oracle_protocol import RESPONSE, SUBJECT
 from condition_evaluator.evaluator import Evaluator
 
@@ -38,10 +38,6 @@ class Oracle:
     condition = body['condition']
     # Future reference - add parsing condition. Now assumed true
     if not self.condition_valid(condition):
-      self.communication.response_to_address(
-          origin_address, 
-          SUBJECT.INVALID_CONDITION, 
-          RESPONSE.INVALID_CONDITION)
       return
 
     transaction = body['raw_transaction']
@@ -68,10 +64,6 @@ class Oracle:
       #DANGER! SHOULD BE TESTED AND PREPARED OMG!
       #checking equality should be done key by key, json object does not preserve order, json list does
       if used_address["json_in_out"] != inputs_outputs:
-        self.communication.response_to_address(
-            origin_address,
-            SUBJECT.ADDRESS_DUPLICATE,
-            RESPONSE.ADDRESS_DUPLICATE)
         return
     else:
       used_address_db.save({
@@ -81,7 +73,6 @@ class Oracle:
 
     locktime = int(body['locktime'])
     task_queue = TaskQueue(self.db).save({
-        "origin_address": body['origin_address'],
         "json_data": message.message,
         "done": 0,
         "next_check": locktime
@@ -112,6 +103,7 @@ class Oracle:
       return
     signed_transaction = self.btc.sign_transaction(transaction)
     body["raw_transaction"] = signed_transaction
+    SignedTransaction().save({"hex_transaction": signed_transaction, "prevtx":body["prevtx"]})
 
     self.communication.broadcast_signed_transaction(json.dumps(body))
     self.task_queue.done(task)

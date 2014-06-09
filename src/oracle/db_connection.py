@@ -106,15 +106,14 @@ class TaskQueue(TableDb):
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
       json_data text not null, \
-      origin_address text not null, \
       next_check integer not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (origin_address, json_data, next_check, done) values (?,?,?,?)"
+  insert_sql = "insert into {0} (json_data, next_check, done) values (?,?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
-    return [obj["origin_address"], obj["json_data"], obj["next_check"], obj["done"]]
+    return [obj["json_data"], obj["next_check"], obj["done"]]
 
   def get_oldest_task(self):
     cursor = self.db.get_cursor()
@@ -157,8 +156,21 @@ class UsedInput(TableDb):
       return None
 
 
+class SignedTransaction(TableDb):
+  """
+  Class that will keep all transactions signed by oracle (possible multiplications for now)
+  """
+  table_name = "signed_transaction"
+  create_sql = "create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      hex_transaction text not null, \
+      prevtx text not null)"
+  insert_sql = "insert into {0} (hex_transaction, prevtx) values (?, ?)"
 
 
+  def args_for_obj(self, obj):
+    return [obj["hex_transaction"], obj["prevtx"]]
 
 
 

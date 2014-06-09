@@ -4,10 +4,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from settings_local import *
 
-import decimal
 import json
 import jsonrpclib
 from xmlrpclib import ProtocolError
+from decimal import Decimal
 
 
 class BitcoinClient:

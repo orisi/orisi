@@ -52,8 +52,7 @@ class BitcoinClient:
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):
-    transaction = self._get_json_transaction(raw_transaction)
-    transaction_dict = json.loads(transaction)
+    transaction_dict = self._get_json_transaction(raw_transaction)
     vin = transaction_dict["vin"]
     vouts = transaction_dict["vout"]
     result = (
@@ -94,8 +93,7 @@ class BitcoinClient:
 
   @keep_alive
   def transaction_contains_oracle_fee(self, raw_transaction):
-    transaction = self._get_json_transaction(raw_transaction)
-    transaction_dict = json.loads(transaction)
+    transaction_dict = self._get_json_transaction(raw_transaction)
     if not 'vout' in transaction_dict:
       return False
     for vout in transaction_dict['vout']:

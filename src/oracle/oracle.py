@@ -44,12 +44,7 @@ class Oracle:
 
     transaction = body['raw_transaction']
     prevtx = body['prevtx']
-    pubkey_json = body['pubkey_json']
-    try:
-      pubkey_list = json.loads(pubkey_list)
-    except ValueError:
-      logging.debug("invalid json")
-      return
+    pubkey_list = body['pubkey_json']
 
     try:
       req_sigs = int(body['req_sigs'])
@@ -58,7 +53,7 @@ class Oracle:
       return
 
     try:
-      self.btc.addmultisigaddress(req_sigs, pubkey_list)
+      self.btc.add_multisig_address(req_sigs, pubkey_list)
     except ProtocolError:
       logging.debug("cant add multisig address")
       return
@@ -86,12 +81,13 @@ class Oracle:
     for i in inputs:
       used_input = used_input_db.get_input(i)
       if used_input:
-        if used_addres["json_out"] != output:
+        if used_input["json_out"] != output:
           self.broadcast(
               SUBJECT.ADDRESS_DUPLICATE,
               RESPONSE.ADDRESS_DUPLICATE)
           return
     for i in inputs:
+      print i
       used_input_db.save({
           'input_hash': i,
           'json_out': output
@@ -121,15 +117,16 @@ class Oracle:
     body = json.loads(task["json_data"])
     condition = body["condition"]
     transaction = body["raw_transaction"]
+    prevtx = body["prevtx"]
     if not self.check_condition(condition):
       self.task_queue.done(task)
       return
     if not self.transaction_valid(transaction):
       self.task_queue.done(task)
       return
-    signed_transaction = self.btc.sign_transaction(transaction)
+    signed_transaction = self.btc.sign_transaction(transaction, prevtx)
     body["raw_transaction"] = signed_transaction
-    SignedTransaction().save({"hex_transaction": signed_transaction, "prevtx":body["prevtx"]})
+    SignedTransaction(self.db).save({"hex_transaction": signed_transaction, "prevtx":json.dumps(prevtx)})
 
     self.communication.broadcast_signed_transaction(json.dumps(body))
     self.task_queue.done(task)

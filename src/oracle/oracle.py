@@ -71,6 +71,10 @@ class Oracle:
       logging.debug("transaction does not need a signature")
       return
 
+    if not self.btc.transaction_contains_org_fee(transaction):
+      logging.debug("org fee not found")
+      return
+
     if not self.btc.transaction_contains_oracle_fee(transaction):
       logging.debug("oracle fee not found")
       self.communication.broadcast(SUBJECT.NO_FEE, RESPONSE.NO_FEE)

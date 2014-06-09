@@ -92,7 +92,7 @@ class BitcoinClient:
       return True
 
   @keep_alive
-  def transaction_contains_oracle_fee(self, raw_transaction):
+  def transaction_contains_output(self, raw_transaction, address, fee):
     transaction_dict = self._get_json_transaction(raw_transaction)
     if not 'vout' in transaction_dict:
       return False
@@ -106,11 +106,19 @@ class BitcoinClient:
         continue
 
       for address in vout['scriptPubKey']['addresses']:
-        if address == ORACLE_ADDRESS:
+        if address == address:
           value = Decimal(vout['value'])
-          if value >= Decimal(ORACLE_FEE):
+          if value >= Decimal(fee):
             return True
     return False
+
+  @keep_alive
+  def transaction_contains_oracle_fee(self, raw_transaction):
+    return self.transaction_contains_output(raw_transaction, ORACLE_ADDRESS, ORACLE_FEE)
+
+  @keep_alive
+  def transaction_contains_org_fee(self, raw_transaction):
+    return self.transaction_contains_output(raw_transaction, ORGANIZATION_ADDRESS, ORGANIZATION_FEE)
 
   @keep_alive
   def create_multisig_address(self, min_sigs, keys):

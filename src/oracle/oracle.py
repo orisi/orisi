@@ -107,6 +107,9 @@ class Oracle:
     if not self.check_condition(condition):
       self.task_queue.done(task)
       return
+    if not self.transaction_valid(transaction):
+      self.task_queue.done(task)
+      return
     signed_transaction = self.btc.sign_transaction(transaction)
     body["raw_transaction"] = signed_transaction
 

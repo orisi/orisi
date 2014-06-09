@@ -26,7 +26,7 @@ VALID_OPERATIONS = {
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.TRANSACTION: ['raw_transaction', 'locktime', 'condition', 'prevtx'],
+    OPERATION.TRANSACTION: ['raw_transaction', 'locktime', 'condition', 'prevtx', 'pubkey_json', 'req_sigs'],
 }
 
 

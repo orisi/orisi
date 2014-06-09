@@ -12,6 +12,7 @@ from bitmessage_communication.bitmessageclient import BitmessageClient
 import time
 import logging
 import json
+from xmlrpclib import ProtocolError
 
 class Oracle:
   def __init__(self):
@@ -43,6 +44,25 @@ class Oracle:
 
     transaction = body['raw_transaction']
     prevtx = body['prevtx']
+    pubkey_json = body['pubkey_json']
+    try:
+      pubkey_list = json.loads(pubkey_list)
+    except ValueError:
+      logging.debug("invalid json")
+      return
+
+    try:
+      req_sigs = int(body['req_sigs'])
+    except ValueError:
+      logging.debug("req_sigs must be a number")
+      return
+
+    try:
+      self.btc.addmultisigaddress(req_sigs, pubkey_list)
+    except ProtocolError:
+      logging.debug("cant add multisig address")
+      return
+
     if not self.transaction_valid(transaction):
       logging.debug("transaction invalid")
       return

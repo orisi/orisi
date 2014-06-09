@@ -117,6 +117,10 @@ class BitcoinClient:
     return self.server.createmultisig(min_sigs, keys)
 
   @keep_alive
+  def add_multisig_address(self, min_sigs, keys):
+    return self.server.addmultisigaddress(min_sigs, keys)
+
+  @keep_alive
   def create_multisig_transaction(self, tx_inputs, outputs):
     raw_transaction = self.server.createrawtransaction(json.dumps(tx_inputs), json.dumps(outputs))
 

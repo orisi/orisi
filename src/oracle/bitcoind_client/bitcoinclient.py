@@ -95,7 +95,7 @@ class BitcoinClient:
   @keep_alive
   def transaction_contains_oracle_fee(self, raw_transaction):
     transaction = self._get_json_transaction(raw_transaction)
-    transaction_dict = json.dumps(transaction)
+    transaction_dict = json.loads(transaction)
     if not 'vout' in transaction_dict:
       return False
     for vout in transaction_dict['vout']:

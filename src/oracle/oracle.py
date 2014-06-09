@@ -36,7 +36,6 @@ class Oracle:
     body = json.loads(message.message)
 
     condition = body['condition']
-    origin_address = body['origin_address']
     # Future reference - add parsing condition. Now assumed true
     if not self.condition_valid(condition):
       self.communication.response_to_address(
@@ -46,11 +45,8 @@ class Oracle:
       return
 
     transaction = body['raw_transaction']
+    prevtx = json.dumps(body['prevtx'])
     if not self.transaction_valid(transaction):
-      self.communication.response_to_address(
-          origin_address, 
-          SUBJECT.INVALID_TRANSACTION, 
-          RESPONSE.INVALID_TRANSACTION)
       return
 
     if not self.btc.transaction_need_signature(transaction):
@@ -60,7 +56,7 @@ class Oracle:
       self.communication.broadcast(SUBJECT.NO_FEE, RESPONSE.NO_FEE)
       return
 
-    if self.btc.transaction_already_signed(transaction):
+    if self.btc.transaction_already_signed(transaction, prevtx):
       return
 
     inputs_outputs = self.btc.get_inputs_outputs(transaction)
@@ -83,12 +79,12 @@ class Oracle:
           "json_in_out": inputs_outputs,
       })
 
-    check_time = int(body['check_time'])
+    locktime = int(body['locktime'])
     task_queue = TaskQueue(self.db).save({
         "origin_address": body['origin_address'],
         "json_data": message.message,
         "done": 0,
-        "next_check": check_time
+        "next_check": locktime
     })
 
   def handle_request(self, request):

@@ -37,8 +37,8 @@ class BitcoinClient:
     return self.server.decoderawtransaction(hex_transaction)
 
   @keep_alive
-  def sign_transaction(self, raw_transaction):
-    result = self.server.signrawtransaction(transaction)
+  def sign_transaction(self, raw_transaction, prevtx = "[]"):
+    result = self.server.signrawtransaction(transaction, prevtx)
     return result['hex']
 
   @keep_alive
@@ -73,8 +73,8 @@ class BitcoinClient:
     return result
 
   @keep_alive
-  def transaction_already_signed(self, raw_transaction):
-    signed_transaction = self.sign_transaction(raw_transaction)
+  def transaction_already_signed(self, raw_transaction, prevtx):
+    signed_transaction = self.sign_transaction(raw_transaction, prevtx)
     if signed_transaction['hex'] == raw_transaction:
       return True
     return False
@@ -113,5 +113,13 @@ class BitcoinClient:
           if value >= Decimal(ORACLE_FEE):
             return True
     return False
+
+  @keep_alive
+  def create_multisig_address(self, min_sigs, keys):
+    return self.server.createmultisig(min_sigs, keys)
+
+  @keep_alive
+  def create_multisig_transaction(self, tx_inputs, outputs):
+    raw_transaction = self.server.createrawtransaction(json.dumps(tx_inputs), json.dumps(outputs))
 
 

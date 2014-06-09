@@ -6,4 +6,4 @@ vagrant.txt - instructions for setting up a Vagrant box for the oracle node
 
 /src/client - reference client
 
-^ @gricha is still polishing the code on his local computer. alpha versions of those will be published today (9th June) afternoon. stay tuned.
+*@gricha is still polishing the code on his local computer. alpha versions of those will be published today (9th June) afternoon. stay tuned*

@@ -74,7 +74,7 @@ class BitcoinClient:
   @keep_alive
   def transaction_already_signed(self, raw_transaction, prevtx):
     signed_transaction = self.sign_transaction(raw_transaction, prevtx)
-    if signed_transaction['hex'] == raw_transaction:
+    if signed_transaction == raw_transaction:
       return True
     return False
 

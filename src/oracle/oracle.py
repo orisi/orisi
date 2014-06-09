@@ -45,7 +45,7 @@ class Oracle:
       return
 
     transaction = body['raw_transaction']
-    prevtx = json.dumps(body['prevtx'])
+    prevtx = body['prevtx']
     if not self.transaction_valid(transaction):
       return
 

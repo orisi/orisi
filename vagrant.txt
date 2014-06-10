@@ -5,6 +5,12 @@ in the main orisi folder:
 
 vagrant box add orisi http://oracles.li/orisi.box
 ^ this is ~1GB download, sorry about that
+it seems our ISP has trouble handling the large files. we put up a mirror on Mega:
+https://mega.co.nz/#!HQwmWSzb!QvJ3CB2k8Xv-hQVSQpDiWsREN9YxhVZ7Qt-O5Z3WzPg
+you can download it using a browser and then do:
+vagrant box add orisi path/to/orisi.box
+
+We'll move the orisi.box to a better hosting provide asap.
 
 vagrant init orisi
 vagrant up

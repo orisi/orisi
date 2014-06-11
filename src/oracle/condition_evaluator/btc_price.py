@@ -1,4 +1,4 @@
-from liburl_wrapper import safe_read
+from shared.liburl_wrapper import safe_read
 
 import json
 

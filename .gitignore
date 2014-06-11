@@ -2,3 +2,4 @@ settings_local.py
 test_local.py
 *.pyc
 *.db
+*.db-journal

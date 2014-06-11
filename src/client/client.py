@@ -38,10 +38,8 @@ class OracleClient:
     if current_time - last_time  > MINIMUM_DIFFERENCE:
       content = liburl_wrapper.safe_read(URL_ORACLE_LIST, timeout_time=10)
       try:
-        print content
         oracle_list = json.loads(content)
         oracle_list = oracle_list['nodes']
-        print oracle_list
         for oracle in oracle_list:
           self.add_oracle(oracle['public_key'], oracle['address'], oracle['fee'])
       except ValueError:

@@ -7,7 +7,6 @@ import json
 MINERS_FEE = 0.0001
 
 def unknown(args):
-  OracleClient()
   print "unknown operation, use ./main.py help for possible operations"
 
 def get_multi_address(args):

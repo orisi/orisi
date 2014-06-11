@@ -6,11 +6,13 @@ import json
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
+from client_db import ClientDb
 
 class OracleClient:
   def __init__(self):
     self.btc = BitcoinClient()
     self.bm = BitmessageClient()
+    self.db = ClientDb()
 
   def create_multisig_address(self, client_pubkey, oracle_pubkey_list_json, min_sigs):
     oracle_pubkey_list = json.loads(oracle_pubkey_list_json)

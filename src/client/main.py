@@ -90,7 +90,8 @@ def add_raw_transaction(args):
     print "not enough arguments"
     return
   raw_transaction = args[0]
-  OracleClient().add_raw_transaction(raw_transaction)
+  txid = OracleClient().add_raw_transaction(raw_transaction)
+  print txid
 
 def add_transaction_by_txid(args):
   """

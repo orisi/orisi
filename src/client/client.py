@@ -81,6 +81,7 @@ class OracleClient:
     RawTransactionDb(self.db).save({
         "txid": txid,
         "raw_transaction": raw_transaction})
+    return txid
 
   def add_oracle(self, pubkey, address, fee):
     OracleListDb(self.db).save({

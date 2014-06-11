@@ -4,8 +4,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import json
 
-from oracle.bitcoind_client.bitcoinclient import BitcoinClient
-from oracle.bitmessage_communication.bitmessageclient import BitmessageClient
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
+from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
 class OracleClient:
   def __init__(self):

@@ -1,9 +1,11 @@
-Oracles Distributed - Orisi ALPHA
+#Oracles Distributed - Orisi ALPHA
 
-vagrant.txt - instructions for setting up a Vagrant box for the oracle node
+* [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 
-/src/oracle - oracle node source
+* [Installing with Vagrant](./vagrant.txt) - Instructions for setting up the oracle node with a Vagrant box 
 
-/src/client - reference client
+---------------------
 
-*@gricha is still polishing the code on his local computer. alpha versions of those will be published today (9th June) afternoon. stay tuned*
+* [./src/oracle](./src/oracle) - oracle node source
+
+* [./src/client](./src/client) - reference client _almost ready. We had slight issues with multisigs not propagating through to Blockchain, but those are all solved now._

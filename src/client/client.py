@@ -2,11 +2,13 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+import hashlib
 import json
+import logging
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
-from client_db import ClientDb
+from client_db import ClientDb, SignatureRequestDb, MultisigRedeemDb
 
 class OracleClient:
   def __init__(self):
@@ -24,6 +26,13 @@ class OracleClient:
 
     key_list = [client_pubkey for _ in range(client_sig_number)] + oracle_pubkey_list
     response = self.btc.create_multisig_address(real_min_sigs, key_list)
+
+    MultisigRedeemDb(self.db).save({
+        "multisig": response['address'], 
+        "min_sig": real_min_sigs,
+        "redeem_script": response['redeemScript'],
+        "pubkey_json": json.dumps(sorted(key_list))})
+
     self.btc.server.addmultisigaddress(real_min_sigs, key_list)
     return response
 
@@ -45,5 +54,16 @@ class OracleClient:
     })
     return message
 
+  def save_transaction(self, request):
+    try:
+      raw_request = json.loads(request)
+    except ValueError:
+      logging.error("request is invalid JSON")
+      return
+    prevtx = json.dumps(raw_request['prevtx'])
+    prevtx_hash = hashlib.sha256(prevtx).hexdigest()
+    SignatureRequestDb(self.db).save({"prevtx_hash": prevtx_hash, "json_data": request})
+
   def send_transaction(self, request):
+    self.save_transaction(request)
     self.bm.send_message(self.bm.chan_address, "TransactionRequest", request)

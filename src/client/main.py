@@ -33,7 +33,7 @@ def describe_protocol(args):
     "Get oracles' public addresses as json list",
     "Create transaction with getmultiaddress (python main.py help for more info)",
     "Send coins you want to lock on that address, save transaction",
-    "Either use addrawtransaction, or addtransaction to save transaction you've created (see more with help)"
+    "Use addrawtransaction to save transaction you've created (see more with help)"
   ]
   for idx, step in enumerate(steps):
     print "{}. {}".format(idx+1, step)

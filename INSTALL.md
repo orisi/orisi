@@ -5,6 +5,11 @@ The standard and recommended way to run a node is through a Vagrant box ([Why Va
 1. [Download & install Vagrant](http://www.vagrantup.com/), may need [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
 1. In the main Orisi folder:
+    
+    _It seems that our ISP has trouble handling the large files. We put up a mirror on Mega:
+    https://mega.co.nz/#!HQwmWSzb!QvJ3CB2k8Xv-hQVSQpDiWsREN9YxhVZ7Qt-O5Z3WzPg
+    you can download it using a browser and then do
+    `vagrant box add orisi path/to/orisi.box` instead of the first command below_
 
     ```
     vagrant box add orisi http://oracles.li/orisi.box

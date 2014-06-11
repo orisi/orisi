@@ -10,7 +10,7 @@ class GeneralDb:
     self.connect()
 
   def connect(self):
-    self.conn = sqlite3.connect(self._filename)
+    self.conn = sqlite3.connect(self._filename, detect_types=sqlite3.PARSE_COLNAMES)
     self.conn.row_factory = sqlite3.Row
 
   def commit(self):

@@ -2,24 +2,52 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+import time
 import hashlib
 import json
 import logging
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
+from shared import liburl_wrapper
 from client_db import (
     ClientDb, 
     SignatureRequestDb, 
     MultisigRedeemDb,
     RawTransactionDb,
-    OracleListDb)
+    OracleListDb,
+    OracleCheckDb)
+
+URL_ORACLE_LIST = 'http://oracles.li/list-default.json'
+MINIMUM_DIFFERENCE = 1 # in seconds
 
 class OracleClient:
   def __init__(self):
     self.btc = BitcoinClient()
     self.bm = BitmessageClient()
     self.db = ClientDb()
+    self.update_oracle_list()
+
+  def update_oracle_list(self):
+    last_check = OracleCheckDb(self.db).get_last()
+    current_time = int(time.time())
+    if last_check:
+      last_time = int(last_check['last_check'])
+    else:
+      last_time = 0
+    if current_time - last_time  > MINIMUM_DIFFERENCE:
+      content = liburl_wrapper.safe_read(URL_ORACLE_LIST, timeout_time=10)
+      try:
+        print content
+        oracle_list = json.loads(content)
+        oracle_list = oracle_list['nodes']
+        print oracle_list
+        for oracle in oracle_list:
+          self.add_oracle(oracle['public_key'], oracle['address'], oracle['fee'])
+      except ValueError:
+        logging.error("oracle list json invalid")
+      OracleCheckDb(self.db).save({"last_check": current_time})
+
 
   def create_multisig_address(self, client_pubkey, oracle_pubkey_list_json, min_sigs):
     oracle_pubkey_list = json.loads(oracle_pubkey_list_json)

@@ -69,3 +69,36 @@ class OracleListDb(TableDb):
 
   def args_for_obj(self, obj):
     return [obj['pubkey'], obj['address'], obj['fee']]
+
+class OracleCheckDb(TableDb):
+  """
+  Keeps check times of remote oracle list.
+  """
+  table_name = 'oracle_checktime'
+  create_sql = 'create table {0} ( \
+    id integer primary key autoincrement, \
+    ts datetime default current_timestamp, \
+    last_check integer not null);'
+  insert_sql = 'insert into {0} (last_check) values (?)'
+  oldest_sql = "select * from {0} order by last_check desc limit 1"
+
+  def args_for_obj(self, obj):
+    return [obj["last_check"], ]
+
+  def get_last(self):
+    cursor = self.db.get_cursor()
+    sql = self.oldest_sql.format(self.table_name)
+
+    row = cursor.execute(sql).fetchone()
+    if row:
+      row = dict(row)
+    return row
+
+
+
+
+
+
+
+
+

@@ -12,4 +12,4 @@
 
 ---------------------
 
-*@gricha is still polishing the code on his local computer. alpha versions of those will be published today (9th June) afternoon. stay tuned*
+*The client's almost ready. We had slight issues with multisigs not propagating through to Blockchain, but those are all solved now.

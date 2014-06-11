@@ -38,3 +38,18 @@ class MultisigRedeemDb(TableDb):
 
   def args_for_obj(self, obj):
     return [obj['multisig'], obj['redeem_script'], obj["min_sig"], obj['pubkey_json']]
+
+class RawTransactionDb(TableDb):
+  """
+  Save raw transaction to retrieve some data from it later
+  """
+  table_name = 'raw_transaction'
+  create_sql = 'create table {0} ( \
+    id integer primary key autoincrement, \
+    ts datetime default current_timestamp, \
+    raw_transaction text not null, \
+    txid text not null);'
+  insert_sql = 'insert into {0} (raw_transaction, txid) values (?, ?)'
+
+  def args_for_obj(self, obj):
+    return [obj['raw_transaction'], obj['txid']]

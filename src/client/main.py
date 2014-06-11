@@ -22,7 +22,10 @@ def get_multi_address(args):
   except ValueError:
     print "number_of_sigs must be int"
   print c.create_multisig_address(client_pubkey, oracle_pubkeys, number_of_sigs)
-  print "send bitcoins for lock on that address, save redeem script, it will be needed later"
+  print "send bitcoins you want to use to that transaction, then add transaction \
+      either with addrawtransaction (hex transaction as argument), or with \
+      addtransaction (txid as argument, ONLY IF the transaction was send locally, \
+      from your current bitcoind)"
 
 def describe_protocol(args):
   """Describes how to create full transaction step by step"""
@@ -30,6 +33,7 @@ def describe_protocol(args):
     "Get oracles' public addresses as json list",
     "Create transaction with getmultiaddress (python main.py help for more info)",
     "Send coins you want to lock on that address, save transaction",
+    "Either use addrawtransaction, or addtransaction to save transaction you've created (see more with help)"
   ]
   for idx, step in enumerate(steps):
     print "{}. {}".format(idx+1, step)
@@ -77,12 +81,31 @@ def send_transaction(args):
     return
   OracleClient().send_transaction(transaction)
 
+def add_raw_transaction(args):
+  """
+  Adds hex transaction to DB, it will be used later 
+  to create your multisig transaction.
+  """
+  if len(args) < 1:
+    print "not enough arguments"
+    return
+  raw_transaction = args[0]
+  OracleClient().add_raw_transaction(raw_transaction)
+
+def add_transaction_by_txid(args):
+  """
+  TODO
+  """
+  pass
+
 RAW_OPERATIONS = {
   'getmultiaddress': get_multi_address,
   'describeprotocol': describe_protocol,
   'createtransaction': create_transaction,
   'createsignedtransaction': create_signed_transaction,
   'preparetransaction': prepare_transaction_request,
+  'addrawtransaction': add_raw_transaction,
+  'addtransaction': add_transaction_by_txid,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 

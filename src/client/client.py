@@ -8,7 +8,11 @@ import logging
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
-from client_db import ClientDb, SignatureRequestDb, MultisigRedeemDb
+from client_db import (
+    ClientDb, 
+    SignatureRequestDb, 
+    MultisigRedeemDb,
+    RawTransactionDb)
 
 class OracleClient:
   def __init__(self):
@@ -67,3 +71,12 @@ class OracleClient:
   def send_transaction(self, request):
     self.save_transaction(request)
     self.bm.send_message(self.bm.chan_address, "TransactionRequest", request)
+
+  def add_raw_transaction(self, raw_transaction):
+    if not self.btc.is_valid_transaction(raw_transaction):
+      logging.error("hex transaction is not valid transaction")
+    transaction_json = self.btc._get_json_transaction(raw_transaction)
+    txid = transaction_json['txid']
+    RawTransactionDb(self.db).save({
+        "txid": txid,
+        "raw_transaction": raw_transaction})

@@ -53,3 +53,19 @@ class RawTransactionDb(TableDb):
 
   def args_for_obj(self, obj):
     return [obj['raw_transaction'], obj['txid']]
+
+class OracleListDb(TableDb):
+  """
+  Save current oracle list.
+  """
+  table_name = 'oracle_list'
+  create_sql = 'create table {0} ( \
+    id integer primary key autoincrement, \
+    ts datetime default current_timestamp, \
+    pubkey text not null, \
+    address text not null, \
+    fee text not null);'
+  insert_sql = 'insert into {0} (pubkey, address, fee) values (?, ?, ?)'
+
+  def args_for_obj(self, obj):
+    return [obj['pubkey'], obj['address'], obj['fee']]

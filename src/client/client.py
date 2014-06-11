@@ -12,7 +12,8 @@ from client_db import (
     ClientDb, 
     SignatureRequestDb, 
     MultisigRedeemDb,
-    RawTransactionDb)
+    RawTransactionDb,
+    OracleListDb)
 
 class OracleClient:
   def __init__(self):
@@ -80,3 +81,9 @@ class OracleClient:
     RawTransactionDb(self.db).save({
         "txid": txid,
         "raw_transaction": raw_transaction})
+
+  def add_oracle(self, pubkey, address, fee):
+    OracleListDb(self.db).save({
+        "pubkey": pubkey,
+        "address": address,
+        "fee": fee})

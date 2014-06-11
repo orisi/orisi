@@ -98,6 +98,19 @@ def add_transaction_by_txid(args):
   """
   pass
 
+def add_oracle(args):
+  """
+  Adds Oracle to Oracle Database. Takes three arguments
+  (pubkey, address, fee).
+  """
+  if len(args) < 3:
+    print "not enough arguments"
+    return
+  pubkey = args[0]
+  address = args[1]
+  fee = args[2]
+  OracleClient().add_oracle(pubkey, address, fee)
+
 RAW_OPERATIONS = {
   'getmultiaddress': get_multi_address,
   'describeprotocol': describe_protocol,
@@ -106,6 +119,7 @@ RAW_OPERATIONS = {
   'preparetransaction': prepare_transaction_request,
   'addrawtransaction': add_raw_transaction,
   'addtransaction': add_transaction_by_txid,
+  'addoracle': add_oracle,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 

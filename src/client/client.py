@@ -19,7 +19,7 @@ from client_db import (
     OracleCheckDb)
 
 URL_ORACLE_LIST = 'http://oracles.li/list-default.json'
-MINIMUM_DIFFERENCE = 1 # in seconds
+MINIMUM_DIFFERENCE = 3600 # in seconds
 
 class OracleClient:
   def __init__(self):

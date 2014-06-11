@@ -1,7 +1,3 @@
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from settings_local import *
 
 from bitmessageexceptions import EXCEPTION_API
@@ -24,9 +20,6 @@ def get_exception_number(result):
 
 class BitmessageServer:
   def __init__(self):
-
-    print "BITMESSAGE_PASSWORD:"
-    print BITMESSAGE_PASSWORD
 
     self.api = xmlrpclib.ServerProxy("http://{0}:{1}@{2}:{3}".format(
         BITMESSAGE_USERNAME,

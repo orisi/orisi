@@ -1,5 +1,5 @@
-import logger
-from oracle import Oracle
+from shared import logger
+from oracle.oracle import Oracle
 
 def main():
   logger.init_logger()

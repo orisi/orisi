@@ -6,8 +6,8 @@ from condition_evaluator.evaluator import Evaluator
 
 from settings_local import ORACLE_ADDRESS
 
-from bitcoind_client.bitcoinclient import BitcoinClient
-from bitmessage_communication.bitmessageclient import BitmessageClient
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
+from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
 import time
 import logging

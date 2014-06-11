@@ -1,6 +1,6 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from db_connection import OracleDb, TaskQueue, UsedInput, SignedTransaction
+from oracle_db import OracleDb, TaskQueue, UsedInput, SignedTransaction
 from oracle_protocol import RESPONSE, SUBJECT
 from condition_evaluator.evaluator import Evaluator
 

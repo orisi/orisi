@@ -12,4 +12,4 @@
 
 ---------------------
 
-*The client's almost ready. We had slight issues with multisigs not propagating through to Blockchain, but those are all solved now.
+* The client's almost ready. We had slight issues with multisigs not propagating through to Blockchain, but those are all solved now.

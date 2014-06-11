@@ -3,6 +3,9 @@ from client import OracleClient
 import sys
 import json
 
+# Fixed for now, TODO: get better estimation of how big fee should be
+MINERS_FEE = 0.0001
+
 def unknown(args):
   print "unknown operation, use ./main.py help for possible operations"
 
@@ -41,6 +44,18 @@ def describe_protocol(args):
 def create_transaction(args):
   """
   Creates raw transaction
+  Arguments:
+  1. Input txids, vout - json of list of elements:
+  [{
+    "txid": "a93..."
+    "vout: 0
+  }, ...]
+  2. Outputs, json:
+  {
+    "address1": amount1,
+    "address2": amount2,
+    ...
+  }
   """
   if len(args) < 2:
     print "Not enough arguments"
@@ -50,7 +65,19 @@ def create_transaction(args):
 
 def create_signed_transaction(args):
   """
-  Creates transaction and signs it
+  Creates raw transaction and signs it.
+  Arguments:
+  1. Input txids, vout - json of list of elements:
+  [{
+    "txid": "a93..."
+    "vout: 0
+  }, ...]
+  2. Outputs, json:
+  {
+    "address1": amount1,
+    "address2": amount2,
+    ...
+  }
   """
   raw_transaction =  create_transaction(args)
   signed_transaction = OracleClient().sign_transaction(raw_transaction)

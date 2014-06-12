@@ -8,7 +8,7 @@
 
 * [./src/oracle](./src/oracle) - oracle node source
 
-* [./src/client](./src/client) - reference client _almost ready. We had slight issues with multisigs not propagating through to Blockchain, but those are all solved now._
+* [./src/client](./src/client) - reference client
 
 ---------------------
 

@@ -81,7 +81,7 @@ class UsedInput(TableDb):
       ts datetime default current_timestamp, \
       input_hash text unique, \
       json_out text not null);"
-  insert_sql = "insert into {0} (input_hash, json_out) values (?, ?)"
+  insert_sql = "insert or ignore into {0} (input_hash, json_out) values (?, ?)"
   exists_sql = "select * from {0} where input_hash=?"
   def args_for_obj(self, obj):
     return [obj["input_hash"], obj["json_out"]]

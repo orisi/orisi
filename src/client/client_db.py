@@ -15,7 +15,7 @@ class SignatureRequestDb(TableDb):
   create_sql = 'create table {0} ( \
     id integer primary key autoincrement, \
     ts datetime default current_timestamp, \
-    prevtx_hash text not null\
+    prevtx_hash text not null, \
     json_data text not null);'
   insert_sql = 'insert into {0} (prevtx_hash, json_data) values (?, ?)'
 

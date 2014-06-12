@@ -178,6 +178,21 @@ def list_oracles(args):
   """
   print OracleClient().list_oracles()
 
+def send_request(args):
+  """
+  Takes one argument. You can create request with createrequest call
+  1. request - string, json
+  """
+  if len(args) < 1:
+    print "not enough arguments"
+    return
+  try:
+    json.loads(args[0])
+  except ValueError:
+    print "request must be valid json"
+    return
+  OracleClient().send_transaction(args[0])
+
 RAW_OPERATIONS = {
   'getmultiaddress': get_multi_address,
   'describeprotocol': describe_protocol,
@@ -189,6 +204,7 @@ RAW_OPERATIONS = {
   'addoracle': add_oracle,
   'createrequest': create_request,
   'listoracles': list_oracles,
+  'sendrequest': send_request,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 

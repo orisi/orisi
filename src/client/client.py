@@ -90,13 +90,15 @@ class OracleClient:
     signed_hex_transaction = self.btc.sign_transaction(hex_transaction)
     return signed_hex_transaction
 
-  def prepare_request(self, transaction, locktime, condition, prevtx):
+  def prepare_request(self, transaction, locktime, condition, prevtx, pubkey_list, req_sigs):
     message = json.dumps({
       "operation": "transaction",
       "raw_transaction": transaction,
       "locktime": locktime,
       "condition": condition,
-      "prevtx": prevtx
+      "prevtx": prevtx,
+      "pubkey_json": pubkey_list,
+      "req_sigs": req_sigs
     })
     return message
 
@@ -190,8 +192,30 @@ class OracleClient:
           break
     return prevtxs
 
+  def get_address(self, tx):
+    raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
+    if not raw_transaction:
+      print "transaction {0} is not in database, \
+          please add transaction with python main.py addtransaction"
+      return
+    transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+    vouts = transaction_dict['vout']
+    for v in vouts:
+      if v['n'] == tx['vout']:
+        addresses = v['scriptPubKey']['addresses']
+        if len(addresses) != 1:
+          raise UnsupportedTransactionError()
+        address = addresses[0]
+        addr_info = MultisigRedeemDb(self.db).get_address(address)
+        if not addr_info:
+          raise AddressMissingError()
+        return addr_info
 
   def create_request(self, tx_inputs, receiver_address, oracle_addresses, locktime=0, condition="True"):
+    if len(tx_inputs) == 0:
+      print "you need to provide at least one input"
+      return
+
     amount = self.get_amount_from_inputs(tx_inputs)
     try:
       oracles = self.get_oracles(oracle_addresses)
@@ -227,8 +251,18 @@ class OracleClient:
           address with python main.py getmultiaddress"
       return
 
+    multisig_info = self.get_address(tx_inputs[0])
+    req_sigs = multisig_info['min_sig']
+    pubkey_list = json.loads(multisig_info['pubkey_json'])
+
     # Now we have all we need to create proper request
-    return self.prepare_request(signed_transaction, locktime, condition, prevtx)
+    return self.prepare_request(
+        signed_transaction, 
+        locktime, 
+        condition, 
+        prevtx, 
+        pubkey_list, 
+        req_sigs)
 
   def list_oracles(self):
     oracles = OracleListDb(self.db).get_all_oracles()

@@ -35,9 +35,19 @@ class MultisigRedeemDb(TableDb):
     min_sig integer not null, \
     pubkey_json text not null);'
   insert_sql = 'insert into {0} (multisig, redeem_script, min_sig, pubkey_json) values (?, ?, ?, ?)'
+  get_address_sql = 'select * from {0} where multisig=? order by ts desc limit 1'
 
   def args_for_obj(self, obj):
     return [obj['multisig'], obj['redeem_script'], obj["min_sig"], obj['pubkey_json']]
+
+  def get_address(self, address):
+    cursor = self.db.get_cursor()
+    sql = self.get_address_sql.format(self.table_name)
+
+    row = cursor.execute(sql, [address,]).fetchone()
+    if row:
+      return dict(row)
+    return row
 
 class RawTransactionDb(TableDb):
   """
@@ -48,11 +58,21 @@ class RawTransactionDb(TableDb):
     id integer primary key autoincrement, \
     ts datetime default current_timestamp, \
     raw_transaction text not null, \
-    txid text not null);'
-  insert_sql = 'insert into {0} (raw_transaction, txid) values (?, ?)'
+    txid text unique);'
+  insert_sql = 'insert or ignore into {0} (raw_transaction, txid) values (?, ?)'
+  get_tx_sql = 'select * from {0} where txid=? limit 1'
 
   def args_for_obj(self, obj):
     return [obj['raw_transaction'], obj['txid']]
+
+  def get_tx(self, txid):
+    cursor = self.db.get_cursor()
+    sql = self.get_tx_sql.format(self.table_name)
+
+    row = cursor.execute(sql, [txid,]).fetchone()
+    if row:
+      return dict(row)
+    return row
 
 class OracleListDb(TableDb):
   """
@@ -63,12 +83,29 @@ class OracleListDb(TableDb):
     id integer primary key autoincrement, \
     ts datetime default current_timestamp, \
     pubkey text not null, \
-    address text not null, \
+    address text unique, \
     fee text not null);'
-  insert_sql = 'insert into {0} (pubkey, address, fee) values (?, ?, ?)'
+  insert_sql = 'insert or replace into {0} (pubkey, address, fee) values (?,?,?)'
+  get_oracles_sql = 'select * from {0} where address in ({1})'
+  get_all_oracles_sql = 'select * from {0}'
 
   def args_for_obj(self, obj):
     return [obj['pubkey'], obj['address'], obj['fee']]
+
+  def get_oracles(self, oracle_addresses):
+    cursor = self.db.get_cursor()
+    sql = self.get_oracles_sql.format(self.table_name, ','.join('?'*len(oracle_addresses)))
+
+    rows = cursor.execute(sql, oracle_addresses).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_all_oracles(self):
+    cursor = self.db.get_cursor()
+    sql = self.get_all_oracles_sql.format(self.table_name)
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row)for row in rows]
+    return rows
 
 class OracleCheckDb(TableDb):
   """

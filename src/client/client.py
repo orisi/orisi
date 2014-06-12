@@ -7,6 +7,8 @@ import hashlib
 import json
 import logging
 
+from decimal import Decimal, getcontext
+
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 from shared import liburl_wrapper
@@ -21,8 +23,21 @@ from client_db import (
 URL_ORACLE_LIST = 'http://oracles.li/list-default.json'
 MINIMUM_DIFFERENCE = 3600 # in seconds
 
+# Fixed for now, TODO: get better estimation of how big fee should be
+MINERS_FEE = "0.0001"
+
+class OracleMissingError(Exception):
+  pass
+
+class UnsupportedTransactionError(Exception):
+  pass
+
+class AddressMissingError(Exception):
+  pass
+
 class OracleClient:
   def __init__(self):
+    getcontext().prec=8
     self.btc = BitcoinClient()
     self.bm = BitmessageClient()
     self.db = ClientDb()
@@ -68,7 +83,7 @@ class OracleClient:
     return response
 
   def create_multisig_transaction(self, input_txids, outputs):
-    transaction_hex = self.btc.create_transaction(input_txids, outputs)
+    transaction_hex = self.btc.create_multisig_transaction(input_txids, outputs)
     return transaction_hex
 
   def sign_transaction(self, hex_transaction):
@@ -78,7 +93,7 @@ class OracleClient:
   def prepare_request(self, transaction, locktime, condition, prevtx):
     message = json.dumps({
       "operation": "transaction",
-      "raw_transaction": signed_transaction,
+      "raw_transaction": transaction,
       "locktime": locktime,
       "condition": condition,
       "prevtx": prevtx
@@ -114,3 +129,108 @@ class OracleClient:
         "pubkey": pubkey,
         "address": address,
         "fee": fee})
+
+  def get_amount_from_inputs(self, tx_inputs):
+    amount = Decimal("0")
+    for tx in tx_inputs:
+      raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
+      if not raw_transaction:
+        print "transaction {0} is not in database, \
+            please add transaction with python main.py addtransaction"
+        return
+      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+      vouts = transaction_dict['vout']
+      for v in vouts:
+        if v['n'] == tx['vout']:
+          amount += Decimal(v['value'])
+          break
+    return amount
+
+  def get_oracles(self, oracle_addresses):
+    oracles = OracleListDb(self.db).get_oracles(oracle_addresses)
+    if len(oracles) != len(oracle_addresses):
+      raise OracleMissingError()
+    return oracles
+
+  def get_scripts_from_inputs(self, tx_inputs):
+    prevtxs = tx_inputs
+    for tx in prevtxs:
+      raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
+      if not raw_transaction:
+        print "transaction {0} is not in database, \
+            please add transaction with python main.py addtransaction"
+        return
+      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+      vouts = transaction_dict['vout']
+      for v in vouts:
+        if v['n'] == tx['vout']:
+          tx['scriptPubKey'] = v['scriptPubKey']['hex']
+          break
+    return prevtxs
+
+  def get_redeem(self, prevtxs):
+    for tx in prevtxs:
+      raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
+      if not raw_transaction:
+        print "transaction {0} is not in database, \
+            please add transaction with python main.py addtransaction"
+        return
+      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+      vouts = transaction_dict['vout']
+      for v in vouts:
+        if v['n'] == tx['vout']:
+          addresses = v['scriptPubKey']['addresses']
+          if len(addresses) != 1:
+            raise UnsupportedTransactionError()
+          address = addresses[0]
+          addr_info = MultisigRedeemDb(self.db).get_address(address)
+          if not addr_info:
+            raise AddressMissingError()
+          tx['redeemScript'] = addr_info['redeem_script']
+          break
+    return prevtxs
+
+
+  def create_request(self, tx_inputs, receiver_address, oracle_addresses, locktime=0, condition="True"):
+    amount = self.get_amount_from_inputs(tx_inputs)
+    try:
+      oracles = self.get_oracles(oracle_addresses)
+    except OracleMissingError:
+      print "one of the oracles you specified is not in database, add it by hand with python main.py addoracle"
+      return
+
+    # First let's substract what's going on fees
+    amount -= Decimal(MINERS_FEE)
+
+    outputs = {}
+    for oracle in oracles:
+      outputs[oracle['address']] = float(oracle['fee'])
+      amount -= Decimal(oracle['fee'])
+
+    if amount <= Decimal('0'):
+      print "tx inputs value is lesser than fees"
+      return
+
+    outputs[receiver_address] = float(amount)
+
+    raw_transaction = self.create_multisig_transaction(tx_inputs, outputs)
+    signed_transaction = self.sign_transaction(raw_transaction)
+
+    prevtx = self.get_scripts_from_inputs(tx_inputs)
+    try:
+      prevtx = self.get_redeem(prevtx)
+    except UnsupportedTransactionError:
+      print "one of inputs has more than one address in outputs, unsupported"
+      return
+    except AddressMissingError:
+      print "one of addresses from inputs is not in address database, add multisig \
+          address with python main.py getmultiaddress"
+      return
+
+    # Now we have all we need to create proper request
+    return self.prepare_request(signed_transaction, locktime, condition, prevtx)
+
+  def list_oracles(self):
+    oracles = OracleListDb(self.db).get_all_oracles()
+    return json.dumps(oracles)
+

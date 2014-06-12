@@ -126,6 +126,6 @@ class BitcoinClient:
 
   @keep_alive
   def create_multisig_transaction(self, tx_inputs, outputs):
-    raw_transaction = self.server.createrawtransaction(json.dumps(tx_inputs), json.dumps(outputs))
+    return self.server.createrawtransaction(tx_inputs, outputs)
 
 

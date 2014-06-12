@@ -3,9 +3,6 @@ from client import OracleClient
 import sys
 import json
 
-# Fixed for now, TODO: get better estimation of how big fee should be
-MINERS_FEE = 0.0001
-
 def unknown(args):
   print "unknown operation, use ./main.py help for possible operations"
 
@@ -33,10 +30,11 @@ def get_multi_address(args):
 def describe_protocol(args):
   """Describes how to create full transaction step by step"""
   steps = [
-    "Get oracles' public addresses as json list",
-    "Create transaction with getmultiaddress (python main.py help for more info)",
+    "Get oracles' public keys as json list",
+    "Create address with getmultiaddress (python main.py help for more info)",
     "Send coins you want to lock on that address, save transaction",
-    "Use addrawtransaction to save transaction you've created (see more with help)"
+    "Use addrawtransaction to save transaction you've created (see more with help)",
+    "Prepare request with python main.py preparerequest (python main.py help for more info)",
   ]
   for idx, step in enumerate(steps):
     print "{}. {}".format(idx+1, step)
@@ -139,6 +137,47 @@ def add_oracle(args):
   fee = args[2]
   OracleClient().add_oracle(pubkey, address, fee)
 
+def create_request(args):
+  """
+  Creates transaction request that has to be sent to Bitmessage network
+  Arguments:
+  1. tx_inputs string json
+  [
+    {
+      "txid": "ab45...",
+      "vout": 0
+    },
+    ...
+  ] WARNING add raw transaction first with python main.py addrawtransaction
+  2. receiver_address string (for now only one receiver, will get amount-minersfee-oraclesfee)
+  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction, 
+    oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
+    no then add oracles with python main.py addoracle)
+  4. locktime
+  5. condition (unused, useful in future for complicated tasks)
+  """
+  if len(args) < 4:
+    print "not enough arguments"
+    return
+  try:
+    json.loads(args[0])
+    json.loads(args[2])
+  except ValueError:
+    print "tx_inputs and oracle_addresses must be valid jsons"
+    return
+  try:
+    int(args[3])
+  except ValueError:
+    print "locktime must be int"
+    return
+  print OracleClient().create_request(json.loads(args[0]), args[1], json.loads(args[2]), int(args[3]))
+
+def list_oracles(args):
+  """
+  Prints json list of oracles that are currently present in your database
+  """
+  print OracleClient().list_oracles()
+
 RAW_OPERATIONS = {
   'getmultiaddress': get_multi_address,
   'describeprotocol': describe_protocol,
@@ -148,6 +187,8 @@ RAW_OPERATIONS = {
   'addrawtransaction': add_raw_transaction,
   'addtransaction': add_transaction_by_txid,
   'addoracle': add_oracle,
+  'createrequest': create_request,
+  'listoracles': list_oracles,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 

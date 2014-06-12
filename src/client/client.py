@@ -254,9 +254,7 @@ class OracleClient:
 
     multisig_info = self.get_address(tx_inputs[0])
     req_sigs = multisig_info['min_sig']
-    print req_sigs
     pubkey_list = json.loads(multisig_info['pubkey_json'])
-    print pubkey_list
 
     # Now we have all we need to create proper request
     return self.prepare_request(

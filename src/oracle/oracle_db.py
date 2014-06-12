@@ -109,9 +109,7 @@ class SignedTransaction(TableDb):
       prevtx text not null)"
   insert_sql = "insert into {0} (hex_transaction, prevtx) values (?, ?)"
 
-
   def args_for_obj(self, obj):
-    print obj
     return [obj["hex_transaction"], obj["prevtx"]]
 
 

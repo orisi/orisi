@@ -91,7 +91,6 @@ class Oracle:
               RESPONSE.ADDRESS_DUPLICATE)
           return
     for i in inputs:
-      print i
       used_input_db.save({
           'input_hash': i,
           'json_out': output
@@ -143,7 +142,6 @@ class Oracle:
       exit()
 
     logging.info("my multisig address is %s" % ORACLE_ADDRESS)
-    logging.debug("private key: %s" % self.btc.server.dumpprivkey(ORACLE_ADDRESS))
 
     while True:
       # Proceed all requests

@@ -86,8 +86,8 @@ class OracleClient:
     transaction_hex = self.btc.create_multisig_transaction(input_txids, outputs)
     return transaction_hex
 
-  def sign_transaction(self, hex_transaction):
-    signed_hex_transaction = self.btc.sign_transaction(hex_transaction)
+  def sign_transaction(self, hex_transaction, prevtx=[]):
+    signed_hex_transaction = self.btc.sign_transaction(hex_transaction, prevtx)
     return signed_hex_transaction
 
   def prepare_request(self, transaction, locktime, condition, prevtx, pubkey_list, req_sigs):
@@ -238,7 +238,6 @@ class OracleClient:
     outputs[receiver_address] = float(amount)
 
     raw_transaction = self.create_multisig_transaction(tx_inputs, outputs)
-    signed_transaction = self.sign_transaction(raw_transaction)
 
     prevtx = self.get_scripts_from_inputs(tx_inputs)
     try:
@@ -251,9 +250,13 @@ class OracleClient:
           address with python main.py getmultiaddress"
       return
 
+    signed_transaction = self.sign_transaction(raw_transaction, prevtx)
+
     multisig_info = self.get_address(tx_inputs[0])
     req_sigs = multisig_info['min_sig']
+    print req_sigs
     pubkey_list = json.loads(multisig_info['pubkey_json'])
+    print pubkey_list
 
     # Now we have all we need to create proper request
     return self.prepare_request(

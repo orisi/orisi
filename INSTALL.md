@@ -55,11 +55,16 @@ The standard and recommended way to run a node is through a Vagrant box ([Why Va
     python run_oracle.py
     ```
 
-1. If you wanted to run the client, check out */vagrant/src*
-    Please keep in mind that you don't want to run both the oracle, and the oracle client on one box. They need separate instances of Bitcoind, and Bitmessage. The easiest way to run both an Orisi node, and an Orisi client on one computer is to launch two Vagrant boxes.
+    After the first oracle run, a private bitcoin address will be generated, and you'll be asked to copy it into your settings file.
 
-This will start the bitoin & bitmessage daemons, switch you into the main oracle folder, and run the oracle.
-After the first oracle run, a private bitcoin address will be generated, and you'll be asked to copy it into your settings file.
+1. If you wanted to run the client
+    ```
+    cd /vagrant/client/
+    python main.py help
+    ```
+
+    *Don't run both client and the oracle on one box!* They need separate instances of Bitcoind, and Bitmessage. The easiest way to run both an Orisi node, and an Orisi client on one computer is to launch two Vagrant boxes.
+
 
 ## Why Vagrant?
 

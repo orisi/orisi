@@ -2,13 +2,13 @@
 
 * [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 
-* [Installing with Vagrant](./INSTALL.md) - Instructions for setting up an oracle node with a Vagrant box 
+* [Installing the oracle node](./INSTALL.md) - Instructions for setting up an oracle node
 
 ---------------------
 
-* [./src/oracle](./src/oracle) - oracle node source
+* [src/oracle](./src/oracle) - Oracle node source
 
-* [./src/client](./src/client) - reference client
+* [src/client](./src/client) - Reference client
 
 ---------------------
 

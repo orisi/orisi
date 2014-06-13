@@ -4,21 +4,25 @@ import sys
 import json
 
 def unknown(args):
+  """unknown operation"""
   print "unknown operation, use ./main.py help for possible operations"
 
-def get_multi_address(args):
+def add_multisig(args):
   """
-  Takes your public key, list of oracles' public keys as json and number of signatures
-  needed for signing. Returns multisig_address and redeemScript as JSON
+  Creates and adds multisig address to database.
+  Arguments:
+  1. Client public key
+  2. Number of oracle signatures needed
+  3. List of public keys (string, json)
   """
   if len(args) < 3:
     print "Not enough arguments"
     return
   c = OracleClient()
   client_pubkey = args[0]
-  oracle_pubkeys = args[1]
+  oracle_pubkeys = args[2]
   try:
-    number_of_sigs = int(args[2])
+    number_of_sigs = int(args[1])
   except ValueError:
     print "number_of_sigs must be int"
   print c.create_multisig_address(client_pubkey, oracle_pubkeys, number_of_sigs)
@@ -35,6 +39,7 @@ def describe_protocol(args):
     "Send coins you want to lock on that address, save transaction",
     "Use addrawtransaction to save transaction you've created (see more with help)",
     "Prepare request with python main.py preparerequest (python main.py help for more info)",
+    "Send request with python main.py sendrequest"
   ]
   for idx, step in enumerate(steps):
     print "{}. {}".format(idx+1, step)
@@ -118,12 +123,6 @@ def add_raw_transaction(args):
   txid = OracleClient().add_raw_transaction(raw_transaction)
   print txid
 
-def add_transaction_by_txid(args):
-  """
-  TODO
-  """
-  pass
-
 def add_oracle(args):
   """
   Adds Oracle to Oracle Database. Takes three arguments
@@ -194,13 +193,9 @@ def send_request(args):
   OracleClient().send_transaction(args[0])
 
 RAW_OPERATIONS = {
-  'getmultiaddress': get_multi_address,
+  'addmultisig': add_multisig,
   'describeprotocol': describe_protocol,
-  'createtransaction': create_transaction,
-  'createsignedtransaction': create_signed_transaction,
-  'preparetransaction': prepare_transaction_request,
   'addrawtransaction': add_raw_transaction,
-  'addtransaction': add_transaction_by_txid,
   'addoracle': add_oracle,
   'createrequest': create_request,
   'listoracles': list_oracles,
@@ -208,19 +203,36 @@ RAW_OPERATIONS = {
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
+SHORT_DESCRIPTIONS = {
+  'addmultisig': "(client_pubkey, required_signatures, json_list_of_oracle_pubkeys) creates and adds multisig address to database and bitcoind, needed to create transaction request",
+  'describeprotocol': "describes step by step how to create transaction request",
+  'addrawtransaction': "(hextransaction) adds transaction to database, all transactions used later as input must be added that way",
+  'addoracle': "(pubkey, address, fee) manualy add oracle to database",
+  'listoracles': "lists all available oracles",
+  'createrequest': "(tx_inputs, receiver_address, oracle_addresses, locktime, condition) - creates json request",
+  'sendrequest': "sends request to oracles via Bitmessage network",
+}
 
 
 def help():
   print "You can use one of the following functions:"
-  for name, fun in RAW_OPERATIONS.iteritems():
-    print "{0} - {1}".format(name, fun.__doc__) 
+  for name, desc in SHORT_DESCRIPTIONS.iteritems():
+    print "{0} - {1}".format(name, desc)
+  print "Learn more by using python main.py help functionname"
+
+def help_fun(fun_name):
+  fun = OPERATIONS[fun_name]
+  print fun.__doc__
 
 def main(args):
   if len(args) == 0:
     print "no arguments given, use ./main.py help for possible operations"
     return
   if args[0] == 'help':
-    help()
+    if len(args) == 1:
+      help()
+    else:
+      help_fun(args[1])
     return
   operation = OPERATIONS[args[0]]
   #special case

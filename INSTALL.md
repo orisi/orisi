@@ -45,8 +45,8 @@ The standard and recommended way to run a node is through a Vagrant box ([Why Va
 1. Then, enter the following commands:
 
     ```
-    /vagrant/scripts/runbitcoin
-    /vagrant/scripts/runbitmessage
+    /vagrant/scripts/runbitcoind.sh
+    /vagrant/scripts/runbitmessage.sh
     ```
     
 1. If you wanted to run an oracle:

@@ -2,7 +2,7 @@
 
 * [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 
-* [Installing with Vagrant](./INSTALL.md) - Instructions for setting up the oracle node with a Vagrant box 
+* [Installing with Vagrant](./INSTALL.md) - Instructions for setting up an oracle node with a Vagrant box 
 
 ---------------------
 

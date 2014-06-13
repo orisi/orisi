@@ -37,3 +37,6 @@ bitcoind is offline on oracle machine and can't verify some transaction data fro
 ```locktime``` tells us when oracle should check the condition for signing transaction
 
 ```condition``` for now - it's not used parameter - condition can be for example btcpricecheck in the future, but it's not yet implemented.
+
+
+*If you have ideas of what should be added to the protocol - please add an issue to [our issue tracker](https://github.com/orisi/orisi/issues)*

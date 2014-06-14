@@ -3,14 +3,16 @@
 We highly recommend using a Vagrant box to run the Orisi node. First of all, it comes with bitcoind and bitmessage preinstalled. Second of all, you never want to run both the client and the Orisi sever on a same machine due to bitcoind & bitmessage conflicts.
 
 But if you really want to run Orisi without Vagrant, do this:
-   ```
-   Install *Bitcoind*
-   Install *Bitmessage*
-   adjust *scripts/secrets.sh* to match paths in your system
-   run *scripts/secrets.sh* once
-   ```   
 
-After the above, you should be all set up.
+1. Install [Bitcoin](https://bitcoin.org/en/download) (only the `bitcoind` executable is needed)
+1. Install [PyBitmessage](https://github.com/Bitmessage/PyBitmessage)
+1. Install the requirements, `python2` and the python library `jsonrpclib`
+1. Run `PyBitmessage` once (src/bitmessagemain.py) to create the basic configuration files, and then [enable the API](https://www.bitmessage.org/wiki/API_Reference).
+1. Edit `scripts/secrets.sh` to match the paths in your system and run it once
+1. Restart `PyBitmessage` and run `bitcoind` by editing the paths of the scripts in the `orisi/scripts` folder
+1. Run `python2 orisi/src/run_oracle.py` to start up the oracle node, and you should see recurring POST requests after your initial addresses are printed.
+
+*Please report any errors you have with this build process [to the issue tracker](https://github.com/orisi/orisi/issues?state=open)*
 
 # Installing the Orisi Node with Vagrant
 

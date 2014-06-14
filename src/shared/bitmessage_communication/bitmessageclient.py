@@ -21,6 +21,11 @@ class BitmessageClient:
   def __init__(self, default_address_label=DEFAULT_ADDRESS_LABEL):
     self.default_address_label = default_address_label
     self.connect()
+    try:
+      response = self.api.helloWorld('x', 'y')
+      assert(response == "x-y")
+    except:
+      raise Exception("Connection to BitMessage server failed")
     self.get_addresses()
     self.update_address_if_empty()
     self.chan_address = CHAN_ADDRESS

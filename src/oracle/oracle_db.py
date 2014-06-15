@@ -51,6 +51,7 @@ class TaskQueue(TableDb):
       done integer default 0);"
   insert_sql = "insert into {0} (json_data, next_check, done) values (?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
+  all_sql = "select * from {0} where next_check<? and done=0 order by ts"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
@@ -64,6 +65,14 @@ class TaskQueue(TableDb):
     if row:
       row = dict(row)
     return row
+
+  def get_all_tasks(self):
+    cursor = self.db.get_cursor()
+    sql = self.all_sql.format(self.table_name)
+
+    rows = cursor.execute(sql, (int(time.time()), )).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
 
   def done(self, task):
     cursor = self.db.get_cursor()

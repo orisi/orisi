@@ -14,6 +14,9 @@ import logging
 import json
 from xmlrpclib import ProtocolError
 
+# 3 minutes between oracles should be sufficient
+HEURISTIC_ADD_TIME = 60 * 3
+
 class Oracle:
   def __init__(self):
     self.communication = OracleCommunication()
@@ -62,6 +65,10 @@ class Oracle:
       logging.debug("transaction invalid")
       return
 
+    if not self.includes_me(prevtx):
+      logging.debug("transaction does not include me")
+      return
+
     if not self.btc.transaction_need_signature(transaction):
       logging.debug("transaction does not need a signature")
       return
@@ -97,10 +104,13 @@ class Oracle:
       })
 
     locktime = int(body['locktime'])
+    turns = [self.get_my_turn(tx['redeemScript']) for tx in prevtx if 'redeemScript' in tx]
+    my_turn = max(turns)
+    add_time = my_turn * HEURISTIC_ADD_TIME
     task_queue = TaskQueue(self.db).save({
         "json_data": message.message,
         "done": 0,
-        "next_check": locktime
+        "next_check": locktime + add_time
     })
 
   def handle_request(self, request):
@@ -112,6 +122,26 @@ class Oracle:
     db_class = self.db.operations[operation]
     if db_class:
       db_class(self.db).save(message)
+
+  def get_my_turn(self, redeem_script):
+    """
+    Returns which one my address is in sorted (lexicographically) list of all
+    addresses included in redeem_script.
+    """
+    addresses = sorted(self.btc.addresses_for_redeem(redeem_script))
+    for idx, addr in enumerate(addresses):
+      if self.btc.address_is_mine(addr):
+        return idx
+    return -1
+
+  def includes_me(self, prevtx):
+    for tx in prevtx:
+      if not 'redeemScript' in tx:
+        continue
+      my_turn = self.get_my_turn(tx['redeemScript'])
+      if my_turn >= 0:
+        return True
+    return False
 
   def check_condition(self, condition):
     return self.evaluator.evaluate(condition)

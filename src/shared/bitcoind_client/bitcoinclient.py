@@ -38,6 +38,31 @@ class BitcoinClient:
     return result['hex']
 
   @keep_alive
+  def signatures_needed(self, raw_transaction, redeem_script):
+    transaction_dict = self._get_json_transaction(raw_transaction)
+
+    signatures_needed = -1
+    for vin in transaction_dict['vin']:
+      try:
+        asm = vin['scriptSig']['asm']
+      except KeyError:
+        logging.error('transaction doesn\'t have scriptSig asm')
+        continue
+      asm_elements = asm.split()
+      try:
+        asm_script_dict = self.server.decodescript(redeem_script)
+        req_sigs = int(asm_script_dict['reqSigs'])
+      except KeyError:
+        logging.error('script is missing reqSigs field')
+        continue
+      # first elements is op_zero, last is script, rest is signatuers
+      current_signatures = len(asm_elements) - 2
+      current_signatures = max(current_signatures, 0)
+      need_signatures = req_sigs - current_signatures
+      signatures_needed = max(signatures_needed, need_signatures)
+    return signatures_needed
+
+  @keep_alive
   def is_valid_transaction(self, raw_transaction):
     # Is raw transaction valid and decodable?
     try:
@@ -45,6 +70,16 @@ class BitcoinClient:
     except ProtocolError:
       return False
     return True
+
+  @keep_alive
+  def address_is_mine(self, address):
+    result = self.server.validateaddress(address)
+    return result['ismine']
+
+  @keep_alive
+  def addresses_for_redeem(self, redeem_script):
+    redeem_dict = self.server.decodescript(redeem_script)
+    return redeem_dict['addresses']
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):

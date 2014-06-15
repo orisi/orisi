@@ -48,3 +48,4 @@ class OracleTests(unittest.TestCase):
         'dummyaddress')
     request = ('TransactionRequest', message)
     self.oracle.handle_request(request)
+    self.assertEqual(len(TaskQueue(self.db).get_all_tasks()), 1)

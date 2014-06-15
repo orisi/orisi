@@ -1,5 +1,6 @@
 import base64
 import datetime
+import json
 
 class BitmessageMessage:
 
@@ -33,3 +34,15 @@ class BitmessageMessage:
         self.received_time.strftime("%Y-%m-%d %H:%M:%S"),
         self.subject,
         self.message)
+
+  def to_json(self):
+    msg_dict = {
+        "encoding_type": self.encoding_type,
+        "from_address": self.from_address,
+        "received_time": self.received_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "msgid": self.msgid,
+        "subject": self.subject,
+        "message": self.message
+    }
+
+    return json.dumps(msg_dict)

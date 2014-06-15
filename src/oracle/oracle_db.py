@@ -48,14 +48,16 @@ class TaskQueue(TableDb):
       ts datetime default current_timestamp, \
       json_data text not null, \
       next_check integer not null, \
+      filter_field text not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (json_data, next_check, done) values (?,?,?)"
+  insert_sql = "insert into {0} (json_data, filter_field, next_check, done) values (?,?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   all_sql = "select * from {0} where next_check<? and done=0 order by ts"
+  similar_sql = "select * from {0} where next_check<? and filter_field=? and done=0"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
-    return [obj["json_data"], obj["next_check"], obj["done"]]
+    return [obj["json_data"], obj['filter_field'], obj["next_check"], obj["done"]]
 
   def get_oldest_task(self):
     cursor = self.db.get_cursor()
@@ -71,6 +73,14 @@ class TaskQueue(TableDb):
     sql = self.all_sql.format(self.table_name)
 
     rows = cursor.execute(sql, (int(time.time()), )).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_similar(self, task):
+    cursor = self.db.get_cursor()
+    sql = self.similar_sql.format(self.table_name)
+
+    rows = cursor.execute(sql, (int(time.time()), task['filter_field'])).fetchall()
     rows = [dict(row) for row in rows]
     return rows
 
@@ -120,6 +130,41 @@ class SignedTransaction(TableDb):
 
   def args_for_obj(self, obj):
     return [obj["hex_transaction"], obj["prevtx"]]
+
+
+class HandledTransaction(TableDb):
+  """
+  Class that will take care of keeping information which txid were already handled
+  and how many signatures they got
+  """
+  talbe_name = "handled_tx"
+  create_sql = "create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      txid text unique, \
+      max_sigs integer not null);"
+  insert_sql = "insert or replace into {0} (txid, max_sigs) values (?,?)"
+  tx_sql = "select max_sigs from {0} where txid=?"
+
+  def args_for_obj(self, obj):
+    return [obj['txid'], obj['max_sigs']]
+
+  def signs_for_transaction(self, txid):
+    cursor = self.db.get_cursor()
+    sql = self.tx_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (txid, )).fetchone()
+    if row:
+      row = dict(row)
+      return row['max_sigs']
+    else:
+      sql = self.insert_sql.format(self.table_name)
+      cursor.execute(sql, (txid, 0))
+    return 0
+
+  def update_tx(self, txid, sigs):
+    self.save({"txid":txid, "max_sigs":sigs})
+
 
 
 

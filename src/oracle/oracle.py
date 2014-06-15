@@ -1,6 +1,6 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from oracle_db import OracleDb, TaskQueue, UsedInput, SignedTransaction
+from oracle_db import OracleDb, TaskQueue, UsedInput, SignedTransaction, HandledTransaction
 from oracle_protocol import RESPONSE, SUBJECT
 from condition_evaluator.evaluator import Evaluator
 
@@ -12,6 +12,7 @@ from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 import time
 import logging
 import json
+import re
 from xmlrpclib import ProtocolError
 
 # 3 minutes between oracles should be sufficient
@@ -107,8 +108,10 @@ class Oracle:
     turns = [self.get_my_turn(tx['redeemScript']) for tx in prevtx if 'redeemScript' in tx]
     my_turn = max(turns)
     add_time = my_turn * HEURISTIC_ADD_TIME
+
     task_queue = TaskQueue(self.db).save({
         "json_data": message.message,
+        "filter_field": 'txid:{}'.format(self.btc.get_txid(transaction)),
         "done": 0,
         "next_check": locktime + add_time
     })
@@ -164,6 +167,47 @@ class Oracle:
     self.communication.broadcast_signed_transaction(json.dumps(body))
     self.task_queue.done(task)
 
+  def filter_tasks(self, task):
+    txid = task['filter_field']
+    match = re.match(r'^txid:(.*)', txid)
+    if not match:
+      return
+    txid = match.group(1)
+    
+    other_tasks = self.task_queue.get_similar(task)
+    most_signatures = 0
+    task_sig = []
+    for task in other_tasks:
+      body = json.loads(task['json_data'])
+      raw_transaction = body['raw_transaction']
+      prevtx = body['prevtx']
+      signatures_for_tx = self.btc.signatures_needed(
+          raw_transaction, 
+          prevtx)
+      task_sig.append((task, signatures_for_tx))
+      most_signatures = max(most_signatures, signatures_for_tx)
+
+    # If there is already a transaction that has MORE signatures than what we
+    # have here - then ignore all tasks
+    signs_for_transaction = HandledTransaction(self.db).signs_for_transaction(txid)
+
+    if most_signatures == 0 or signs_for_transaction > most_signatures:
+      redundant = [t[0] for t in task_sig]
+    else:
+      tasks_to_do = [t[0] for t in task_sig if t[1] == most_signatures]
+      redundant = [t[0] for t in task_sig if t not in tasks_to_do]
+
+    HandledTransaction(self.db).update_tx(txid, most_signatures)
+    for r in redundant:
+      self.task_queue.done(r)
+    return tasks_to_do
+
+  def task_round(self):
+    task = self.task_queue.get_oldest_task()
+    tasks = self.filter_tasks(task)
+    for task in tasks:
+      self.handle_task(task)
+
   def run(self):
     
     if not ORACLE_ADDRESS:
@@ -181,8 +225,6 @@ class Oracle:
         self.handle_request(request)
         self.communication.mark_request_done(request)
 
-      task = self.task_queue.get_oldest_task()
-      if task:
-        self.handle_task(task)
+      self.task_round()
 
       time.sleep(1)

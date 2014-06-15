@@ -38,11 +38,21 @@ class BitcoinClient:
     return result['hex']
 
   @keep_alive
-  def signatures_needed(self, raw_transaction, redeem_script):
+  def get_txid(self, raw_transaction):
     transaction_dict = self._get_json_transaction(raw_transaction)
+    return transaction_dict['txid']
+
+  @keep_alive
+  def signatures_needed(self, raw_transaction, prevtx):
+    transaction_dict = self._get_json_transaction(raw_transaction)
+
+    prevtx_dict = {}
+    for tx in prevtx:
+      prevtx_dict[str((tx['txid'], tx['vout']))] = tx['redeemScript']
 
     signatures_needed = -1
     for vin in transaction_dict['vin']:
+      redeem_script = prevtx_dict[str((vin['txid'], vin['vout']))]
       try:
         asm = vin['scriptSig']['asm']
       except KeyError:

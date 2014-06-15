@@ -8,7 +8,8 @@ But if you really want to run Orisi without Vagrant, do this:
 1. Install [PyBitmessage](https://github.com/Bitmessage/PyBitmessage)
 1. Install the requirements, `python2` and the python library `jsonrpclib`
 1. Run `PyBitmessage` once (src/bitmessagemain.py) to create the basic configuration files, and then [enable the API](https://www.bitmessage.org/wiki/API_Reference).
-1. Edit `scripts/secrets.sh` to match the paths in your system and run it once
+1. Copy src/settings_local.py.example into src/settings.local.py
+1. Modify the settings. Put in BITMESSAGE\_PASSWORD, and BITCOIND\_RPC\_PASSWORD (consult `scripts/secrets.sh` if you're lost) 
 1. Restart `PyBitmessage` and run `bitcoind` by editing the paths of the scripts in the `orisi/scripts` folder
 1. Run `python2 orisi/src/run_oracle.py` to start up the oracle node, and you should see recurring POST requests after your initial addresses are printed.
 

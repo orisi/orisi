@@ -141,29 +141,29 @@ class HandledTransaction(TableDb):
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      txid text unique, \
+      txhs text unique, \
       max_sigs integer not null);"
-  insert_sql = "insert or replace into {0} (txid, max_sigs) values (?,?)"
-  tx_sql = "select max_sigs from {0} where txid=?"
+  insert_sql = "insert or replace into {0} (txhs, max_sigs) values (?,?)"
+  tx_sql = "select max_sigs from {0} where txhs=?"
 
   def args_for_obj(self, obj):
-    return [obj['txid'], obj['max_sigs']]
+    return [obj['txhs'], obj['max_sigs']]
 
-  def signs_for_transaction(self, txid):
+  def signs_for_transaction(self, txhs):
     cursor = self.db.get_cursor()
     sql = self.tx_sql.format(self.table_name)
 
-    row = cursor.execute(sql, (txid, )).fetchone()
+    row = cursor.execute(sql, (txhs, )).fetchone()
     if row:
       row = dict(row)
       return row['max_sigs']
     else:
       sql = self.insert_sql.format(self.table_name)
-      cursor.execute(sql, (txid, 0))
+      cursor.execute(sql, (txhs, 0))
     return 0
 
-  def update_tx(self, txid, sigs):
-    self.save({"txid":txid, "max_sigs":sigs})
+  def update_tx(self, txhs, sigs):
+    self.save({"txhs":txhs, "max_sigs":sigs})
 
 
 

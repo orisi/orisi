@@ -1,5 +1,6 @@
 from settings_local import *
 
+import hashlib
 import json
 import jsonrpclib
 from xmlrpclib import ProtocolError
@@ -43,14 +44,14 @@ class BitcoinClient:
     return transaction_dict['txid']
 
   @keep_alive
-  def signatures_needed(self, raw_transaction, prevtx):
+  def signatures_number(self, raw_transaction, prevtx):
     transaction_dict = self._get_json_transaction(raw_transaction)
 
     prevtx_dict = {}
     for tx in prevtx:
       prevtx_dict[str((tx['txid'], tx['vout']))] = tx['redeemScript']
 
-    signatures_needed = -1
+    has_signatures = 999
     for vin in transaction_dict['vin']:
       redeem_script = prevtx_dict[str((vin['txid'], vin['vout']))]
       try:
@@ -68,9 +69,8 @@ class BitcoinClient:
       # first elements is op_zero, last is script, rest is signatuers
       current_signatures = len(asm_elements) - 2
       current_signatures = max(current_signatures, 0)
-      need_signatures = req_sigs - current_signatures
-      signatures_needed = max(signatures_needed, need_signatures)
-    return signatures_needed
+      has_signatures = min(has_signatures, current_signatures)
+    return has_signatures
 
   @keep_alive
   def is_valid_transaction(self, raw_transaction):
@@ -172,5 +172,15 @@ class BitcoinClient:
   @keep_alive
   def create_multisig_transaction(self, tx_inputs, outputs):
     return self.server.createrawtransaction(tx_inputs, outputs)
+
+  @keep_alive
+  def unique_transaction_hash(self, raw_transaction):
+    transaction_dict = self._get_json_transaction(raw_transaction)
+    inputs = transaction_dict['vin']
+    outputs = transaction_dict['vout']
+    inputs_compressed = sorted(['{0}:{1}'.format(i['txid'], i['vout']) for i in inputs])
+    outputs_compressed = sorted(['{0}:{1}'.format(o['scriptPubKey']['hex'], o['value']) for o in outputs])
+    prehash = json.dumps({"i":inputs_compressed, "o":outputs_compressed})
+    return hashlib.sha256(prehash).hexdigest()
 
 

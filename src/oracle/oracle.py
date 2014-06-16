@@ -111,7 +111,7 @@ class Oracle:
 
     task_queue = TaskQueue(self.db).save({
         "json_data": message.message,
-        "filter_field": 'txid:{}'.format(self.btc.get_txid(transaction)),
+        "filter_field": 'txhs:{}'.format(self.btc.unique_transaction_hash(transaction)),
         "done": 0,
         "next_check": locktime + add_time
     })
@@ -165,14 +165,15 @@ class Oracle:
     SignedTransaction(self.db).save({"hex_transaction": signed_transaction, "prevtx":json.dumps(prevtx)})
 
     self.communication.broadcast_signed_transaction(json.dumps(body))
+
     self.task_queue.done(task)
 
   def filter_tasks(self, task):
-    txid = task['filter_field']
-    match = re.match(r'^txid:(.*)', txid)
+    txhs = task['filter_field']
+    match = re.match(r'^txhs:(.*)', txhs)
     if not match:
       return
-    txid = match.group(1)
+    txhs = match.group(1)
 
     other_tasks = self.task_queue.get_similar(task)
     most_signatures = 0
@@ -181,7 +182,7 @@ class Oracle:
       body = json.loads(task['json_data'])
       raw_transaction = body['raw_transaction']
       prevtx = body['prevtx']
-      signatures_for_tx = self.btc.signatures_needed(
+      signatures_for_tx = self.btc.signatures_number(
           raw_transaction, 
           prevtx)
       task_sig.append((task, signatures_for_tx))
@@ -189,7 +190,7 @@ class Oracle:
 
     # If there is already a transaction that has MORE signatures than what we
     # have here - then ignore all tasks
-    signs_for_transaction = HandledTransaction(self.db).signs_for_transaction(txid)
+    signs_for_transaction = HandledTransaction(self.db).signs_for_transaction(txhs)
 
     if most_signatures == 0 or signs_for_transaction > most_signatures:
       tasks_to_do = []
@@ -198,7 +199,7 @@ class Oracle:
       tasks_to_do = [t[0] for t in task_sig if t[1] == most_signatures]
       redundant = [t[0] for t in task_sig if t not in tasks_to_do]
 
-    HandledTransaction(self.db).update_tx(txid, most_signatures)
+    HandledTransaction(self.db).update_tx(txhs, most_signatures)
     for r in redundant:
       self.task_queue.done(r)
     return tasks_to_do

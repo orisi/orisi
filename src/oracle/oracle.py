@@ -37,6 +37,18 @@ class Oracle:
   def transaction_valid(self, transaction):
     return self.btc.is_valid_transaction(transaction)
 
+  def inputs_from_same_address(self, prevtxs):
+    addresses = set()
+    for prevtx in prevtxs:
+      if not 'redeemScript' in prevtx:
+        return False
+      script = prevtx['redeemScript']
+      address = self.btc.get_address_from_script(script)
+      addresses.add(address)
+    if len(addresses) != 1:
+      return False
+    return True
+
   def add_transaction(self, message):
     body = json.loads(message.message)
 
@@ -64,6 +76,10 @@ class Oracle:
 
     if not self.transaction_valid(transaction):
       logging.debug("transaction invalid")
+      return
+
+    if not self.inputs_from_same_address(prevtx):
+      logging.debug("all inputs should go from the same multisig address")
       return
 
     if not self.includes_me(prevtx):

@@ -183,4 +183,9 @@ class BitcoinClient:
     prehash = json.dumps({"i":inputs_compressed, "o":outputs_compressed})
     return hashlib.sha256(prehash).hexdigest()
 
+  @keep_alive
+  def get_address_from_script(self, script):
+    script_dict = self.server.decodescript(script)
+    return script_dict['p2sh']
+
 

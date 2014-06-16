@@ -139,6 +139,10 @@ class OracleTests(unittest.TestCase):
 
     self.assertEqual(HandledTransaction(self.db).signs_for_transaction(self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION)), 2)
 
+  def test_no_tasks(self):
+    tasks = self.oracle.get_tasks()
+    self.assertIsInstance(tasks, list)
+    self.assertEqual(len(tasks), 0)
 
 
   

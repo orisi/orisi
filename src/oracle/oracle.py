@@ -222,8 +222,10 @@ class Oracle:
 
   def get_tasks(self):
     task = self.task_queue.get_oldest_task()
-    tasks = self.filter_tasks(task)
-    return tasks
+    if task:
+      tasks = self.filter_tasks(task)
+      return tasks
+    return []
 
   def run(self):
     

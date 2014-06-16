@@ -140,11 +140,11 @@ class Oracle:
   def includes_me(self, prevtx):
     for tx in prevtx:
       if not 'redeemScript' in tx:
-        continue
+        return False
       my_turn = self.get_my_turn(tx['redeemScript'])
-      if my_turn >= 0:
-        return True
-    return False
+      if my_turn < 0:
+        return False
+    return True
 
   def check_condition(self, condition):
     return self.evaluator.evaluate(condition)

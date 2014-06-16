@@ -1,5 +1,5 @@
 from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 
@@ -10,6 +10,7 @@ import unittest
 from collections import defaultdict
 
 TEMP_DB_FILE = 'temp_db_file.db'
+RAW_TRANSACTION = "010000000144c1ae801383d9e65df8b0f7c6d65f976ceb3c087d3b33c7087f66388f581cfb00000000fd4101004730440220148ce15f921b2e073b70b4b1aa32f3e13bed7992d94ff1d48cba15323ceb1ac1022047bf4c17628a37baa2107cb0b117272c8ecfd57c94fd73248c3ca1a824b470dd01483045022100c6da3c358d50f05cd7e72f92b46449486fef9f3a8a8ff75047c60a566227823c02205187c4edb265ed9672ede1f52d1dab9925cf6af2ba930f2319fbbc0d454697bb014cad542102e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a21022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c2103a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce9962103c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5210271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da555aeffffffff01204e0000000000001976a914f77ddab3ea50377e1ce8995b1eb52310e43b43e988ac00000000"
 
 def create_message():
   msg_dict = defaultdict(lambda: 'dummy')
@@ -67,6 +68,16 @@ class OracleTests(unittest.TestCase):
 
     task = self.oracle.task_queue.get_oldest_task()
     self.assertIsNone(task)
+
+  def test_reject_task_more_sigs(self):
+    message = create_message()
+    request = ('TransactionRequest', message)
+    HandledTransaction(self.db).save({"txid": self.oracle.btc.get_txid(RAW_TRANSACTION), "max_sigs": 4})
+
+    self.oracle.handle_request(request)
+    tasks = self.oracle.task_queue.get_all_tasks()
+    self.assertEqual(len(tasks), 0)
+
 
 
   

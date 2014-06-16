@@ -173,7 +173,7 @@ class Oracle:
     if not match:
       return
     txid = match.group(1)
-    
+
     other_tasks = self.task_queue.get_similar(task)
     most_signatures = 0
     task_sig = []
@@ -192,6 +192,7 @@ class Oracle:
     signs_for_transaction = HandledTransaction(self.db).signs_for_transaction(txid)
 
     if most_signatures == 0 or signs_for_transaction > most_signatures:
+      tasks_to_do = []
       redundant = [t[0] for t in task_sig]
     else:
       tasks_to_do = [t[0] for t in task_sig if t[1] == most_signatures]
@@ -202,11 +203,10 @@ class Oracle:
       self.task_queue.done(r)
     return tasks_to_do
 
-  def task_round(self):
+  def get_tasks(self):
     task = self.task_queue.get_oldest_task()
     tasks = self.filter_tasks(task)
-    for task in tasks:
-      self.handle_task(task)
+    return tasks
 
   def run(self):
     
@@ -225,6 +225,8 @@ class Oracle:
         self.handle_request(request)
         self.communication.mark_request_done(request)
 
-      self.task_round()
+      tasks = self.get_tasks()
+      for task in tasks:
+        self.handle_task(task)
 
       time.sleep(1)

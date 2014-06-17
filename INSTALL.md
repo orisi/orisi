@@ -11,4 +11,4 @@ Requirements: python2, jsonrpclib python library (`pip install jsonrpclib`)
 1. `cd` into the Orisi directory, `cd ./orisi`, and run `installoracle.sh` (may have to run `chmod +x ./installoracle.sh` first)
 1. Run `runoracle.sh` (may have to do the same as above to run it)
 
-[Please report any issues you have!](https://github.com/orisi/orisi)
+[Please report any issues you have!](https://github.com/orisi/orisi/issues?state=open)

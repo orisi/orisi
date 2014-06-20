@@ -1,11 +1,12 @@
 from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction
+from condition_evaluator.evaluator import Evaluator
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 import base64
 import json
-import logging
 import os
 import unittest
 
@@ -51,13 +52,22 @@ class MockBitmessageCommunication:
   def broadcast_signed_transaction(self,msg_bd):
     pass
 
+class MockOracle(Oracle):
+  def __init__(self):
+    self.communication = MockBitmessageCommunication()
+    self.db = MockOracleDb()
+    self.btc = BitcoinClient()
+    self.evaluator = Evaluator()
+
+    self.task_queue = TaskQueue(self.db)
+
+    self.operations = {
+      'TransactionRequest': self.add_transaction,
+    }
+
 class OracleTests(unittest.TestCase):
   def setUp(self):
-    self.oracle = Oracle()
-    self.db = MockOracleDb()
-    self.oracle.db = self.db
-    self.oracle.communication = MockBitmessageCommunication()
-    self.oracle.task_queue = TaskQueue(self.db)
+    self.oracle = MockOracle()
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)
@@ -70,7 +80,7 @@ class OracleTests(unittest.TestCase):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
     self.oracle.handle_request(request)
-    self.assertEqual(len(TaskQueue(self.db).get_all_tasks()), 1)
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 1)
 
   def test_add_task(self):
     message = create_message(RAW_TRANSACTION)
@@ -89,7 +99,7 @@ class OracleTests(unittest.TestCase):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
     rqhs = self.oracle.get_request_hash(json.loads(message.message))
-    HandledTransaction(self.db).save({
+    HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs": 3})
 
@@ -101,7 +111,7 @@ class OracleTests(unittest.TestCase):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
     rqhs = self.oracle.get_request_hash(json.loads(message.message))
-    HandledTransaction(self.db).save({
+    HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":2})
 
@@ -113,7 +123,7 @@ class OracleTests(unittest.TestCase):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
     rqhs = self.oracle.get_request_hash(json.loads(message.message))
-    HandledTransaction(self.db).save({
+    HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":1})
 
@@ -123,7 +133,7 @@ class OracleTests(unittest.TestCase):
 
     self.oracle.task_queue.done(tasks[0])
 
-    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(
+    self.assertEqual(HandledTransaction(self.oracle.db).signs_for_transaction(
         rqhs),
         2)
 
@@ -151,7 +161,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(sigs, 2)
     self.oracle.task_queue.done(task)
 
-    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(rqhs), 2)
+    self.assertEqual(HandledTransaction(self.oracle.db).signs_for_transaction(rqhs), 2)
 
   def test_no_tasks(self):
     tasks = self.oracle.get_tasks()

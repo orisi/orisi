@@ -102,8 +102,8 @@ class BitcoinClient:
             {
               'vout': sorted([
                 {
-                  "value": vout["value"], 
-                  "addresses": vout["scriptPubKey"]["addresses"]
+                  "value": vout["value"],
+                  "scriptPubKey": vout["scriptPubKey"]["hex"]
                 } for vout in vouts
               ])
             }
@@ -172,16 +172,6 @@ class BitcoinClient:
   @keep_alive
   def create_multisig_transaction(self, tx_inputs, outputs):
     return self.server.createrawtransaction(tx_inputs, outputs)
-
-  @keep_alive
-  def unique_transaction_hash(self, raw_transaction):
-    transaction_dict = self._get_json_transaction(raw_transaction)
-    inputs = transaction_dict['vin']
-    outputs = transaction_dict['vout']
-    inputs_compressed = sorted(['{0}:{1}'.format(i['txid'], i['vout']) for i in inputs])
-    outputs_compressed = sorted(['{0}:{1}'.format(o['scriptPubKey']['hex'], o['value']) for o in outputs])
-    prehash = json.dumps({"i":inputs_compressed, "o":outputs_compressed})
-    return hashlib.sha256(prehash).hexdigest()
 
   @keep_alive
   def get_address_from_script(self, script):

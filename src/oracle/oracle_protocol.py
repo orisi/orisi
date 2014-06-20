@@ -26,11 +26,11 @@ VALID_OPERATIONS = {
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.TRANSACTION: ['raw_transaction', 'locktime', 'condition', 'prevtx', 'pubkey_json', 'req_sigs'],
+    OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
 }
 
 
-PROTOCOL_VERSION = '0.1'
+PROTOCOL_VERSION = '0.11'
 
 RAW_RESPONSE = {
   'version': PROTOCOL_VERSION

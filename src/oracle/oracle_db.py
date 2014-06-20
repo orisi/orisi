@@ -1,7 +1,6 @@
 from collections import defaultdict
 from shared.db_classes import TableDb, GeneralDb
 
-import sqlite3
 import time
 
 ORACLE_FILE = 'oracle.db'
@@ -42,7 +41,7 @@ class TaskQueue(TableDb):
   """
 
   table_name = "task_queue"
-  
+
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
@@ -127,9 +126,18 @@ class SignedTransaction(TableDb):
       hex_transaction text not null, \
       prevtx text not null)"
   insert_sql = "insert into {0} (hex_transaction, prevtx) values (?, ?)"
+  all_sql = "select * from {0} order by ts"
 
   def args_for_obj(self, obj):
     return [obj["hex_transaction"], obj["prevtx"]]
+
+  def get_all(self):
+    cursor = self.db.get_cursor()
+    sql = self.all_sql.format(self.table_name)
+
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
 
 
 class HandledTransaction(TableDb):
@@ -137,33 +145,33 @@ class HandledTransaction(TableDb):
   Class that will take care of keeping information which txid were already handled
   and how many signatures they got
   """
-  talbe_name = "handled_tx"
+  table_name = "handled_tx"
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      txhs text unique, \
+      rqhs text unique, \
       max_sigs integer not null);"
-  insert_sql = "insert or replace into {0} (txhs, max_sigs) values (?,?)"
-  tx_sql = "select max_sigs from {0} where txhs=?"
+  insert_sql = "insert or replace into {0} (rqhs, max_sigs) values (?,?)"
+  tx_sql = "select max_sigs from {0} where rqhs=?"
 
   def args_for_obj(self, obj):
-    return [obj['txhs'], obj['max_sigs']]
+    return [obj['rqhs'], obj['max_sigs']]
 
-  def signs_for_transaction(self, txhs):
+  def signs_for_transaction(self, rqhs):
     cursor = self.db.get_cursor()
     sql = self.tx_sql.format(self.table_name)
 
-    row = cursor.execute(sql, (txhs, )).fetchone()
+    row = cursor.execute(sql, (rqhs, )).fetchone()
     if row:
       row = dict(row)
       return row['max_sigs']
     else:
       sql = self.insert_sql.format(self.table_name)
-      cursor.execute(sql, (txhs, 0))
+      cursor.execute(sql, (rqhs, 0))
     return 0
 
-  def update_tx(self, txhs, sigs):
-    self.save({"txhs":txhs, "max_sigs":sigs})
+  def update_tx(self, rqhs, sigs):
+    self.save({"rqhs":rqhs, "max_sigs":sigs})
 
 
 

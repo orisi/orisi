@@ -1,5 +1,5 @@
 from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 
@@ -21,19 +21,22 @@ def create_message(tx):
   msg_dict['receivedTime'] = 1000
   msg_dict['subject'] = base64.encodestring('dummy')
   msg_dict['message'] = base64.encodestring("""
-    {{"raw_transaction": "{0}", 
-    "prevtx": [{{"txid": "fb1c588f38667f08c7333b7d083ceb6c975fd6c6f7b0f85de6d9831380aec144","vout": 0, "redeemScript":"542102e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a21022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c2103a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce9962103c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5210271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da555ae","scriptPubKey":"a9141cd14546dd7cfeee3b5bdf56d46423acefa51d7687"}}], 
-    "pubkey_json": ["02e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a","022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c","03a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce996","03c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5","0271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da5"], 
-    "req_sigs": 4, 
-    "operation": "transaction", 
-    "locktime": 1402318623, 
+    {{
+    "transactions": [{{
+        "raw_transaction": "{0}",
+        "prevtx": [{{"txid": "fb1c588f38667f08c7333b7d083ceb6c975fd6c6f7b0f85de6d9831380aec144","vout": 0, "redeemScript":"542102e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a21022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c2103a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce9962103c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5210271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da555ae","scriptPubKey":"a9141cd14546dd7cfeee3b5bdf56d46423acefa51d7687"}}]
+    }}],
+    "pubkey_json": ["02e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a","022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c","03a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce996","03c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5","0271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da5"],
+    "req_sigs": 4,
+    "operation": "transaction",
+    "locktime": 1402318623,
     "condition": "True"}}
     """.format(tx))
   message = BitmessageMessage(
       msg_dict,
       'dummyaddress')
   return message
-  
+
 
 class MockOracleDb(OracleDb):
   def __init__(self):
@@ -44,11 +47,16 @@ class MockOracleDb(OracleDb):
     }
     self.operations = defaultdict(lambda: False, operations)
 
+class MockBitmessageCommunication:
+  def broadcast_signed_transaction(self,msg_bd):
+    pass
+
 class OracleTests(unittest.TestCase):
   def setUp(self):
     self.oracle = Oracle()
     self.db = MockOracleDb()
     self.oracle.db = self.db
+    self.oracle.communication = MockBitmessageCommunication()
     self.oracle.task_queue = TaskQueue(self.db)
 
   def tearDown(self):
@@ -80,8 +88,9 @@ class OracleTests(unittest.TestCase):
   def test_reject_task_more_sigs(self):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
+    rqhs = self.oracle.get_request_hash(json.loads(message.message))
     HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
+        "rqhs": rqhs,
         "max_sigs": 3})
 
     self.oracle.handle_request(request)
@@ -91,8 +100,9 @@ class OracleTests(unittest.TestCase):
   def test_accept_task_same_sigs(self):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
+    rqhs = self.oracle.get_request_hash(json.loads(message.message))
     HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
+        "rqhs": rqhs,
         "max_sigs":2})
 
     self.oracle.handle_request(request)
@@ -102,8 +112,9 @@ class OracleTests(unittest.TestCase):
   def test_update_task_less_sigs(self):
     message = create_message(RAW_TRANSACTION)
     request = ('TransactionRequest', message)
+    rqhs = self.oracle.get_request_hash(json.loads(message.message))
     HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
+        "rqhs": rqhs,
         "max_sigs":1})
 
     self.oracle.handle_request(request)
@@ -113,7 +124,7 @@ class OracleTests(unittest.TestCase):
     self.oracle.task_queue.done(tasks[0])
 
     self.assertEqual(HandledTransaction(self.db).signs_for_transaction(
-        self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION)), 
+        rqhs),
         2)
 
   def test_choosing_bigger_transaction(self):
@@ -125,24 +136,24 @@ class OracleTests(unittest.TestCase):
     request = ('TransactionRequest', message)
     self.oracle.handle_request(request)
 
+    rqhs = self.oracle.get_request_hash(json.loads(message.message))
+
     self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 2)
     tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 1)
     task = tasks[0]
     body = json.loads(task['json_data'])
-    raw_transaction = body['raw_transaction']
-    prevtx = body['prevtx']
+    transaction = body['transactions'][0]
+    raw_transaction = transaction['raw_transaction']
+    prevtx = transaction['prevtx']
 
     sigs = self.oracle.btc.signatures_number(raw_transaction, prevtx)
     self.assertEqual(sigs, 2)
     self.oracle.task_queue.done(task)
 
-    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION)), 2)
+    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(rqhs), 2)
 
   def test_no_tasks(self):
     tasks = self.oracle.get_tasks()
     self.assertIsInstance(tasks, list)
     self.assertEqual(len(tasks), 0)
-
-
-  

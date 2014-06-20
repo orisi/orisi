@@ -13,8 +13,8 @@ from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 from shared import liburl_wrapper
 from client_db import (
-    ClientDb, 
-    SignatureRequestDb, 
+    ClientDb,
+    SignatureRequestDb,
     MultisigRedeemDb,
     RawTransactionDb,
     OracleListDb,
@@ -74,7 +74,7 @@ class OracleClient:
     response = self.btc.create_multisig_address(real_min_sigs, key_list)
 
     MultisigRedeemDb(self.db).save({
-        "multisig": response['address'], 
+        "multisig": response['address'],
         "min_sig": real_min_sigs,
         "redeem_script": response['redeemScript'],
         "pubkey_json": json.dumps(sorted(key_list))})
@@ -93,10 +93,14 @@ class OracleClient:
   def prepare_request(self, transaction, locktime, condition, prevtx, pubkey_list, req_sigs):
     message = json.dumps({
       "operation": "transaction",
-      "raw_transaction": transaction,
+      "transactions": [
+        {
+          "raw_transaction": transaction,
+          "prevtx": prevtx,
+        }
+      ],
       "locktime": locktime,
       "condition": condition,
-      "prevtx": prevtx,
       "pubkey_json": pubkey_list,
       "req_sigs": req_sigs
     })
@@ -258,11 +262,11 @@ class OracleClient:
 
     # Now we have all we need to create proper request
     return self.prepare_request(
-        signed_transaction, 
-        locktime, 
-        condition, 
-        prevtx, 
-        pubkey_list, 
+        signed_transaction,
+        locktime,
+        condition,
+        prevtx,
+        pubkey_list,
         req_sigs)
 
   def list_oracles(self):

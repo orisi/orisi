@@ -1,5 +1,5 @@
 from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 from condition_evaluator.evaluator import Evaluator
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
@@ -103,17 +103,27 @@ class OracleTests(unittest.TestCase):
     self.oracle.btc.add_multisig_address(4, all_addresses)
     return multisig, redeem_script, all_addresses
 
-  def create_unsigned_transaction(self):
-    multisig, redeem_script, pubkeys = self.create_multisig()
+  def create_fake_transaction(self, address):
     transaction = self.oracle.btc.create_multisig_transaction(
         [{"txid":FAKE_TXID, "vout":0}],
+        {address:1.0}
+    )
+    return transaction
+
+  def create_unsigned_transaction(self):
+    multisig, redeem_script, pubkeys = self.create_multisig()
+    fake_transaction = self.create_fake_transaction(multisig)
+    fake_transaction_dict = self.oracle.btc._get_json_transaction(fake_transaction)
+    transaction = self.oracle.btc.create_multisig_transaction(
+        [{"txid":fake_transaction_dict['txid'], "vout":0}],
         {"1NJJpSgp55nQKe6DZkzg4VqxRRYcUuJSHz":1.0}
     )
     prevtxs = []
+    script_pub_key = fake_transaction_dict['vout'][0]['scriptPubKey']['hex']
     prevtx = {
-        "scriptPubKey": redeem_script,
+        "scriptPubKey": script_pub_key,
         "redeemScript": redeem_script,
-        "txid": FAKE_TXID,
+        "txid": fake_transaction_dict['txid'],
         "vout": 0
     }
     prevtxs.append(prevtx)
@@ -214,3 +224,23 @@ class OracleTests(unittest.TestCase):
     tasks = self.oracle.get_tasks()
     self.assertIsInstance(tasks, list)
     self.assertEqual(len(tasks), 0)
+
+  def test_handle_sign(self):
+    self.add_request()
+
+    tasks = self.oracle.get_tasks()
+    self.assertEqual(len(tasks), 1)
+    task = tasks[0]
+
+    self.oracle.handle_task(task)
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 0)
+
+    handled_transaction = SignedTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(handled_transaction), 1)
+
+    handled_transaction = handled_transaction[0]
+    transaction = handled_transaction['hex_transaction']
+    prevtx = json.loads(handled_transaction['prevtx'])
+    signs = self.oracle.btc.signatures_number(transaction, prevtx)
+    self.assertEqual(signs, 4)
+

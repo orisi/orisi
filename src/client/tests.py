@@ -41,18 +41,25 @@ class ClientTests(unittest.TestCase):
     self.client = None
 
   def get_all_addresses(self):
-    return self.oracle.btc.get_addresses_for_account(TEST_ACCOUNT)
+    return sorted(self.client.btc.get_addresses_for_account(TEST_ACCOUNT))
+
+  def get_client_pubkey_address(self):
+    addresses = self.get_addresses(1)
+    address = addresses[0]
+    address_data = self.client.btc.validate_address(address)
+    pubkey = address_data['pubkey']
+    return pubkey, address
 
   def get_addresses(self, n):
     addresses = self.get_all_addresses()
-    diff = max(n - addresses, 0)
+    diff = max(n - len(addresses), 0)
     for i in range(diff):
       self.client.btc.get_new_address()
     addresses = self.get_all_addresses()[:n]
     return addresses
 
   def create_multisig(self):
-    client_pubkey = ADDRESSES['client_pubkey']
+    client_pubkey, _ = self.get_client_pubkey_address()
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
 
     # 5 oracles, 3 signatures required
@@ -80,7 +87,8 @@ class ClientTests(unittest.TestCase):
     self.assertEquals(len(addresses), 8)
 
     address_counter = Counter(addresses)
-    self.assertEquals(address_counter[ADDRESSES['client_address']], 3)
+    client_pubkey, client_address = self.get_client_pubkey_address()
+    self.assertEquals(address_counter[client_address], 3)
 
     expected_addresses = [e['address'] for e in ADDRESSES['oracles']]
     for addr in expected_addresses:
@@ -91,7 +99,6 @@ class ClientTests(unittest.TestCase):
     self.assertEquals(db_object['multisig'], address_result['p2sh'])
     self.assertEquals(db_object['min_sig'], 6)
     self.assertEquals(db_object['redeem_script'], result['redeemScript'])
-    client_pubkey = ADDRESSES['client_pubkey']
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
     self.assertEquals(db_object['pubkey_json'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
 

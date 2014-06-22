@@ -1,5 +1,5 @@
 from client import OracleClient
-from client_db import ClientDb
+from client_db import ClientDb, MultisigRedeemDb
 from test_data import ADDRESSES
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -8,6 +8,7 @@ from collections import Counter
 from decimal import getcontext
 from xmlrpclib import ProtocolError
 
+import json
 import os
 import unittest
 
@@ -61,6 +62,13 @@ class ClientTests(unittest.TestCase):
     expected_addresses = [e['address'] for e in ADDRESSES['oracles']]
     for addr in expected_addresses:
       self.assertEquals(address_counter[addr], 1)
+
+    # Verify database
+    db_object = MultisigRedeemDb(self.client.db).get_address(address_result['p2sh'])
+    self.assertEquals(db_object['multisig'], address_result['p2sh'])
+    self.assertEquals(db_object['min_sig'], 6)
+    self.assertEquals(db_object['redeem_script'], result['redeemScript'])
+    self.assertEquals(db_object['pubkey_json'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
 
   def test_create_multisig_address_invalid_pubkey(self):
     client_pubkey = "020323notavalidpubkey234"

@@ -1,7 +1,5 @@
 from oracle import tests
-from oracle.oracle import Oracle
 
-import sys
 import unittest
 
 TESTS = [
@@ -14,5 +12,8 @@ def test():
     st = unittest.TestLoader().loadTestsFromTestCase(test_cls)
     suite.append(st)
   suite = unittest.TestSuite(suite)
-  results = unittest.TestResult()
   unittest.TextTestRunner(verbosity=2).run(suite)
+
+if __name__=="__main__":
+  test()
+

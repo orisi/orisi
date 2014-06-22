@@ -207,9 +207,7 @@ class OracleClient:
   def get_address(self, tx):
     raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
     if not raw_transaction:
-      print "transaction {0} is not in database, \
-          please add transaction with python main.py addtransaction"
-      return
+      raise TransactionUnknownError()
     transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
     vouts = transaction_dict['vout']
     for v in vouts:

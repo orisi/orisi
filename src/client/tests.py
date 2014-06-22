@@ -1,4 +1,4 @@
-from client import OracleClient, TransactionUnknownError
+from client import OracleClient, TransactionUnknownError, AddressMissingError
 from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
 from test_data import ADDRESSES
 
@@ -180,3 +180,31 @@ class ClientTests(unittest.TestCase):
     inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}]
     with self.assertRaises(TransactionUnknownError):
       self.client.get_amount_from_inputs(inputs)
+
+  def test_get_address(self):
+    result = self.create_multisig()
+    address = result['address']
+    redeem = result['redeemScript']
+    fake_transaction = self.create_fake_transaction(address)
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    self.client.add_raw_transaction(fake_transaction)
+
+    tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
+    self.assertEquals(redeem, self.client.get_address(tx_input)['redeem_script'])
+
+  def test_get_address_invalid_missing_address(self):
+    fake_transaction = self.create_fake_transaction()
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    self.client.add_raw_transaction(fake_transaction)
+
+    tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
+    with self.assertRaises(AddressMissingError):
+      self.client.get_address(tx_input)
+
+  def test_get_address_invalid_unknown_transaction(self):
+    fake_transaction = self.create_fake_transaction()
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+
+    tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
+    with self.assertRaises(TransactionUnknownError):
+      self.client.get_address(tx_input)

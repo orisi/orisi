@@ -13,6 +13,8 @@ import os
 import unittest
 
 TEMP_CLIENT_DB_FILE = 'client_test.db'
+TEST_ACCOUNT = 'client_test_account'
+FAKE_TXID = '3bda4918180fd55775a24580652f4c26d898d5840c7e71313491a05ef0b743d8'
 
 class MockBitmessageClient:
   pass
@@ -25,7 +27,7 @@ class MockClientDb(ClientDb):
 class MockOracleClient(OracleClient):
   def __init__(self):
     getcontext().prec=8
-    self.btc = BitcoinClient()
+    self.btc = BitcoinClient(account = TEST_ACCOUNT)
     self.bm = MockBitmessageClient()
     self.db = MockClientDb()
 
@@ -38,7 +40,18 @@ class ClientTests(unittest.TestCase):
 
     self.client = None
 
-  def test_create_multisig_address_correct(self):
+  def get_all_addresses(self):
+    return self.oracle.btc.get_addresses_for_account(TEST_ACCOUNT)
+
+  def get_addresses(self, n):
+    addresses = self.get_all_addresses()
+    diff = max(n - addresses, 0)
+    for i in range(diff):
+      self.client.btc.get_new_address()
+    addresses = self.get_all_addresses()[:n]
+    return addresses
+
+  def create_multisig(self):
     client_pubkey = ADDRESSES['client_pubkey']
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
 
@@ -46,6 +59,17 @@ class ClientTests(unittest.TestCase):
     req_sigs = 3
 
     result = self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)
+    return result
+
+  def create_fake_transaction(self, address):
+    transaction = self.client.btc.create_multisig_transaction(
+        [{"txid":FAKE_TXID, "vout":0}],
+        {address:1.0}
+    )
+    return transaction
+
+  def test_create_multisig_address_correct(self):
+    result = self.create_multisig()
 
     # We should assume the created address will be 6 from 8
     # 3 of the pubkeys will be client_pubkeys
@@ -67,6 +91,8 @@ class ClientTests(unittest.TestCase):
     self.assertEquals(db_object['multisig'], address_result['p2sh'])
     self.assertEquals(db_object['min_sig'], 6)
     self.assertEquals(db_object['redeem_script'], result['redeemScript'])
+    client_pubkey = ADDRESSES['client_pubkey']
+    oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
     self.assertEquals(db_object['pubkey_json'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
 
   def test_create_multisig_address_invalid_pubkey(self):
@@ -86,3 +112,14 @@ class ClientTests(unittest.TestCase):
     self.client.update_oracle_list()
     oracles = OracleListDb(self.client.db).get_all_oracles()
     self.assertGreater(len(oracles), 0)
+
+  def test_create_transaction(self):
+    result = self.create_multisig()
+    input_transaction = self.create_fake_transaction(result['address'])
+    input_transaction_dict = self.client.btc._get_json_transaction(input_transaction)
+
+    inputs = [{'txid': input_transaction_dict['txid'], 'vout':0}]
+    outputs = {ADDRESSES['client_address']: 1.0}
+
+    self.client.create_multisig_transaction(inputs, outputs)
+    # If no errors occured then transaction is assumed to be valid

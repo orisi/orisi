@@ -1,4 +1,4 @@
-from client import OracleClient
+from client import OracleClient, TransactionUnknownError
 from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
 from test_data import ADDRESSES
 
@@ -164,3 +164,19 @@ class ClientTests(unittest.TestCase):
     transactions = RawTransactionDb(self.client.db).get_all_transactions()
     self.assertEquals(len(transactions), 0)
 
+  def test_get_amount_from_inputs_valid(self):
+    fake_transaction = self.create_fake_transaction(ADDRESSES['oracles'][0]['address'])
+    self.client.add_raw_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    # We add the same transaction three times to see if client will count it only once
+    inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}] * 3
+
+    amount = self.client.get_amount_from_inputs(inputs)
+    self.assertEquals(amount, 1.0)
+
+  def test_get_amount_from_inputs_invalid(self):
+    fake_transaction = self.create_fake_transaction(ADDRESSES['oracles'][0]['address'])
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}]
+    with self.assertRaises(TransactionUnknownError):
+      self.client.get_amount_from_inputs(inputs)

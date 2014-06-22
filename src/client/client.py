@@ -35,6 +35,9 @@ class UnsupportedTransactionError(Exception):
 class AddressMissingError(Exception):
   pass
 
+class TransactionUnknownError(Exception):
+  pass
+
 class OracleClient:
   def __init__(self):
     getcontext().prec=8
@@ -136,14 +139,19 @@ class OracleClient:
         "address": address,
         "fee": fee})
 
-  def get_amount_from_inputs(self, tx_inputs):
+  def get_amount_from_inputs(self, raw_tx_inputs):
     amount = Decimal("0")
+
+    # Filters duplicates - can't use sets - dict is unhashable
+    tx_inputs = []
+    for tx in raw_tx_inputs:
+      if tx not in tx_inputs:
+        tx_inputs.append(tx)
+
     for tx in tx_inputs:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
+        raise TransactionUnknownError()
       transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:

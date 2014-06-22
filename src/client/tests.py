@@ -1,5 +1,5 @@
 from client import OracleClient
-from client_db import ClientDb, MultisigRedeemDb, OracleListDb
+from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
 from test_data import ADDRESSES
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -150,3 +150,17 @@ class ClientTests(unittest.TestCase):
     unsigned_transaction, prevtx = self.create_transaction()
     signed_transaction = self.client.sign_transaction(unsigned_transaction, prevtx)
     self.assertEquals(self.client.btc.signatures_number(signed_transaction, prevtx), 3)
+
+  def test_add_raw_transaction_valid(self):
+    fake_transaction = self.create_fake_transaction(ADDRESSES['oracles'][0]['address'])
+    self.client.add_raw_transaction(fake_transaction)
+    transactions = RawTransactionDb(self.client.db).get_all_transactions()
+    self.assertEquals(len(transactions), 1)
+
+  def test_add_raw_transaction_invalid(self):
+    fake_transaction = "00001023093842098"
+    with self.assertRaises(ProtocolError):
+      self.client.add_raw_transaction(fake_transaction)
+    transactions = RawTransactionDb(self.client.db).get_all_transactions()
+    self.assertEquals(len(transactions), 0)
+

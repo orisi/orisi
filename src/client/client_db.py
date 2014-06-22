@@ -61,6 +61,7 @@ class RawTransactionDb(TableDb):
     txid text unique);'
   insert_sql = 'insert or ignore into {0} (raw_transaction, txid) values (?, ?)'
   get_tx_sql = 'select * from {0} where txid=? limit 1'
+  get_all_transactions_sql = 'select * from {0}'
 
   def args_for_obj(self, obj):
     return [obj['raw_transaction'], obj['txid']]
@@ -73,6 +74,13 @@ class RawTransactionDb(TableDb):
     if row:
       return dict(row)
     return row
+
+  def get_all_transactions(self):
+    cursor = self.db.get_cursor()
+    sql = self.get_all_transactions_sql.format(self.table_name)
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row)for row in rows]
+    return rows
 
 class OracleListDb(TableDb):
   """

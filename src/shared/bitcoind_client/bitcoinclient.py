@@ -198,3 +198,7 @@ class BitcoinClient:
   @keep_alive
   def validate_address(self, address):
     return self.server.validateaddress(address)
+
+  @keep_alive
+  def decode_script(self, script):
+    return self.server.decodescript(script)

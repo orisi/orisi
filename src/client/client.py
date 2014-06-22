@@ -62,8 +62,7 @@ class OracleClient:
       OracleCheckDb(self.db).save({"last_check": current_time})
 
 
-  def create_multisig_address(self, client_pubkey, oracle_pubkey_list_json, min_sigs):
-    oracle_pubkey_list = json.loads(oracle_pubkey_list_json)
+  def create_multisig_address(self, client_pubkey, oracle_pubkey_list, min_sigs):
     max_sigs = len(oracle_pubkey_list)
     difference = max_sigs - min_sigs
 

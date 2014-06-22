@@ -28,7 +28,11 @@ def add_multisig(args):
     number_of_sigs = int(args[1])
   except ValueError:
     print "number_of_sigs must be int"
-  print c.create_multisig_address(client_pubkey, oracle_pubkeys, number_of_sigs)
+  try:
+    oracle_pubkey_list = json.loads(oracle_pubkeys)
+  except ValueError:
+    print "pubkey_list not valid json"
+  print c.create_multisig_address(client_pubkey, oracle_pubkey_list, number_of_sigs)
   print "send bitcoins you want to use to that transaction, then add transaction \
       either with addrawtransaction (hex transaction as argument), or with \
       addtransaction (txid as argument, ONLY IF the transaction was send locally, \

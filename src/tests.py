@@ -1,9 +1,11 @@
-from oracle import tests
+from oracle.tests import OracleTests
+from client.tests import ClientTests
 
 import unittest
 
 TESTS = [
-  tests.OracleTests,
+  OracleTests,
+  ClientTests,
 ]
 
 def test():

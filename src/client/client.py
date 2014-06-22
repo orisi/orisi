@@ -130,6 +130,7 @@ class OracleClient:
     return txid
 
   def add_oracle(self, pubkey, address, fee):
+    # TODO: check if pubkey is valid and corresponding to address, check if fee is valid
     OracleListDb(self.db).save({
         "pubkey": pubkey,
         "address": address,

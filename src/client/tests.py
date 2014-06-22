@@ -1,5 +1,5 @@
 from client import OracleClient
-from client_db import ClientDb, MultisigRedeemDb
+from client_db import ClientDb, MultisigRedeemDb, OracleListDb
 from test_data import ADDRESSES
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -29,6 +29,9 @@ class MockOracleClient(OracleClient):
     self.bm = MockBitmessageClient()
     self.db = MockClientDb()
     self.update_oracle_list()
+
+  def update_oracle_list(self):
+    pass
 
 class ClientTests(unittest.TestCase):
   def setUp(self):
@@ -77,3 +80,9 @@ class ClientTests(unittest.TestCase):
 
     with self.assertRaises(ProtocolError):
       self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)
+
+  def test_add_oracle(self):
+    self.client.add_oracle(ADDRESSES['client_pubkey'], ADDRESSES['client_address'], 0.0001)
+    oracles = OracleListDb(self.client.db).get_all_oracles()
+    self.assertEquals(len(oracles), 1)
+

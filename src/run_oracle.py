@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from shared import logger
 from oracle.oracle import Oracle
 

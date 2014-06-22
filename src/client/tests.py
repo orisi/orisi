@@ -75,6 +75,27 @@ class ClientTests(unittest.TestCase):
     )
     return transaction
 
+  def create_transaction(self):
+    result = self.create_multisig()
+    input_transaction = self.create_fake_transaction(result['address'])
+    input_transaction_dict = self.client.btc._get_json_transaction(input_transaction)
+
+    inputs = [{'txid': input_transaction_dict['txid'], 'vout':0}]
+    _, client_address = self.get_client_pubkey_address()
+    outputs = {client_address: 1.0}
+
+    prevtxs = []
+    script_pub_key = input_transaction_dict['vout'][0]['scriptPubKey']['hex']
+    prevtx = {
+        "scriptPubKey": script_pub_key,
+        "redeemScript": result['redeemScript'],
+        "txid": input_transaction_dict['txid'],
+        "vout": 0
+    }
+    prevtxs.append(prevtx)
+
+    return self.client.create_multisig_transaction(inputs, outputs), prevtxs
+
   def test_create_multisig_address_correct(self):
     result = self.create_multisig()
 
@@ -122,13 +143,10 @@ class ClientTests(unittest.TestCase):
     self.assertGreater(len(oracles), 0)
 
   def test_create_transaction(self):
-    result = self.create_multisig()
-    input_transaction = self.create_fake_transaction(result['address'])
-    input_transaction_dict = self.client.btc._get_json_transaction(input_transaction)
-
-    inputs = [{'txid': input_transaction_dict['txid'], 'vout':0}]
-    _, client_address = self.get_client_pubkey_address()
-    outputs = {client_address: 1.0}
-
-    self.client.create_multisig_transaction(inputs, outputs)
     # If no errors occured then transaction is assumed to be valid
+    self.create_transaction()
+
+  def test_create_signed_transaction(self):
+    unsigned_transaction, prevtx = self.create_transaction()
+    signed_transaction = self.client.sign_transaction(unsigned_transaction, prevtx)
+    self.assertEquals(self.client.btc.signatures_number(signed_transaction, prevtx), 3)

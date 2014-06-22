@@ -6,6 +6,7 @@ from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 from collections import Counter
 from decimal import getcontext
+from xmlrpclib import ProtocolError
 
 import os
 import unittest
@@ -61,4 +62,10 @@ class ClientTests(unittest.TestCase):
     for addr in expected_addresses:
       self.assertEquals(address_counter[addr], 1)
 
+  def test_create_multisig_address_invalid_pubkey(self):
+    client_pubkey = "020323notavalidpubkey234"
+    oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
+    req_sigs = 3
 
+    with self.assertRaises(ProtocolError):
+      self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)

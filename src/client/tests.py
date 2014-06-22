@@ -28,10 +28,6 @@ class MockOracleClient(OracleClient):
     self.btc = BitcoinClient()
     self.bm = MockBitmessageClient()
     self.db = MockClientDb()
-    self.update_oracle_list()
-
-  def update_oracle_list(self):
-    pass
 
 class ClientTests(unittest.TestCase):
   def setUp(self):
@@ -86,3 +82,7 @@ class ClientTests(unittest.TestCase):
     oracles = OracleListDb(self.client.db).get_all_oracles()
     self.assertEquals(len(oracles), 1)
 
+  def test_update_oracle_list(self):
+    self.client.update_oracle_list()
+    oracles = OracleListDb(self.client.db).get_all_oracles()
+    self.assertGreater(len(oracles), 0)

@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from oracle.tests import OracleTests
 from client.tests import ClientTests
 

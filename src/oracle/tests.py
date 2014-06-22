@@ -244,3 +244,16 @@ class OracleTests(unittest.TestCase):
     signs = self.oracle.btc.signatures_number(transaction, prevtx)
     self.assertEqual(signs, 4)
 
+  def test_signature_number(self):
+    transaction, prevtx, pubkeys = self.create_signed_transaction()
+    self.assertEqual(self.oracle.btc.signatures_number(transaction, prevtx), 3)
+
+    signed_transaction = self.oracle.btc.sign_transaction(transaction, prevtx)
+    self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 4)
+
+    unsigned_transaction, prevtx, pubkeys = self.create_unsigned_transaction()
+    self.assertEqual(self.oracle.btc.signatures_number(unsigned_transaction, prevtx), 0)
+
+    signed_transaction = self.oracle.btc.sign_transaction(unsigned_transaction, prevtx)
+    self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
+

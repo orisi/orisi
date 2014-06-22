@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from collections import defaultdict
 from client import OracleClient
 import sys
@@ -113,7 +114,7 @@ def send_transaction(args):
 
 def add_raw_transaction(args):
   """
-  Adds hex transaction to DB, it will be used later 
+  Adds hex transaction to DB, it will be used later
   to create your multisig transaction.
   """
   if len(args) < 1:
@@ -149,7 +150,7 @@ def create_request(args):
     ...
   ] WARNING add raw transaction first with python main.py addrawtransaction
   2. receiver_address string (for now only one receiver, will get amount-minersfee-oraclesfee)
-  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction, 
+  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction,
     oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
     no then add oracles with python main.py addoracle)
   4. locktime

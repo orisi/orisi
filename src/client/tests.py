@@ -111,9 +111,10 @@ class ClientTests(unittest.TestCase):
       self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)
 
   def test_add_oracle(self):
-    self.client.add_oracle(ADDRESSES['client_pubkey'], ADDRESSES['client_address'], 0.0001)
+    for oracle in ADDRESSES['oracles']:
+      self.client.add_oracle(oracle['pubkey'], oracle['address'], 0.0001)
     oracles = OracleListDb(self.client.db).get_all_oracles()
-    self.assertEquals(len(oracles), 1)
+    self.assertEquals(len(oracles), len(ADDRESSES['oracles']))
 
   def test_update_oracle_list(self):
     self.client.update_oracle_list()
@@ -126,7 +127,8 @@ class ClientTests(unittest.TestCase):
     input_transaction_dict = self.client.btc._get_json_transaction(input_transaction)
 
     inputs = [{'txid': input_transaction_dict['txid'], 'vout':0}]
-    outputs = {ADDRESSES['client_address']: 1.0}
+    _, client_address = self.get_client_pubkey_address()
+    outputs = {client_address: 1.0}
 
     self.client.create_multisig_transaction(inputs, outputs)
     # If no errors occured then transaction is assumed to be valid

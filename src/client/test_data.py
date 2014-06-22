@@ -1,8 +1,6 @@
 import json
 
 PREGENERATED_ADDRESSES_JSON = """{
-    "client_pubkey": "02997bd658fe9df0706596e341a2fa8d2ac58111a88c0b7afa0fc3a7b9e32d4f5c",
-    "client_address": "12GyMKmujGuR1pwAWDiNoMGcnsBNhKwav3",
     "oracles": [
         {
             "address": "1GKwKyRqB4tURDFvsEG5Hfr6ApWhNRzQE8",

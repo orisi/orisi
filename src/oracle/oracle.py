@@ -229,53 +229,19 @@ class Oracle:
       logging.debug("Task has invalid operation")
       self.task_queue.done(task)
 
-  def filter_tasks(self, task):
-    rqhs = task['filter_field']
-    match = re.match(r'^rqhs:(.*)', rqhs)
-    if not match:
-      return
-    rqhs = match.group(1)
-
-    other_tasks = self.task_queue.get_similar(task)
-    most_signatures = 0
-    task_sig = []
-    for task in other_tasks:
-      body = json.loads(task['json_data'])
-
-      transactions = body['transactions']
-      min_sig_for_tx = 999
-      for tx in transactions:
-        raw_transaction = tx['raw_transaction']
-        prevtx = tx['prevtx']
-        signatures_for_tx = self.btc.signatures_number(
-            raw_transaction,
-            prevtx)
-        min_sig_for_tx = min(min_sig_for_tx, signatures_for_tx)
-      task_sig.append((task, min_sig_for_tx))
-      most_signatures = max(most_signatures, signatures_for_tx)
-
-    # If there is already a transaction that has MORE signatures than what we
-    # have here - then ignore all tasks
-    signs_for_transaction = HandledTransaction(self.db).signs_for_transaction(rqhs)
-
-    if signs_for_transaction > most_signatures:
-      tasks_to_do = []
-      redundant = [t[0] for t in task_sig]
-    else:
-      tasks_to_do = [t[0] for t in task_sig if t[1] == most_signatures]
-      redundant = [t[0] for t in task_sig if t not in tasks_to_do]
-
-    HandledTransaction(self.db).update_tx(rqhs, most_signatures)
-    for r in redundant:
-      self.task_queue.done(r)
-    return tasks_to_do
-
   def get_tasks(self):
     task = self.task_queue.get_oldest_task()
-    if task:
-      tasks = self.filter_tasks(task)
+    if not task:
+      return []
+
+    operation = task['operation']
+    handler = self.task_handlers[operation]
+    if handler:
+      tasks = handler(self).filter_tasks(task)
       return tasks
-    return []
+    else:
+      logging.debug("Task has invalid operation")
+      self.task_queue.done(task)
 
   def run(self):
 

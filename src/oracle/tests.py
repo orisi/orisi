@@ -157,8 +157,7 @@ class OracleTests(unittest.TestCase):
 
   def test_add_task(self):
     self.add_request()
-    task = self.oracle.task_queue.get_oldest_task()
-    tasks = self.oracle.filter_tasks(task)
+    tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 1)
 
     self.oracle.task_queue.done(tasks[0])

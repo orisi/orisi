@@ -110,7 +110,7 @@ class OracleClient:
 
   def prepare_request(self, transaction, locktime, condition, prevtx, pubkey_list, req_sigs):
     message = json.dumps({
-      "operation": "transaction",
+      "operation": "conditioned_transaction",
       "transactions": [
         {
           "raw_transaction": transaction,
@@ -134,7 +134,7 @@ class OracleClient:
 
   def send_transaction(self, request):
     self.save_transaction(request)
-    self.bm.send_message(self.bm.chan_address, "TransactionRequest", request)
+    self.bm.send_message(self.bm.chan_address, "conditioned_transaction", request)
 
   def add_raw_transaction(self, raw_transaction):
     if not self.btc.is_valid_transaction(raw_transaction):

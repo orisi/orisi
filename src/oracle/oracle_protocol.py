@@ -1,7 +1,7 @@
 import json
 
 class OPERATION:
-  TRANSACTION = 'TransactionRequest'
+  TRANSACTION = 'conditioned_transaction'
 
 class RESPONSE:
   CONFIRMED = 'transaction accepted and added to queue'
@@ -22,7 +22,7 @@ class SUBJECT:
   NO_FEE = 'MissingOracleFee'
 
 VALID_OPERATIONS = {
-    'transaction': OPERATION.TRANSACTION
+    'conditioned_transaction': OPERATION.TRANSACTION
 }
 
 OPERATION_REQUIRED_FIELDS = {
@@ -39,6 +39,6 @@ RAW_RESPONSE = {
 IDENTITY_SUBJECT = 'IdentityBroadcast'
 IDENTITY_MESSAGE_RAW = {
   "response": "active",
-  "version": PROTOCOL_VERSION 
+  "version": PROTOCOL_VERSION
 }
 IDENTITY_MESSAGE = json.dumps(IDENTITY_MESSAGE_RAW)

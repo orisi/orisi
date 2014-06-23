@@ -291,13 +291,13 @@ class ClientTests(unittest.TestCase):
     receiver_address = self.get_addresses(2)[-1]
 
     self.assertEquals(
-        'TransactionRequest',
+        'conditioned_transaction',
         MockOracleCommunication().corresponds_to_protocol(MockMessage(request)))
 
     request_dict = json.loads(request)
     self.assertEquals(request_dict['req_sigs'], 6)
     self.assertEquals(request_dict['locktime'], 100)
-    self.assertEquals(request_dict['operation'], 'transaction')
+    self.assertEquals(request_dict['operation'], 'conditioned_transaction')
 
     transactions = request_dict['transactions']
     self.assertEquals(len(transactions), 1)

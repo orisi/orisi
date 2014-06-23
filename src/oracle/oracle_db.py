@@ -11,7 +11,7 @@ class OracleDb(GeneralDb):
     self._filename = ORACLE_FILE
     self.connect()
     operations = {
-      'TransactionRequest': TransactionRequestDb
+      'conditioned_transaction': TransactionRequestDb
     }
     self.operations = defaultdict(lambda: False, operations)
 

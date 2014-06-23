@@ -2,6 +2,7 @@ from oracle import Oracle
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 from condition_evaluator.evaluator import Evaluator
 from task_handler.handlers import ConditionedTransactionTaskHandler
+from request_handler.handlers import ConditionedTransactionRequestHandler
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -39,7 +40,7 @@ def create_message(tx, prevtx, pubkeys):
     }}],
     "pubkey_json": {2},
     "req_sigs": 4,
-    "operation": "transaction",
+    "operation": "conditioned_transaction",
     "locktime": 1402318623,
     "condition": "True"}}
     """.format(tx, prevtx, pubkeys))
@@ -54,7 +55,7 @@ class MockOracleDb(OracleDb):
     self._filename = TEMP_DB_FILE
     self.connect()
     operations = {
-      'TransactionRequest': TransactionRequestDb
+      'conditioned_transaction': TransactionRequestDb
     }
     self.operations = defaultdict(lambda: False, operations)
 
@@ -71,17 +72,19 @@ class MockOracle(Oracle):
 
     self.task_queue = TaskQueue(self.db)
 
-    self.operations = {
-      'TransactionRequest': self.add_transaction,
-    }
     handlers = {
       'conditioned_transaction': ConditionedTransactionTaskHandler
     }
     self.task_handlers = defaultdict(lambda: None, handlers)
+    request_handlers = {
+      'conditioned_transaction': ConditionedTransactionRequestHandler
+    }
+    self.request_handlers = defaultdict(lambda: None, request_handlers)
 
 class OracleTests(unittest.TestCase):
   def setUp(self):
     self.oracle = MockOracle()
+    self.conditioned_request_handler = ConditionedTransactionRequestHandler(self.oracle)
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)
@@ -139,15 +142,15 @@ class OracleTests(unittest.TestCase):
     signed = self.oracle.btc.sign_transaction(unsigned, prevtx, FAKE_PRIVKEYS)
     return signed, prevtx, pubkeys
 
-  def create_request(self):
+  def create_conditioned_transaction_request(self):
     transaction, prevtx, pubkeys = self.create_signed_transaction()
     message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
-    rqhs = self.oracle.get_request_hash(json.loads(message.message))
-    request = ('TransactionRequest', message)
+    rqhs = self.conditioned_request_handler.get_request_hash(json.loads(message.message))
+    request = ('conditioned_transaction', message)
     return request, rqhs
 
   def add_request(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     self.oracle.handle_request(request)
     return rqhs
 
@@ -166,7 +169,7 @@ class OracleTests(unittest.TestCase):
     self.assertIsNone(task)
 
   def test_reject_task_more_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs": 4})
@@ -176,7 +179,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(tasks), 0)
 
   def test_accept_task_same_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":3})
@@ -186,7 +189,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(tasks), 1)
 
   def test_update_task_less_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":1})
@@ -204,7 +207,7 @@ class OracleTests(unittest.TestCase):
   def test_choosing_bigger_transaction(self):
     transaction, prevtx, pubkeys = self.create_unsigned_transaction()
     message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
-    request = ('TransactionRequest', message)
+    request = ('conditioned_transaction', message)
     self.oracle.handle_request(request)
 
     rqhs = self.add_request()

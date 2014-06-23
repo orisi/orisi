@@ -1,4 +1,4 @@
-from client import OracleClient, TransactionUnknownError, AddressMissingError
+from client import OracleClient, TransactionUnknownError, AddressMissingError, TooSmallAmountError
 from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
 from test_data import ADDRESSES
 
@@ -78,10 +78,10 @@ class ClientTests(unittest.TestCase):
     result = self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)
     return result
 
-  def create_fake_transaction(self, address=ADDRESSES['oracles'][0]['address']):
+  def create_fake_transaction(self, address=ADDRESSES['oracles'][0]['address'], amount=1.0):
     transaction = self.client.btc.create_multisig_transaction(
         [{"txid":FAKE_TXID, "vout":0}],
-        {address:1.0}
+        {address:amount}
     )
     return transaction
 
@@ -251,10 +251,10 @@ class ClientTests(unittest.TestCase):
     with self.assertRaises(AddressMissingError):
       prevtx = self.client.prepare_prevtx(prevtx)
 
-  def test_create_request_valid(self):
+  def create_fake_request(self, amount = 1.0):
     result = self.create_multisig()
     address = result['address']
-    fake_transaction = self.create_fake_transaction(address)
+    fake_transaction = self.create_fake_transaction(address, amount)
     fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
     self.client.add_raw_transaction(fake_transaction)
 
@@ -265,11 +265,15 @@ class ClientTests(unittest.TestCase):
 
     oracle_addresses = [e['address'] for e in ADDRESSES['oracles']]
     receiver_address = self.get_addresses(2)[-1]
-    request = self.client.create_request(
+    return self.client.create_request(
         inputs,
         receiver_address,
         oracle_addresses,
         100)
+
+  def test_create_request_valid(self):
+    request = self.create_fake_request()
+    receiver_address = self.get_addresses(2)[-1]
 
     self.assertEquals(
         'TransactionRequest',
@@ -298,3 +302,11 @@ class ClientTests(unittest.TestCase):
     for oracle in ADDRESSES['oracles']:
       self.assertAlmostEqual(outputs[oracle['address']], Decimal("0.0001"), 8)
     self.assertAlmostEqual(outputs[receiver_address], Decimal("0.9994"), 8)
+
+  def test_create_request_invalid_not_enough_for_oracles(self):
+    with self.assertRaises(TooSmallAmountError):
+      self.create_fake_request(0.0004)
+
+  def test_create_request_invalid_not_enough_for_receiver(self):
+    with self.assertRaises(TooSmallAmountError):
+      self.create_fake_request(0.0006)

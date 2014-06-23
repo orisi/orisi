@@ -70,12 +70,23 @@ class OracleClient:
       OracleCheckDb(self.db).save({"last_check": current_time})
 
 
-  def create_multisig_address(self, client_pubkey, oracle_pubkey_list, min_sigs):
-    max_sigs = len(oracle_pubkey_list)
-    difference = max_sigs - min_sigs
+  def create_multisig_address(self, client_pubkey, oracle_pubkey_list, min_sigs, blocking=True):
+    """
+    Creates multisig address between client and oracles.
+    blocking is responsible for creating either address, that requires many client
+    signatures (low trust for oracles), or only one signature (high trust for oracle).
+    One signature is required only for address to be unique.
+    client_pubkey should be choosen freshly every time
+    """
+    if blocking:
+      max_sigs = len(oracle_pubkey_list)
+      difference = max_sigs - min_sigs
 
-    real_min_sigs = max_sigs + 1
-    client_sig_number = difference + 1
+      real_min_sigs = max_sigs + 1
+      client_sig_number = difference + 1
+    else:
+      real_min_sigs = min_sigs + 1
+      client_sig_number = 1
 
     key_list = [client_pubkey for _ in range(client_sig_number)] + oracle_pubkey_list
     response = self.btc.create_multisig_address(real_min_sigs, key_list)

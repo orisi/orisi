@@ -2,10 +2,11 @@ from client import OracleClient, TransactionUnknownError, AddressMissingError
 from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
 from test_data import ADDRESSES
 
+from oracle.oracle_communication import OracleCommunication
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 from collections import Counter
-from decimal import getcontext
+from decimal import getcontext, Decimal
 from xmlrpclib import ProtocolError
 
 import json
@@ -19,6 +20,10 @@ FAKE_TXID = '3bda4918180fd55775a24580652f4c26d898d5840c7e71313491a05ef0b743d8'
 class MockBitmessageClient:
   pass
 
+class MockOracleCommunication(OracleCommunication):
+  def __init__(self):
+    self.client = MockBitmessageClient()
+
 class MockClientDb(ClientDb):
   def __init__(self):
     self._filename = TEMP_CLIENT_DB_FILE
@@ -26,14 +31,19 @@ class MockClientDb(ClientDb):
 
 class MockOracleClient(OracleClient):
   def __init__(self):
-    getcontext().prec=8
+    getcontext().prec = 8
     self.btc = BitcoinClient(account = TEST_ACCOUNT)
     self.bm = MockBitmessageClient()
     self.db = MockClientDb()
 
+class MockMessage():
+  def __init__(self, msg):
+    self.message = msg
+
 class ClientTests(unittest.TestCase):
   def setUp(self):
     self.client = MockOracleClient()
+    getcontext().prec = 8
 
   def tearDown(self):
     os.remove(TEMP_CLIENT_DB_FILE)
@@ -241,3 +251,50 @@ class ClientTests(unittest.TestCase):
     with self.assertRaises(AddressMissingError):
       prevtx = self.client.prepare_prevtx(prevtx)
 
+  def test_create_request_valid(self):
+    result = self.create_multisig()
+    address = result['address']
+    fake_transaction = self.create_fake_transaction(address)
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    self.client.add_raw_transaction(fake_transaction)
+
+    inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}]
+
+    for oracle in ADDRESSES['oracles']:
+      self.client.add_oracle(oracle['pubkey'], oracle['address'], 0.0001)
+
+    oracle_addresses = [e['address'] for e in ADDRESSES['oracles']]
+    receiver_address = self.get_addresses(2)[-1]
+    request = self.client.create_request(
+        inputs,
+        receiver_address,
+        oracle_addresses,
+        100)
+
+    self.assertEquals(
+        'TransactionRequest',
+        MockOracleCommunication().corresponds_to_protocol(MockMessage(request)))
+
+    request_dict = json.loads(request)
+    self.assertEquals(request_dict['req_sigs'], 6)
+    self.assertEquals(request_dict['locktime'], 100)
+    self.assertEquals(request_dict['operation'], 'transaction')
+
+    transactions = request_dict['transactions']
+    self.assertEquals(len(transactions), 1)
+
+    transaction = transactions[0]
+    self.assertEquals(self.client.btc.signatures_number(transaction['raw_transaction'], transaction['prevtx']), 3)
+    transaction_dict = self.client.btc._get_json_transaction(transaction['raw_transaction'])
+
+    outs = transaction_dict['vout']
+    output_sum = sum([Decimal(o['value']) for o in outs])
+    # Fee for miners included?
+    self.assertEquals(output_sum, Decimal("0.9999"))
+
+    outputs = {}
+    for o in outs:
+      outputs[o['scriptPubKey']['addresses'][0]] = Decimal(o['value'])
+    for oracle in ADDRESSES['oracles']:
+      self.assertAlmostEqual(outputs[oracle['address']], Decimal("0.0001"), 8)
+    self.assertAlmostEqual(outputs[receiver_address], Decimal("0.9994"), 8)

@@ -38,6 +38,12 @@ class AddressMissingError(Exception):
 class TransactionUnknownError(Exception):
   pass
 
+class NoInputsError(Exception):
+  pass
+
+class TooSmallAmountError(Exception):
+  pass
+
 class OracleClient:
   def __init__(self):
     getcontext().prec=8
@@ -204,44 +210,40 @@ class OracleClient:
           raise AddressMissingError()
         return addr_info
 
-  def create_request(self, tx_inputs, receiver_address, oracle_addresses, locktime=0, condition="True"):
+  def create_request(
+      self,
+      tx_inputs,
+      receiver_address,
+      oracle_addresses,
+      locktime=0,
+      condition="True"):
+
     if len(tx_inputs) == 0:
-      print "you need to provide at least one input"
-      return
+      raise NoInputsError()
 
     amount = self.get_amount_from_inputs(tx_inputs)
-    try:
-      oracles = self.get_oracles(oracle_addresses)
-    except OracleMissingError:
-      print "one of the oracles you specified is not in database, add it by hand with python main.py addoracle"
-      return
+    oracles = self.get_oracles(oracle_addresses)
 
     # First let's substract what's going on fees
     amount -= Decimal(MINERS_FEE)
 
     outputs = {}
     for oracle in oracles:
-      outputs[oracle['address']] = float(oracle['fee'])
+      if not oracle['address'] in outputs:
+        outputs[oracle['address']] = 0
+      outputs[oracle['address']] += float(oracle['fee'])
       amount -= Decimal(oracle['fee'])
 
     if amount <= Decimal('0'):
-      print "tx inputs value is lesser than fees"
-      return
+      raise TooSmallAmountError()
 
-    outputs[receiver_address] = float(amount)
+    if receiver_address not in outputs:
+      outputs[receiver_address] = 0
+    outputs[receiver_address] += float(amount)
 
     raw_transaction = self.create_multisig_transaction(tx_inputs, outputs)
 
-    try:
-      prevtx = self.prepare_prevtx(tx_inputs)
-    except UnsupportedTransactionError:
-      print "one of inputs has more than one address in outputs, unsupported"
-      return
-    except AddressMissingError:
-      print "one of addresses from inputs is not in address database, add multisig \
-          address with python main.py getmultiaddress"
-      return
-
+    prevtx = self.prepare_prevtx(tx_inputs)
     signed_transaction = self.sign_transaction(raw_transaction, prevtx)
 
     multisig_info = self.get_address(tx_inputs[0])

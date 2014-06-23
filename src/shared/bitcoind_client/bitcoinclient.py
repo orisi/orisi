@@ -1,6 +1,5 @@
 from settings_local import *
 
-import hashlib
 import json
 import jsonrpclib
 from xmlrpclib import ProtocolError
@@ -9,7 +8,8 @@ from decimal import Decimal
 
 class BitcoinClient:
 
-  def __init__(self):
+  def __init__(self, account=None):
+    self.account = account
     self.connect()
 
   def connect(self):
@@ -34,8 +34,11 @@ class BitcoinClient:
     return self.server.decoderawtransaction(hex_transaction)
 
   @keep_alive
-  def sign_transaction(self, raw_transaction, prevtx = []):
-    result = self.server.signrawtransaction(raw_transaction, prevtx)
+  def sign_transaction(self, raw_transaction, prevtx = [], priv=None):
+    if priv:
+      result = self.server.signrawtransaction(raw_transaction, prevtx, priv)
+    else:
+      result = self.server.signrawtransaction(raw_transaction, prevtx)
     return result['hex']
 
   @keep_alive
@@ -62,7 +65,7 @@ class BitcoinClient:
       asm_elements = asm.split()
       try:
         asm_script_dict = self.server.decodescript(redeem_script)
-        req_sigs = int(asm_script_dict['reqSigs'])
+        int(asm_script_dict['reqSigs'])
       except KeyError:
         logging.error('script is missing reqSigs field')
         continue
@@ -76,7 +79,7 @@ class BitcoinClient:
   def is_valid_transaction(self, raw_transaction):
     # Is raw transaction valid and decodable?
     try:
-      transaction = self._get_json_transaction(raw_transaction)
+      self._get_json_transaction(raw_transaction)
     except ProtocolError:
       return False
     return True
@@ -102,8 +105,8 @@ class BitcoinClient:
             {
               'vout': sorted([
                 {
-                  "value": vout["value"], 
-                  "addresses": vout["scriptPubKey"]["addresses"]
+                  "value": vout["value"],
+                  "scriptPubKey": vout["scriptPubKey"]["hex"]
                 } for vout in vouts
               ])
             }
@@ -167,6 +170,8 @@ class BitcoinClient:
 
   @keep_alive
   def add_multisig_address(self, min_sigs, keys):
+    if self.account:
+      return self.server.addmultisigaddress(min_sigs, keys, self.account)
     return self.server.addmultisigaddress(min_sigs, keys)
 
   @keep_alive
@@ -174,18 +179,26 @@ class BitcoinClient:
     return self.server.createrawtransaction(tx_inputs, outputs)
 
   @keep_alive
-  def unique_transaction_hash(self, raw_transaction):
-    transaction_dict = self._get_json_transaction(raw_transaction)
-    inputs = transaction_dict['vin']
-    outputs = transaction_dict['vout']
-    inputs_compressed = sorted(['{0}:{1}'.format(i['txid'], i['vout']) for i in inputs])
-    outputs_compressed = sorted(['{0}:{1}'.format(o['scriptPubKey']['hex'], o['value']) for o in outputs])
-    prehash = json.dumps({"i":inputs_compressed, "o":outputs_compressed})
-    return hashlib.sha256(prehash).hexdigest()
-
-  @keep_alive
   def get_address_from_script(self, script):
     script_dict = self.server.decodescript(script)
     return script_dict['p2sh']
 
+  @keep_alive
+  def get_new_address(self):
+    if self.account:
+      return self.server.getnewaddress(self.account)
+    return self.server.getnewaddress()
 
+  @keep_alive
+  def get_addresses_for_account(self, account):
+    all_addresses = self.server.listreceivedbyaddress(0,True)
+    addresses = [elt['address'] for elt in all_addresses if elt['account'] == account]
+    return addresses
+
+  @keep_alive
+  def validate_address(self, address):
+    return self.server.validateaddress(address)
+
+  @keep_alive
+  def decode_script(self, script):
+    return self.server.decodescript(script)

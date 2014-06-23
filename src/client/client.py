@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time
-import hashlib
 import json
 import logging
 
@@ -13,8 +12,8 @@ from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 from shared import liburl_wrapper
 from client_db import (
-    ClientDb, 
-    SignatureRequestDb, 
+    ClientDb,
+    SignatureRequestDb,
     MultisigRedeemDb,
     RawTransactionDb,
     OracleListDb,
@@ -33,6 +32,15 @@ class UnsupportedTransactionError(Exception):
   pass
 
 class AddressMissingError(Exception):
+  pass
+
+class TransactionUnknownError(Exception):
+  pass
+
+class NoInputsError(Exception):
+  pass
+
+class TooSmallAmountError(Exception):
   pass
 
 class OracleClient:
@@ -62,8 +70,7 @@ class OracleClient:
       OracleCheckDb(self.db).save({"last_check": current_time})
 
 
-  def create_multisig_address(self, client_pubkey, oracle_pubkey_list_json, min_sigs):
-    oracle_pubkey_list = json.loads(oracle_pubkey_list_json)
+  def create_multisig_address(self, client_pubkey, oracle_pubkey_list, min_sigs):
     max_sigs = len(oracle_pubkey_list)
     difference = max_sigs - min_sigs
 
@@ -74,7 +81,7 @@ class OracleClient:
     response = self.btc.create_multisig_address(real_min_sigs, key_list)
 
     MultisigRedeemDb(self.db).save({
-        "multisig": response['address'], 
+        "multisig": response['address'],
         "min_sig": real_min_sigs,
         "redeem_script": response['redeemScript'],
         "pubkey_json": json.dumps(sorted(key_list))})
@@ -93,10 +100,14 @@ class OracleClient:
   def prepare_request(self, transaction, locktime, condition, prevtx, pubkey_list, req_sigs):
     message = json.dumps({
       "operation": "transaction",
-      "raw_transaction": transaction,
+      "transactions": [
+        {
+          "raw_transaction": transaction,
+          "prevtx": prevtx,
+        }
+      ],
       "locktime": locktime,
       "condition": condition,
-      "prevtx": prevtx,
       "pubkey_json": pubkey_list,
       "req_sigs": req_sigs
     })
@@ -104,13 +115,11 @@ class OracleClient:
 
   def save_transaction(self, request):
     try:
-      raw_request = json.loads(request)
+      json.loads(request)
     except ValueError:
       logging.error("request is invalid JSON")
       return
-    prevtx = json.dumps(raw_request['prevtx'])
-    prevtx_hash = hashlib.sha256(prevtx).hexdigest()
-    SignatureRequestDb(self.db).save({"prevtx_hash": prevtx_hash, "json_data": request})
+    SignatureRequestDb(self.db).save({"json_data": request})
 
   def send_transaction(self, request):
     self.save_transaction(request)
@@ -127,19 +136,25 @@ class OracleClient:
     return txid
 
   def add_oracle(self, pubkey, address, fee):
+    # TODO: check if pubkey is valid and corresponding to address, check if fee is valid
     OracleListDb(self.db).save({
         "pubkey": pubkey,
         "address": address,
         "fee": fee})
 
-  def get_amount_from_inputs(self, tx_inputs):
+  def get_amount_from_inputs(self, raw_tx_inputs):
     amount = Decimal("0")
+
+    # Filters duplicates - can't use sets - dict is unhashable
+    tx_inputs = []
+    for tx in raw_tx_inputs:
+      if tx not in tx_inputs:
+        tx_inputs.append(tx)
+
     for tx in tx_inputs:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
+        raise TransactionUnknownError()
       transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:
@@ -154,29 +169,11 @@ class OracleClient:
       raise OracleMissingError()
     return oracles
 
-  def get_scripts_from_inputs(self, tx_inputs):
-    prevtxs = tx_inputs
+  def prepare_prevtx(self, prevtxs):
     for tx in prevtxs:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
-      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
-      vouts = transaction_dict['vout']
-      for v in vouts:
-        if v['n'] == tx['vout']:
-          tx['scriptPubKey'] = v['scriptPubKey']['hex']
-          break
-    return prevtxs
-
-  def get_redeem(self, prevtxs):
-    for tx in prevtxs:
-      raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
-      if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
+        raise TransactionUnknownError()
       transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:
@@ -189,15 +186,14 @@ class OracleClient:
           if not addr_info:
             raise AddressMissingError()
           tx['redeemScript'] = addr_info['redeem_script']
+          tx['scriptPubKey'] = v['scriptPubKey']['hex']
           break
     return prevtxs
 
   def get_address(self, tx):
     raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
     if not raw_transaction:
-      print "transaction {0} is not in database, \
-          please add transaction with python main.py addtransaction"
-      return
+      raise TransactionUnknownError()
     transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
     vouts = transaction_dict['vout']
     for v in vouts:
@@ -211,45 +207,40 @@ class OracleClient:
           raise AddressMissingError()
         return addr_info
 
-  def create_request(self, tx_inputs, receiver_address, oracle_addresses, locktime=0, condition="True"):
+  def create_request(
+      self,
+      tx_inputs,
+      receiver_address,
+      oracle_addresses,
+      locktime=0,
+      condition="True"):
+
     if len(tx_inputs) == 0:
-      print "you need to provide at least one input"
-      return
+      raise NoInputsError()
 
     amount = self.get_amount_from_inputs(tx_inputs)
-    try:
-      oracles = self.get_oracles(oracle_addresses)
-    except OracleMissingError:
-      print "one of the oracles you specified is not in database, add it by hand with python main.py addoracle"
-      return
+    oracles = self.get_oracles(oracle_addresses)
 
     # First let's substract what's going on fees
     amount -= Decimal(MINERS_FEE)
 
     outputs = {}
     for oracle in oracles:
-      outputs[oracle['address']] = float(oracle['fee'])
+      if not oracle['address'] in outputs:
+        outputs[oracle['address']] = 0
+      outputs[oracle['address']] += float(oracle['fee'])
       amount -= Decimal(oracle['fee'])
 
     if amount <= Decimal('0'):
-      print "tx inputs value is lesser than fees"
-      return
+      raise TooSmallAmountError()
 
-    outputs[receiver_address] = float(amount)
+    if receiver_address not in outputs:
+      outputs[receiver_address] = 0
+    outputs[receiver_address] += float(amount)
 
     raw_transaction = self.create_multisig_transaction(tx_inputs, outputs)
 
-    prevtx = self.get_scripts_from_inputs(tx_inputs)
-    try:
-      prevtx = self.get_redeem(prevtx)
-    except UnsupportedTransactionError:
-      print "one of inputs has more than one address in outputs, unsupported"
-      return
-    except AddressMissingError:
-      print "one of addresses from inputs is not in address database, add multisig \
-          address with python main.py getmultiaddress"
-      return
-
+    prevtx = self.prepare_prevtx(tx_inputs)
     signed_transaction = self.sign_transaction(raw_transaction, prevtx)
 
     multisig_info = self.get_address(tx_inputs[0])
@@ -258,11 +249,11 @@ class OracleClient:
 
     # Now we have all we need to create proper request
     return self.prepare_request(
-        signed_transaction, 
-        locktime, 
-        condition, 
-        prevtx, 
-        pubkey_list, 
+        signed_transaction,
+        locktime,
+        condition,
+        prevtx,
+        pubkey_list,
         req_sigs)
 
   def list_oracles(self):

@@ -1,11 +1,14 @@
+#!/usr/bin/env python2.7
 from collections import defaultdict
 from client import OracleClient
 import sys
 import json
 
+START_COMMAND = "./client.sh"
+
 def unknown(args):
   """unknown operation"""
-  print "unknown operation, use ./main.py help for possible operations"
+  print "unknown operation, use {} help for possible operations".format(START_COMMAND)
 
 def add_multisig(args):
   """
@@ -25,7 +28,11 @@ def add_multisig(args):
     number_of_sigs = int(args[1])
   except ValueError:
     print "number_of_sigs must be int"
-  print c.create_multisig_address(client_pubkey, oracle_pubkeys, number_of_sigs)
+  try:
+    oracle_pubkey_list = json.loads(oracle_pubkeys)
+  except ValueError:
+    print "pubkey_list not valid json"
+  print c.create_multisig_address(client_pubkey, oracle_pubkey_list, number_of_sigs)
   print "send bitcoins you want to use to that transaction, then add transaction \
       either with addrawtransaction (hex transaction as argument), or with \
       addtransaction (txid as argument, ONLY IF the transaction was send locally, \
@@ -35,11 +42,11 @@ def describe_protocol(args):
   """Describes how to create full transaction step by step"""
   steps = [
     "Get oracles' public keys as json list",
-    "Create address with getmultiaddress (python main.py help for more info)",
+    "Create address with getmultiaddress ({0} help for more info)".format(START_COMMAND),
     "Send coins you want to lock on that address, save transaction",
     "Use addrawtransaction to save transaction you've created (see more with help)",
-    "Prepare request with python main.py preparerequest (python main.py help for more info)",
-    "Send request with python main.py sendrequest"
+    "Prepare request with {0} preparerequest ({0} help for more info)".format(START_COMMAND),
+    "Send request with {0} sendrequest".format(START_COMMAND)
   ]
   for idx, step in enumerate(steps):
     print "{}. {}".format(idx+1, step)
@@ -113,7 +120,7 @@ def send_transaction(args):
 
 def add_raw_transaction(args):
   """
-  Adds hex transaction to DB, it will be used later 
+  Adds hex transaction to DB, it will be used later
   to create your multisig transaction.
   """
   if len(args) < 1:
@@ -147,14 +154,14 @@ def create_request(args):
       "vout": 0
     },
     ...
-  ] WARNING add raw transaction first with python main.py addrawtransaction
+  ] WARNING add raw transaction first with {0} addrawtransaction
   2. receiver_address string (for now only one receiver, will get amount-minersfee-oraclesfee)
-  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction, 
+  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction,
     oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
-    no then add oracles with python main.py addoracle)
+    no then add oracles with {0} addoracle)
   4. locktime
   5. condition (unused, useful in future for complicated tasks)
-  """
+  """.format(START_COMMAND)
   if len(args) < 4:
     print "not enough arguments"
     return
@@ -218,7 +225,7 @@ def help():
   print "You can use one of the following functions:"
   for name, desc in SHORT_DESCRIPTIONS.iteritems():
     print "{0} - {1}".format(name, desc)
-  print "Learn more by using python main.py help functionname"
+  print "Learn more by using {0} help functionname".format(START_COMMAND)
 
 def help_fun(fun_name):
   fun = OPERATIONS[fun_name]
@@ -226,7 +233,7 @@ def help_fun(fun_name):
 
 def main(args):
   if len(args) == 0:
-    print "no arguments given, use ./main.py help for possible operations"
+    print "no arguments given, use {0} help for possible operations".format(START_COMMAND)
     return
   if args[0] == 'help':
     if len(args) == 1:

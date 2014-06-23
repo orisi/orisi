@@ -1,39 +1,52 @@
 from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
+from condition_evaluator.evaluator import Evaluator
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 import base64
 import json
-import logging
 import os
 import unittest
 
 from collections import defaultdict
 
 TEMP_DB_FILE = 'temp_db_file.db'
-RAW_TRANSACTION = "010000000144c1ae801383d9e65df8b0f7c6d65f976ceb3c087d3b33c7087f66388f581cfb00000000fd4101004730440220148ce15f921b2e073b70b4b1aa32f3e13bed7992d94ff1d48cba15323ceb1ac1022047bf4c17628a37baa2107cb0b117272c8ecfd57c94fd73248c3ca1a824b470dd01483045022100c6da3c358d50f05cd7e72f92b46449486fef9f3a8a8ff75047c60a566227823c02205187c4edb265ed9672ede1f52d1dab9925cf6af2ba930f2319fbbc0d454697bb014cad542102e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a21022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c2103a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce9962103c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5210271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da555aeffffffff01204e0000000000001976a914f77ddab3ea50377e1ce8995b1eb52310e43b43e988ac00000000"
-UNSIGNED_RAW_TRANSACTION = "010000000144c1ae801383d9e65df8b0f7c6d65f976ceb3c087d3b33c7087f66388f581cfb0000000000ffffffff01204e0000000000001976a914f77ddab3ea50377e1ce8995b1eb52310e43b43e988ac00000000"
-TXID = "b1e1dc2077f6a8dd9e1d53e5922ec556cce536e62cd078f3e862b116bbfcc323"
+TEST_ACCOUNT = 'oracle_test_account'
+FAKE_TXID = '3bda4918180fd55775a24580652f4c26d898d5840c7e71313491a05ef0b743d8'
+FAKE_PUBKEYS = [
+  "0446ea8a207cb52c15c36bed7fb4cabc6d86df92ae0e1d32eb5274352c41fe763751150205aa93b07432030e9fe9f4a3e546925656c9ea69ab3977d5885215868d",
+  "04ae31650f219e598a2c69beeb97867c9d3a292581af56ee156394f639ee4d6d7d19d2f4c9c565cc962fc5ecb5954edd1df13a8cd49962b8ebb78143c69cff7d6a",
+  "04454a56bd5d554aff9001f330d87936aee45645b56139b3739dc50775c468813cfe74daca943a0d35252631f769618a4f33acb00f75a95f37d3cab55b07884309"
+]
+FAKE_PRIVKEYS = [
+  "5JcfuBf6XcSARDjJsLuLB4JxBmVhHTHhGTqWUvsW5dPGEK6pW3i",
+  "5KDdTzAiw5KZKALWk5jfxdTNwbPgVjqNf4fYdvq4pQT6enV7GrL",
+  "5KQADM2LgH1JZDaSdYD6WwbukqCFFo54YDd62sE3KEnbXfscnxo"
+]
 
-def create_message(tx):
+def create_message(tx, prevtx, pubkeys):
   msg_dict = defaultdict(lambda: 'dummy')
   msg_dict['receivedTime'] = 1000
   msg_dict['subject'] = base64.encodestring('dummy')
   msg_dict['message'] = base64.encodestring("""
-    {{"raw_transaction": "{0}", 
-    "prevtx": [{{"txid": "fb1c588f38667f08c7333b7d083ceb6c975fd6c6f7b0f85de6d9831380aec144","vout": 0, "redeemScript":"542102e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a21022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c2103a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce9962103c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5210271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da555ae","scriptPubKey":"a9141cd14546dd7cfeee3b5bdf56d46423acefa51d7687"}}], 
-    "pubkey_json": ["02e6cc83f0e811464e02a0b003d172ddc7ca5342f587306b7f9ff26d4170e5c02a","022864b2e3d86a38dc7f75b681f8461763a7777cd250708a4fb7b5af69255f444c","03a3f790ee5f9c7a2383c62fbc96a8490fffe2c5ea3bff7a8ee050ed4e272ce996","03c46985b570636543289971f1ea787119bd79d0041cc4be284e4a591c7dd9bbc5","0271e5a37045b3a41474286deeba84667ac962548bddafc7f8359e2a80995b5da5"], 
-    "req_sigs": 4, 
-    "operation": "transaction", 
-    "locktime": 1402318623, 
+    {{
+    "transactions": [{{
+        "raw_transaction": "{0}",
+        "prevtx": {1}
+    }}],
+    "pubkey_json": {2},
+    "req_sigs": 4,
+    "operation": "transaction",
+    "locktime": 1402318623,
     "condition": "True"}}
-    """.format(tx))
+    """.format(tx, prevtx, pubkeys))
   message = BitmessageMessage(
       msg_dict,
       'dummyaddress')
   return message
-  
+
 
 class MockOracleDb(OracleDb):
   def __init__(self):
@@ -44,30 +57,101 @@ class MockOracleDb(OracleDb):
     }
     self.operations = defaultdict(lambda: False, operations)
 
+class MockBitmessageCommunication:
+  def broadcast_signed_transaction(self,msg_bd):
+    pass
+
+class MockOracle(Oracle):
+  def __init__(self):
+    self.communication = MockBitmessageCommunication()
+    self.db = MockOracleDb()
+    self.btc = BitcoinClient(account = TEST_ACCOUNT)
+    self.evaluator = Evaluator()
+
+    self.task_queue = TaskQueue(self.db)
+
+    self.operations = {
+      'TransactionRequest': self.add_transaction,
+    }
+
 class OracleTests(unittest.TestCase):
   def setUp(self):
-    self.oracle = Oracle()
-    self.db = MockOracleDb()
-    self.oracle.db = self.db
-    self.oracle.task_queue = TaskQueue(self.db)
+    self.oracle = MockOracle()
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)
 
     # Bitcoind has limited rpc connections
     # We could change them in config, but we can just free resources
+    self.oracle.btc = None
     self.oracle = None
 
-  def test_add_transaction(self):
-    message = create_message(RAW_TRANSACTION)
+  # Helping functions
+  def get_all_addresses(self):
+    return self.oracle.btc.get_addresses_for_account(TEST_ACCOUNT)
+
+  def create_multisig(self):
+    addresses = self.get_all_addresses()
+    for i in range(max(0, 2 - len(addresses))):
+      self.oracle.btc.get_new_address()
+    addresses = self.get_all_addresses()[:2]
+    pubkeys = [self.oracle.btc.validate_address(addr)['pubkey'] for addr in addresses]
+    all_addresses = pubkeys + FAKE_PUBKEYS
+    result = self.oracle.btc.create_multisig_address(4, all_addresses)
+    multisig = result['address']
+    redeem_script = result['redeemScript']
+    self.oracle.btc.add_multisig_address(4, all_addresses)
+    return multisig, redeem_script, all_addresses
+
+  def create_fake_transaction(self, address):
+    transaction = self.oracle.btc.create_multisig_transaction(
+        [{"txid":FAKE_TXID, "vout":0}],
+        {address:1.0}
+    )
+    return transaction
+
+  def create_unsigned_transaction(self):
+    multisig, redeem_script, pubkeys = self.create_multisig()
+    fake_transaction = self.create_fake_transaction(multisig)
+    fake_transaction_dict = self.oracle.btc._get_json_transaction(fake_transaction)
+    transaction = self.oracle.btc.create_multisig_transaction(
+        [{"txid":fake_transaction_dict['txid'], "vout":0}],
+        {"1NJJpSgp55nQKe6DZkzg4VqxRRYcUuJSHz":1.0}
+    )
+    prevtxs = []
+    script_pub_key = fake_transaction_dict['vout'][0]['scriptPubKey']['hex']
+    prevtx = {
+        "scriptPubKey": script_pub_key,
+        "redeemScript": redeem_script,
+        "txid": fake_transaction_dict['txid'],
+        "vout": 0
+    }
+    prevtxs.append(prevtx)
+    return (transaction, prevtxs, pubkeys)
+
+  def create_signed_transaction(self):
+    unsigned, prevtx, pubkeys = self.create_unsigned_transaction()
+    signed = self.oracle.btc.sign_transaction(unsigned, prevtx, FAKE_PRIVKEYS)
+    return signed, prevtx, pubkeys
+
+  def create_request(self):
+    transaction, prevtx, pubkeys = self.create_signed_transaction()
+    message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
+    rqhs = self.oracle.get_request_hash(json.loads(message.message))
     request = ('TransactionRequest', message)
+    return request, rqhs
+
+  def add_request(self):
+    request, rqhs = self.create_request()
     self.oracle.handle_request(request)
-    self.assertEqual(len(TaskQueue(self.db).get_all_tasks()), 1)
+    return rqhs
+
+  def test_add_transaction(self):
+    self.add_request()
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 1)
 
   def test_add_task(self):
-    message = create_message(RAW_TRANSACTION)
-    request = ('TransactionRequest', message)
-    self.oracle.handle_request(request)
+    self.add_request()
     task = self.oracle.task_queue.get_oldest_task()
     tasks = self.oracle.filter_tasks(task)
     self.assertEqual(len(tasks), 1)
@@ -78,32 +162,29 @@ class OracleTests(unittest.TestCase):
     self.assertIsNone(task)
 
   def test_reject_task_more_sigs(self):
-    message = create_message(RAW_TRANSACTION)
-    request = ('TransactionRequest', message)
-    HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
-        "max_sigs": 3})
+    request, rqhs = self.create_request()
+    HandledTransaction(self.oracle.db).save({
+        "rqhs": rqhs,
+        "max_sigs": 4})
 
     self.oracle.handle_request(request)
     tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 0)
 
   def test_accept_task_same_sigs(self):
-    message = create_message(RAW_TRANSACTION)
-    request = ('TransactionRequest', message)
-    HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
-        "max_sigs":2})
+    request, rqhs = self.create_request()
+    HandledTransaction(self.oracle.db).save({
+        "rqhs": rqhs,
+        "max_sigs":3})
 
     self.oracle.handle_request(request)
     tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 1)
 
   def test_update_task_less_sigs(self):
-    message = create_message(RAW_TRANSACTION)
-    request = ('TransactionRequest', message)
-    HandledTransaction(self.db).save({
-        "txhs": self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION), 
+    request, rqhs = self.create_request()
+    HandledTransaction(self.oracle.db).save({
+        "rqhs": rqhs,
         "max_sigs":1})
 
     self.oracle.handle_request(request)
@@ -112,37 +193,67 @@ class OracleTests(unittest.TestCase):
 
     self.oracle.task_queue.done(tasks[0])
 
-    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(
-        self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION)), 
-        2)
+    self.assertEqual(HandledTransaction(self.oracle.db).signs_for_transaction(
+        rqhs),
+        3)
 
   def test_choosing_bigger_transaction(self):
-    message = create_message(UNSIGNED_RAW_TRANSACTION)
+    transaction, prevtx, pubkeys = self.create_unsigned_transaction()
+    message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
     request = ('TransactionRequest', message)
     self.oracle.handle_request(request)
 
-    message = create_message(RAW_TRANSACTION)
-    request = ('TransactionRequest', message)
-    self.oracle.handle_request(request)
+    rqhs = self.add_request()
 
     self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 2)
     tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 1)
     task = tasks[0]
     body = json.loads(task['json_data'])
-    raw_transaction = body['raw_transaction']
-    prevtx = body['prevtx']
+    transaction = body['transactions'][0]
+    raw_transaction = transaction['raw_transaction']
+    prevtx = transaction['prevtx']
 
     sigs = self.oracle.btc.signatures_number(raw_transaction, prevtx)
-    self.assertEqual(sigs, 2)
+    self.assertEqual(sigs, 3)
     self.oracle.task_queue.done(task)
 
-    self.assertEqual(HandledTransaction(self.db).signs_for_transaction(self.oracle.btc.unique_transaction_hash(RAW_TRANSACTION)), 2)
+    self.assertEqual(HandledTransaction(self.oracle.db).signs_for_transaction(rqhs), 3)
 
   def test_no_tasks(self):
     tasks = self.oracle.get_tasks()
     self.assertIsInstance(tasks, list)
     self.assertEqual(len(tasks), 0)
 
+  def test_handle_sign(self):
+    self.add_request()
 
-  
+    tasks = self.oracle.get_tasks()
+    self.assertEqual(len(tasks), 1)
+    task = tasks[0]
+
+    self.oracle.handle_task(task)
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 0)
+
+    handled_transaction = SignedTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(handled_transaction), 1)
+
+    handled_transaction = handled_transaction[0]
+    transaction = handled_transaction['hex_transaction']
+    prevtx = json.loads(handled_transaction['prevtx'])
+    signs = self.oracle.btc.signatures_number(transaction, prevtx)
+    self.assertEqual(signs, 4)
+
+  def test_signature_number(self):
+    transaction, prevtx, pubkeys = self.create_signed_transaction()
+    self.assertEqual(self.oracle.btc.signatures_number(transaction, prevtx), 3)
+
+    signed_transaction = self.oracle.btc.sign_transaction(transaction, prevtx)
+    self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 4)
+
+    unsigned_transaction, prevtx, pubkeys = self.create_unsigned_transaction()
+    self.assertEqual(self.oracle.btc.signatures_number(unsigned_transaction, prevtx), 0)
+
+    signed_transaction = self.oracle.btc.sign_transaction(unsigned_transaction, prevtx)
+    self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
+

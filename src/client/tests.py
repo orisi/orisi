@@ -208,3 +208,36 @@ class ClientTests(unittest.TestCase):
     tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
     with self.assertRaises(TransactionUnknownError):
       self.client.get_address(tx_input)
+
+  def test_prepare_prevtx_valid(self):
+    result = self.create_multisig()
+    address = result['address']
+    redeem = result['redeemScript']
+    fake_transaction = self.create_fake_transaction(address)
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    script = fake_transaction_dict['vout'][0]['scriptPubKey']['hex']
+    self.client.add_raw_transaction(fake_transaction)
+
+    prevtx = [{'txid': fake_transaction_dict['txid'], 'vout': 0}]
+    prevtx = self.client.prepare_prevtx(prevtx)
+    prevtx = prevtx[0]
+    self.assertEquals(redeem, prevtx['redeemScript'])
+    self.assertEquals(script, prevtx['scriptPubKey'])
+
+  def test_prepare_prevtx_invalid_unknown_transaction(self):
+    fake_transaction = self.create_fake_transaction()
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+
+    prevtx = [{'txid': fake_transaction_dict['txid'], 'vout': 0}]
+    with self.assertRaises(TransactionUnknownError):
+      prevtx = self.client.prepare_prevtx(prevtx)
+
+  def test_prepare_prevtx_invalid_missing_address(self):
+    fake_transaction = self.create_fake_transaction()
+    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    self.client.add_raw_transaction(fake_transaction)
+
+    prevtx = [{'txid': fake_transaction_dict['txid'], 'vout': 0}]
+    with self.assertRaises(AddressMissingError):
+      prevtx = self.client.prepare_prevtx(prevtx)
+

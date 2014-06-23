@@ -166,29 +166,11 @@ class OracleClient:
       raise OracleMissingError()
     return oracles
 
-  def get_scripts_from_inputs(self, tx_inputs):
-    prevtxs = tx_inputs
+  def prepare_prevtx(self, prevtxs):
     for tx in prevtxs:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
-      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
-      vouts = transaction_dict['vout']
-      for v in vouts:
-        if v['n'] == tx['vout']:
-          tx['scriptPubKey'] = v['scriptPubKey']['hex']
-          break
-    return prevtxs
-
-  def get_redeem(self, prevtxs):
-    for tx in prevtxs:
-      raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
-      if not raw_transaction:
-        print "transaction {0} is not in database, \
-            please add transaction with python main.py addtransaction"
-        return
+        raise TransactionUnknownError()
       transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:
@@ -201,6 +183,7 @@ class OracleClient:
           if not addr_info:
             raise AddressMissingError()
           tx['redeemScript'] = addr_info['redeem_script']
+          tx['scriptPubKey'] = v['scriptPubKey']['hex']
           break
     return prevtxs
 
@@ -249,9 +232,8 @@ class OracleClient:
 
     raw_transaction = self.create_multisig_transaction(tx_inputs, outputs)
 
-    prevtx = self.get_scripts_from_inputs(tx_inputs)
     try:
-      prevtx = self.get_redeem(prevtx)
+      prevtx = self.prepare_prevtx(tx_inputs)
     except UnsupportedTransactionError:
       print "one of inputs has more than one address in outputs, unsupported"
       return

@@ -1,7 +1,8 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from oracle_db import OracleDb, TaskQueue, UsedInput, SignedTransaction, HandledTransaction
+from oracle_db import OracleDb, TaskQueue, UsedInput, HandledTransaction
 from oracle_protocol import RESPONSE, SUBJECT
+from task_handler.handlers import ConditionedTransactionTaskHandler
 from condition_evaluator.evaluator import Evaluator
 
 from settings_local import ORACLE_ADDRESS
@@ -12,6 +13,8 @@ import time
 import logging
 import json
 import re
+
+from collections import defaultdict
 from xmlrpclib import ProtocolError
 
 # 3 minutes between oracles should be sufficient
@@ -32,6 +35,11 @@ class Oracle:
     self.operations = {
       'TransactionRequest': self.add_transaction,
     }
+
+    handlers = {
+      'conditioned_transaction': ConditionedTransactionTaskHandler
+    }
+    self.task_handlers = defaultdict(lambda: None, handlers)
 
   def condition_valid(self, condition):
     return self.evaluator.valid(condition)
@@ -175,6 +183,7 @@ class Oracle:
     add_time = my_turn * HEURISTIC_ADD_TIME
 
     self.task_queue.save({
+        "operation": 'conditioned_transaction',
         "json_data": message.message,
         "filter_field": 'rqhs:{}'.format(rq_hash),
         "done": 0,
@@ -212,29 +221,13 @@ class Oracle:
     return True
 
   def handle_task(self, task):
-    body = json.loads(task['json_data'])
-    condition = body['condition']
-    transactions = body['transactions']
-
-    permissions_to_sign = self.evaluator.permissions_to_sign(condition, transactions)
-
-    if sum(permissions_to_sign) == 0:
-      logging.debug('no signatures for tx')
+    operation = task['operation']
+    handler = self.task_handlers[operation]
+    if handler:
+      handler(self).handle_task(task)
+    else:
+      logging.debug("Task has invalid operation")
       self.task_queue.done(task)
-      return False
-
-    for idx, tx in enumerate(transactions):
-      if permissions_to_sign[idx]:
-        transaction = tx['raw_transaction']
-        prevtx = tx['prevtx']
-        signed_transaction = self.btc.sign_transaction(transaction, prevtx)
-        body['transactions'][idx]['raw_transaction'] = signed_transaction
-        SignedTransaction(self.db).save({
-            "hex_transaction": signed_transaction,
-            "prevtx":json.dumps(prevtx)})
-
-    self.communication.broadcast_signed_transaction(json.dumps(body))
-    self.task_queue.done(task)
 
   def filter_tasks(self, task):
     rqhs = task['filter_field']

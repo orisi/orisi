@@ -45,18 +45,19 @@ class TaskQueue(TableDb):
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
+      operation text not null, \
       json_data text not null, \
       next_check integer not null, \
       filter_field text not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (json_data, filter_field, next_check, done) values (?,?,?,?)"
+  insert_sql = "insert into {0} (operation, json_data, filter_field, next_check, done) values (?,?,?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   all_sql = "select * from {0} where next_check<? and done=0 order by ts"
   similar_sql = "select * from {0} where next_check<? and filter_field=? and done=0"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
-    return [obj["json_data"], obj['filter_field'], obj["next_check"], obj["done"]]
+    return [obj['operation'], obj['json_data'], obj['filter_field'], obj['next_check'], obj['done']]
 
   def get_oldest_task(self):
     cursor = self.db.get_cursor()

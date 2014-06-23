@@ -3,3 +3,6 @@ test_local.py
 *.pyc
 *.db
 *.db-journal
+bitcoin/
+PyBitmessage/
+*.tar.gz

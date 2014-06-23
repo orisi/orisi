@@ -1,6 +1,8 @@
 #!/bin/bash
 
-python27 PyBitmessage/src/bitmessagemain.py > /dev/null &
-bitcoin/bin/32/bitcoind -connect=127.0.0.1 &
+PYTHON_EXEC=python27
+
+$PYTHON_EXEC PyBitmessage/src/bitmessagemain.py > /dev/null &
+bitcoin/bin/$(getconf LONG_BIT)/bitcoind -connect=127.0.0.1 &
 sleep 5
-python27 src/run_oracle.py
+$PYTHON_EXEC src/run_oracle.py

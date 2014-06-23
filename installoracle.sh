@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PYTHON_EXEC=python27
+
 wget https://bitcoin.org/bin/0.9.1/bitcoin-0.9.1-linux.tar.gz
 tar -zxvf bitcoin-0.9.1-linux.tar.gz
 mv ./bitcoin-0.9.1-linux ./bitcoin
@@ -17,14 +19,17 @@ echo rpcuser=bitrpc >> ~/.bitcoin/bitcoin.conf
 echo rpcpassword=$BTCRPC >> ~/.bitcoin/bitcoin.conf
 echo BITCOIND_RPC_PASSWORD = \"$BTCRPC\" >> src/settings_local.py
 
-PyBitmessage/src/bitmessagemain.py > /dev/null &
+$PYTHON_EXEC PyBitmessage/src/bitmessagemain.py > /dev/null &#sleep 5
 sleep 5
-pkill -x python
+pkill -x $PYTHON_EXEC
 
-echo daemon=true >> ~/.config/PyBitmessage/keys.dat
-echo apienabled=true >> ~/.config/PyBitmessage/keys.dat
-echo apiport=8442 >> ~/.config/PyBitmessage/keys.dat
-echo apiinterface=127.0.0.1 >> ~/.config/PyBitmessage/keys.dat
+mkdir ~/.config/
+mkdir ~/.config/PyBitmessage/
+
+echo daemon = true >> ~/.config/PyBitmessage/keys.dat
+echo apienabled = true >> ~/.config/PyBitmessage/keys.dat
+echo apiport = 8442 >> ~/.config/PyBitmessage/keys.dat
+echo apiinterface = 127.0.0.1 >> ~/.config/PyBitmessage/keys.dat
 echo apiusername = bitrpc >> ~/.config/PyBitmessage/keys.dat
 
 BMPW=`openssl rand -hex 32`

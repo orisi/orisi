@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time
-import hashlib
 import json
 import logging
 
@@ -116,13 +115,11 @@ class OracleClient:
 
   def save_transaction(self, request):
     try:
-      raw_request = json.loads(request)
+      json.loads(request)
     except ValueError:
       logging.error("request is invalid JSON")
       return
-    prevtx = json.dumps(raw_request['prevtx'])
-    prevtx_hash = hashlib.sha256(prevtx).hexdigest()
-    SignatureRequestDb(self.db).save({"prevtx_hash": prevtx_hash, "json_data": request})
+    SignatureRequestDb(self.db).save({"json_data": request})
 
   def send_transaction(self, request):
     self.save_transaction(request)

@@ -15,12 +15,19 @@ class SignatureRequestDb(TableDb):
   create_sql = 'create table {0} ( \
     id integer primary key autoincrement, \
     ts datetime default current_timestamp, \
-    prevtx_hash text not null, \
     json_data text not null);'
-  insert_sql = 'insert into {0} (prevtx_hash, json_data) values (?, ?)'
+  insert_sql = 'insert into {0} (json_data) values (?)'
+  get_all_sql = 'select * from {0}'
 
   def args_for_obj(self, obj):
-    return [obj['prevtx_hash'], obj['json_data']]
+    return [obj['json_data'],]
+
+  def get_all(self):
+    cursor = self.db.get_cursor()
+    sql = self.get_all_sql.format(self.table_name)
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row)for row in rows]
+    return rows
 
 class MultisigRedeemDb(TableDb):
   """

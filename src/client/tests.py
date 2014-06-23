@@ -1,5 +1,5 @@
 from client import OracleClient, TransactionUnknownError, AddressMissingError, TooSmallAmountError
-from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb
+from client_db import ClientDb, MultisigRedeemDb, OracleListDb, RawTransactionDb, SignatureRequestDb
 from test_data import ADDRESSES
 
 from oracle.oracle_communication import OracleCommunication
@@ -310,3 +310,11 @@ class ClientTests(unittest.TestCase):
   def test_create_request_invalid_not_enough_for_receiver(self):
     with self.assertRaises(TooSmallAmountError):
       self.create_fake_request(0.0006)
+
+  def test_save_transaction_valid(self):
+    request = self.create_fake_request()
+    self.client.save_transaction(request)
+
+    requests = SignatureRequestDb(self.client.db).get_all()
+    self.assertEquals(len(requests), 1)
+    self.assertEquals(request, requests[0]['json_data'])

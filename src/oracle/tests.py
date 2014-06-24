@@ -1,8 +1,7 @@
 from oracle import Oracle
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 from condition_evaluator.evaluator import Evaluator
-from task_handler.handlers import ConditionedTransactionTaskHandler
-from request_handler.handlers import ConditionedTransactionRequestHandler
+from handlers.handlers import ConditionedTransactionHandler
 
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -73,18 +72,14 @@ class MockOracle(Oracle):
     self.task_queue = TaskQueue(self.db)
 
     handlers = {
-      'conditioned_transaction': ConditionedTransactionTaskHandler
+      'conditioned_transaction': ConditionedTransactionHandler
     }
-    self.task_handlers = defaultdict(lambda: None, handlers)
-    request_handlers = {
-      'conditioned_transaction': ConditionedTransactionRequestHandler
-    }
-    self.request_handlers = defaultdict(lambda: None, request_handlers)
+    self.handlers = defaultdict(lambda: None, handlers)
 
 class OracleTests(unittest.TestCase):
   def setUp(self):
     self.oracle = MockOracle()
-    self.conditioned_request_handler = ConditionedTransactionRequestHandler(self.oracle)
+    self.conditioned_request_handler = ConditionedTransactionHandler(self.oracle)
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)

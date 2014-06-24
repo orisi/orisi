@@ -1,21 +1,16 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from oracle_db import OracleDb, TaskQueue, UsedInput
-from oracle_protocol import RESPONSE, SUBJECT
-from task_handler.handlers import ConditionedTransactionTaskHandler
-from request_handler.handlers import ConditionedTransactionRequestHandler
+from oracle_db import OracleDb, TaskQueue
+from handlers.handlers import ConditionedTransactionHandler
 from condition_evaluator.evaluator import Evaluator
 
 from settings_local import ORACLE_ADDRESS
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
-import hashlib
 import time
 import logging
-import json
 
 from collections import defaultdict
-from xmlrpclib import ProtocolError
 
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
@@ -29,20 +24,14 @@ class Oracle:
 
     self.task_queue = TaskQueue(self.db)
 
-    task_handlers = {
-      'conditioned_transaction': ConditionedTransactionTaskHandler
+    handlers = {
+      'conditioned_transaction': ConditionedTransactionHandler
     }
-    self.task_handlers = defaultdict(lambda: None, task_handlers)
-
-    request_handlers = {
-      'conditioned_transaction': ConditionedTransactionRequestHandler
-    }
-    self.request_handlers = defaultdict(lambda: None, request_handlers)
-
+    self.handlers = defaultdict(lambda: None, handlers)
 
   def handle_request(self, request):
     operation, message = request
-    handler = self.request_handlers[operation]
+    handler = self.handlers[operation]
 
     if not handler:
       logging.debug("operation {} not supported".format(operation))
@@ -57,7 +46,7 @@ class Oracle:
 
   def handle_task(self, task):
     operation = task['operation']
-    handler = self.task_handlers[operation]
+    handler = self.handlers[operation]
     if handler:
       handler(self).handle_task(task)
     else:
@@ -70,7 +59,7 @@ class Oracle:
       return []
 
     operation = task['operation']
-    handler = self.task_handlers[operation]
+    handler = self.handlers[operation]
     if handler:
       tasks = handler(self).filter_tasks(task)
       return tasks

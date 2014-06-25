@@ -150,23 +150,9 @@ class ConditionedTransactionHandler(BaseHandler):
       logging.debug("transaction already signed")
       raise TransactionVerificationError()
 
-  def get_inputs_outputs(self, transactions):
-    all_inputs = set()
-    all_outputs = []
-
-    for transaction in transactions:
-      inputs, output = self.oracle.btc.get_inputs_outputs(transaction)
-      for i in inputs:
-          all_inputs.add(i)
-      all_outputs.extend(output)
-
-    all_inputs = sorted(list(all_inputs))
-    all_outputs = sorted(all_outputs)
-    return (all_inputs, all_outputs)
-
   def get_request_hash(self, request):
     raw_transactions = [tx['raw_transaction'] for tx in request['transactions']]
-    inputs, outputs = self.get_inputs_outputs(raw_transactions)
+    inputs, outputs = self.oracle.get_inputs_outputs(raw_transactions)
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,
@@ -211,7 +197,7 @@ class ConditionedTransactionHandler(BaseHandler):
         return
 
     raw_transactions = [tx['raw_transaction'] for tx in transactions]
-    all_inputs, all_outputs = self.get_inputs_outputs(raw_transactions)
+    all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transactions)
 
     rq_hash = self.get_request_hash(body)
 

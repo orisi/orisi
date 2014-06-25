@@ -29,7 +29,7 @@ VALID_OPERATIONS = {
 
 OPERATION_REQUIRED_FIELDS = {
     OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
-    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'password_hash', 'return_address']
+    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address']
 }
 
 PROTOCOL_VERSION = '0.11'

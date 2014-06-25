@@ -137,7 +137,7 @@ class ClientTests(unittest.TestCase):
     address_result = self.create_multisig(blocking=False)
     script = address_result['redeemScript']
     script_dict = self.client.btc.decode_script(script)
-    self.assertEquals(script_dict['reqSigs'], 4)
+    self.assertEquals(script_dict['reqSigs'], 3)
     addresses = script_dict['addresses']
     address_counter = Counter(addresses)
     client_pubkey, client_address = self.get_client_pubkey_address()

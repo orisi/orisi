@@ -27,6 +27,19 @@ class Oracle:
 
     self.handlers = defaultdict(lambda: None, handlers)
 
+  def get_inputs_outputs(self, transactions):
+    all_inputs = set()
+    all_outputs = []
+
+    for transaction in transactions:
+      inputs, output = self.btc.get_inputs_outputs(transaction)
+      for i in inputs:
+        all_inputs.add(i)
+      all_outputs.append(sorted(output))
+
+    all_inputs = sorted(list(all_inputs))
+    return (all_inputs, all_outputs)
+
   def handle_request(self, request):
     operation, message = request
     handler = self.handlers[operation]

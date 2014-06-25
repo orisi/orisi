@@ -1,6 +1,6 @@
 from condition_evaluator.evaluator import Evaluator
 from handlers.handlers import handlers
-from handlers.password_transaction.password_db import RSAKeyPairs
+from handlers.password_transaction.password_db import RSAKeyPairs, LockedPasswordTransaction
 from oracle import Oracle
 from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
@@ -264,7 +264,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
 
   # password_transaction tests
-  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash):
+  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash, pubkey_json):
     msg_dict = defaultdict(lambda: 'dummy')
     msg_dict['receivedTime'] = 1000
     msg_dict['subject'] = base64.encodestring('dummy')
@@ -277,9 +277,11 @@ class OracleTests(unittest.TestCase):
     "oracle_fees": {1},
     "operation": "password_transaction",
     "prevtx": {2},
-    "password_hash": "{3}"
+    "password_hash": "{3}",
+    "pubkey_json": {4},
+    "req_sigs": 4
     }}
-    """.format(sum_amount, oracle_fees, prevtx, password_hash))
+    """.format(sum_amount, oracle_fees, prevtx, password_hash, pubkey_json))
     message = BitmessageMessage(
       msg_dict,
       'dummyaddress')
@@ -321,16 +323,29 @@ class OracleTests(unittest.TestCase):
     sum_amount = 0.2
     password_hash = hashlib.sha256('test').hexdigest()
     oracle_fees = json.dumps({ORACLE_ADDRESS:"0.0001"})
+    pubkeys = json.dumps(pubkeys)
 
-    message = self.create_password_transaction_message(sum_amount, oracle_fees, prevtxs, password_hash)
+    message = self.create_password_transaction_message(sum_amount, oracle_fees, prevtxs, password_hash, pubkeys)
     request = ('password_transaction', message)
     return request
 
   def test_create_password_transaction_request(self):
     request = self.create_password_transaction_request()
     self.oracle.handle_request(request)
+    locked_transactions = LockedPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(locked_transactions), 1)
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 1)
 
   def test_password_transaction_request_corresponds_to_protocol(self):
     oc = OracleCommunication()
     operation, message = self.create_password_transaction_request()
     self.assertEqual(oc.corresponds_to_protocol(message), 'password_transaction')
+
+  def test_handle_expired_password_transaction(self):
+    request = self.create_password_transaction_request()
+    self.oracle.handle_request(request)
+    tasks = self.oracle.task_queue.get_all_tasks()
+    self.assertEqual(len(tasks), 1)
+    task = tasks[0]
+
+    self.oracle.handle_task(task)

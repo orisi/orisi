@@ -54,6 +54,7 @@ class TaskQueue(TableDb):
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   all_sql = "select * from {0} where next_check<? and done=0 order by ts"
   similar_sql = "select * from {0} where next_check<? and filter_field=? and done=0"
+  filter_sql = "select * from {0} where filter_field=?"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
@@ -81,6 +82,14 @@ class TaskQueue(TableDb):
     sql = self.similar_sql.format(self.table_name)
 
     rows = cursor.execute(sql, (int(time.time()), task['filter_field'])).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_by_filter(self, filter_field):
+    cursor = self.db.get_cursor()
+    sql = self.filter_sql.format(self.table_name)
+
+    rows = cursor.execute(sql, (filter_field,)).fetchall()
     rows = [dict(row) for row in rows]
     return rows
 

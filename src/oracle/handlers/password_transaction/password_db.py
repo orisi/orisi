@@ -9,11 +9,19 @@ class LockedPasswordTransaction(TableDb):
   create_sql = 'create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      pwtxid text not null, \
+      pwtxid text unique, \
       json_data text not null, \
       done integer default 0)'
   insert_sql = 'insert into {0} (pwtxid, json_data) values (?, ?)'
   all_sql = 'select * from {0} order by ts'
+  pwtxid_sql = 'select * from {0} where pwtxid=?'
+  mark_done_sql = 'update {0} set done=1 where pwtxid=?'
+
+  def mark_as_done(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.mark_done_sql.format(self.table_name)
+
+    cursor.execute(sql, (pwtxid,))
 
   def args_for_obj(self, obj):
     return [obj['pwtxid'], obj['json_data']]
@@ -25,6 +33,15 @@ class LockedPasswordTransaction(TableDb):
     rows = cursor.execute(sql).fetchall()
     rows = [dict(row) for row in rows]
     return rows
+
+  def get_by_pwtxid(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (pwtxid, )).fetchone()
+    if row:
+      return dict(row)
+    return None
 
 class RSAKeyPairs(TableDb):
   table_name = 'rsa_keypairs'
@@ -57,4 +74,5 @@ class RSAKeyPairs(TableDb):
     if row:
       return dict(row)
     return None
+
 

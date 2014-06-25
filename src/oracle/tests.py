@@ -1,17 +1,21 @@
+from condition_evaluator.evaluator import Evaluator
+from handlers.handlers import handlers
+from handlers.password_transaction.password_db import RSAKeyPairs
 from oracle import Oracle
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
-from condition_evaluator.evaluator import Evaluator
-from handlers.handlers import ConditionedTransactionHandler
 
+from settings_local import ORACLE_ADDRESS
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 import base64
+import hashlib
 import json
 import os
 import unittest
 
 from collections import defaultdict
+from Crypto.PublicKey import RSA
 
 TEMP_DB_FILE = 'temp_db_file.db'
 TEST_ACCOUNT = 'oracle_test_account'
@@ -48,7 +52,6 @@ def create_message(tx, prevtx, pubkeys):
       'dummyaddress')
   return message
 
-
 class MockOracleDb(OracleDb):
   def __init__(self):
     self._filename = TEMP_DB_FILE
@@ -62,6 +65,9 @@ class MockBitmessageCommunication:
   def broadcast_signed_transaction(self,msg_bd):
     pass
 
+  def broadcast(self, sub, msg):
+    pass
+
 class MockOracle(Oracle):
   def __init__(self):
     self.communication = MockBitmessageCommunication()
@@ -71,15 +77,12 @@ class MockOracle(Oracle):
 
     self.task_queue = TaskQueue(self.db)
 
-    handlers = {
-      'conditioned_transaction': ConditionedTransactionHandler
-    }
     self.handlers = defaultdict(lambda: None, handlers)
 
 class OracleTests(unittest.TestCase):
   def setUp(self):
     self.oracle = MockOracle()
-    self.conditioned_request_handler = ConditionedTransactionHandler(self.oracle)
+    self.conditioned_request_handler = handlers['conditioned_transaction'](self.oracle)
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)
@@ -106,10 +109,10 @@ class OracleTests(unittest.TestCase):
     self.oracle.btc.add_multisig_address(4, all_addresses)
     return multisig, redeem_script, all_addresses
 
-  def create_fake_transaction(self, address):
+  def create_fake_transaction(self, address, txid=FAKE_TXID, amount=1.0):
     transaction = self.oracle.btc.create_multisig_transaction(
-        [{"txid":FAKE_TXID, "vout":0}],
-        {address:1.0}
+        [{"txid":txid, "vout":0}],
+        {address:amount}
     )
     return transaction
 
@@ -259,3 +262,65 @@ class OracleTests(unittest.TestCase):
     signed_transaction = self.oracle.btc.sign_transaction(unsigned_transaction, prevtx)
     self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
 
+  # password_transaction tests
+  def create_password_transaction_request(self, sum_amount, oracle_fees, prevtx, password_hash):
+    msg_dict = defaultdict(lambda: 'dummy')
+    msg_dict['receivedTime'] = 1000
+    msg_dict['subject'] = base64.encodestring('dummy')
+    msg_dict['message'] = base64.encodestring("""
+    {{
+    "miners_fee": "0.0001",
+    "return_address": "1LocAwBWdEBDxSRGDAomWFBVFCYAiKfBVx",
+    "locktime": 0,
+    "sum_amount": "{0}",
+    "oracle_fees": {1},
+    "operation": "password_transaction",
+    "prevtx": {2},
+    "password_hash": "{3}"
+    }}
+    """.format(sum_amount, oracle_fees, prevtx, password_hash))
+    message = BitmessageMessage(
+      msg_dict,
+      'dummyaddress')
+    return message
+
+  def test_rsa(self):
+    handler = handlers['password_transaction'](self.oracle)
+    pwtxid = hashlib.sha256('test').hexdigest()
+    rsa_public_key = json.loads(handler.get_public_key(pwtxid))
+    key = RSA.construct((long(rsa_public_key['n']), long(rsa_public_key['e'])))
+
+    msg = 'test message'
+    msg_encrypted = key.encrypt(msg, 0)
+
+    rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
+    key2 = handler.construct_key_from_data(rsa_key)
+
+    msg_decrypted = key2.decrypt(msg_encrypted)
+    self.assertEqual(msg, msg_decrypted)
+
+  def test_create_password_transaction_request(self):
+    multisig, redeem, pubkeys = self.create_multisig()
+    txids = ["1959375b1b7fe88f5c369bf9219370a33b23ce71f0b5923dc2722ffdd99c6cca","2bf37212b70c879d24740e5466fef0e9bb8f48eea6210e69d126fc1c7109aeca"]
+
+    fake_transactions = [self.create_fake_transaction(multisig, txids[i], 0.1) for i in range(2)]
+
+    prevtxs = []
+    for tx in fake_transactions:
+      tx_dict = self.oracle.btc._get_json_transaction(tx)
+      prevtx = {
+        "txid": tx_dict['txid'],
+        "vout": 0,
+        "redeemScript":redeem,
+        "scriptPubKey": tx_dict['vout'][0]['scriptPubKey']['hex']
+      }
+      prevtxs.append(prevtx)
+    prevtxs = json.dumps(prevtxs)
+
+    sum_amount = 0.2
+    password_hash = hashlib.sha256('test').hexdigest()
+    oracle_fees = json.dumps({ORACLE_ADDRESS:"0.0001"})
+
+    message = self.create_password_transaction_request(sum_amount, oracle_fees, prevtxs, password_hash)
+    request = ('password_transaction', message)
+    self.oracle.handle_request(request)

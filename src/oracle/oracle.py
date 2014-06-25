@@ -1,16 +1,17 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue
-from handlers.handlers import ConditionedTransactionHandler
+from handlers.handlers import handlers
 from condition_evaluator.evaluator import Evaluator
 
-from settings_local import ORACLE_ADDRESS
+from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 import time
 import logging
 
 from collections import defaultdict
+from decimal import Decimal
 
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
@@ -24,9 +25,6 @@ class Oracle:
 
     self.task_queue = TaskQueue(self.db)
 
-    handlers = {
-      'conditioned_transaction': ConditionedTransactionHandler
-    }
     self.handlers = defaultdict(lambda: None, handlers)
 
   def handle_request(self, request):
@@ -66,6 +64,13 @@ class Oracle:
     else:
       logging.debug("Task has invalid operation")
       self.task_queue.done(task)
+
+  def is_fee_sufficient(self, addr, fee):
+    if addr != ORACLE_ADDRESS:
+      return False
+    if fee < Decimal(ORACLE_FEE):
+      return False
+    return True
 
   def run(self):
 

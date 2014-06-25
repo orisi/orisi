@@ -2,6 +2,7 @@ from condition_evaluator.evaluator import Evaluator
 from handlers.handlers import handlers
 from handlers.password_transaction.password_db import RSAKeyPairs
 from oracle import Oracle
+from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 
 from settings_local import ORACLE_ADDRESS
@@ -263,7 +264,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
 
   # password_transaction tests
-  def create_password_transaction_request(self, sum_amount, oracle_fees, prevtx, password_hash):
+  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash):
     msg_dict = defaultdict(lambda: 'dummy')
     msg_dict['receivedTime'] = 1000
     msg_dict['subject'] = base64.encodestring('dummy')
@@ -299,7 +300,7 @@ class OracleTests(unittest.TestCase):
     msg_decrypted = key2.decrypt(msg_encrypted)
     self.assertEqual(msg, msg_decrypted)
 
-  def test_create_password_transaction_request(self):
+  def create_password_transaction_request(self):
     multisig, redeem, pubkeys = self.create_multisig()
     txids = ["1959375b1b7fe88f5c369bf9219370a33b23ce71f0b5923dc2722ffdd99c6cca","2bf37212b70c879d24740e5466fef0e9bb8f48eea6210e69d126fc1c7109aeca"]
 
@@ -321,6 +322,15 @@ class OracleTests(unittest.TestCase):
     password_hash = hashlib.sha256('test').hexdigest()
     oracle_fees = json.dumps({ORACLE_ADDRESS:"0.0001"})
 
-    message = self.create_password_transaction_request(sum_amount, oracle_fees, prevtxs, password_hash)
+    message = self.create_password_transaction_message(sum_amount, oracle_fees, prevtxs, password_hash)
     request = ('password_transaction', message)
+    return request
+
+  def test_create_password_transaction_request(self):
+    request = self.create_password_transaction_request()
     self.oracle.handle_request(request)
+
+  def test_password_transaction_request_corresponds_to_protocol(self):
+    oc = OracleCommunication()
+    operation, message = self.create_password_transaction_request()
+    self.assertEqual(oc.corresponds_to_protocol(message), 'password_transaction')

@@ -2,6 +2,7 @@ import json
 
 class OPERATION:
   TRANSACTION = 'conditioned_transaction'
+  PASSWORD_TRANSACTION = 'password_transaction'
 
 class RESPONSE:
   CONFIRMED = 'transaction accepted and added to queue'
@@ -22,13 +23,14 @@ class SUBJECT:
   NO_FEE = 'MissingOracleFee'
 
 VALID_OPERATIONS = {
-    'conditioned_transaction': OPERATION.TRANSACTION
+    'conditioned_transaction': OPERATION.TRANSACTION,
+    'password_transaction': OPERATION.PASSWORD_TRANSACTION
 }
 
 OPERATION_REQUIRED_FIELDS = {
     OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
+    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'password_hash', 'return_address']
 }
-
 
 PROTOCOL_VERSION = '0.11'
 

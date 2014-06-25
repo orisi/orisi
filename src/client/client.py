@@ -85,7 +85,7 @@ class OracleClient:
       real_min_sigs = max_sigs + 1
       client_sig_number = difference + 1
     else:
-      real_min_sigs = min_sigs + 1
+      real_min_sigs = min_sigs
       client_sig_number = 1
 
     key_list = [client_pubkey for _ in range(client_sig_number)] + oracle_pubkey_list

@@ -132,7 +132,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     if not transaction:
       # This should be weird
-      logging.error('task dolesn\'t apply to any transaction')
+      logging.error('task doesn\'t apply to any transaction')
       return
 
     if transaction['done']:

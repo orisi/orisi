@@ -27,12 +27,12 @@ $PYTHON_EXEC PyBitmessage/src/bitmessagemain.py > /dev/null &
 sleep 5
 pkill -x $PYTHON_EXEC
 
-echo port = 2522 >> keys.dat
-echo daemon = true >> keys.dat
-echo apienabled = true >> keys.dat
-echo apiport = 2523 >> keys.dat
-echo apiinterface = 127.0.0.1 >> keys.dat
-echo apiusername = bitrpc >> keys.dat
+echo port = 2522 >> PyBitmessage/keys.dat
+echo daemon = true >> PyBitmessage/keys.dat
+echo apienabled = true >> PyBitmessage/keys.dat
+echo apiport = 2523 >> PyBitmessage/keys.dat
+echo apiinterface = 127.0.0.1 >> PyBitmessage/keys.dat
+echo apiusername = bitrpc >> PyBitmessage/keys.dat
 
 BMPW=`openssl rand -hex 32`
 echo "apipassword = $BMPW" >> keys.dat

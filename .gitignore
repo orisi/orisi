@@ -8,3 +8,4 @@ PyBitmessage/
 *.tar.gz
 keys.dat
 debug.log
+.bitcoin/

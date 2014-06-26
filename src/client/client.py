@@ -174,6 +174,9 @@ class OracleClient:
     self.save_transaction(request)
     self.bm.send_message(self.bm.chan_address, "conditioned_transaction", request)
 
+  def send_bounty_request(self, request):
+    self.bm.send_message(self.bm.chan_address, "password_transaction", request)
+
   def add_raw_transaction(self, raw_transaction):
     if not self.btc.is_valid_transaction(raw_transaction):
       logging.error("hex transaction is not valid transaction")
@@ -304,6 +307,40 @@ class OracleClient:
         prevtx,
         pubkey_list,
         req_sigs)
+
+  def create_bounty_request(
+      self,
+      tx_inputs,
+      return_address,
+      oracle_addresses,
+      password,
+      locktime):
+    if len(tx_inputs) == 0:
+      raise NoInputsError()
+
+    amount = self.get_amount_from_inputs(tx_inputs)
+    oracles = self.get_oracles(oracle_addresses)
+
+    pass_hash = hashlib.sha256(password).hexdigest()
+
+    multisig_info = self.get_address(tx_inputs[0])
+    req_sigs = multisig_info['min_sig']
+    pubkey_list = json.loads(multisig_info['pubkey_json'])
+
+    prevtx = self.prepare_prevtx(tx_inputs)
+    message = json.dumps({
+      "operation": "password_transaction",
+      "locktime": locktime,
+      "pubkey_json": pubkey_list,
+      "req_sigs": req_sigs,
+      "sum_amount": float(amount),
+      "miners_fee": float(MINERS_FEE),
+      "prevtx": prevtx,
+      "oracle_fees": oracles,
+      "password_hash": pass_hash,
+      "return_address": return_address
+    })
+    return message
 
   def list_oracles(self):
     oracles = OracleListDb(self.db).get_all_oracles()

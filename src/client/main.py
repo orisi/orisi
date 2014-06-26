@@ -10,14 +10,7 @@ def unknown(args):
   """unknown operation"""
   print "unknown operation, use {} help for possible operations".format(START_COMMAND)
 
-def add_multisig(args):
-  """
-  Creates and adds multisig address to database.
-  Arguments:
-  1. Client public key
-  2. Number of oracle signatures needed
-  3. List of public keys (string, json)
-  """
+def __add_multisig(args, blocking):
   if len(args) < 3:
     print "Not enough arguments"
     return
@@ -28,15 +21,40 @@ def add_multisig(args):
     number_of_sigs = int(args[1])
   except ValueError:
     print "number_of_sigs must be int"
+    return
   try:
     oracle_pubkey_list = json.loads(oracle_pubkeys)
   except ValueError:
     print "pubkey_list not valid json"
-  print c.create_multisig_address(client_pubkey, oracle_pubkey_list, number_of_sigs)
+    return
+  print c.create_multisig_address(client_pubkey, oracle_pubkey_list, number_of_sigs, blocking)
+
+
+def add_multisig(args):
+  """
+  Creates and adds multisig address to database.
+  Arguments:
+  1. Client public key
+  2. Number of oracle signatures needed
+  3. List of public keys (string, json)
+  """
+  __add_multisig(args, True)
   print "send bitcoins you want to use to that transaction, then add transaction \
       either with addrawtransaction (hex transaction as argument), or with \
       addtransaction (txid as argument, ONLY IF the transaction was send locally, \
       from your current bitcoind)"
+
+def add_bounty_multisig(args):
+  """
+  Creates and adds multisig address to database. This address does not need client signatures
+  Arguments:
+  1. Client public key
+  2. Number of oracle signatures needed
+  3. List of public keys (string, json)
+  """
+  __add_multisig(args, False)
+  print "send bitcoins you want to use to that transaction, then add transaction \
+      with addrawtransaction (hex transaction as argument)"
 
 def describe_protocol(args):
   """Describes how to create full transaction step by step"""
@@ -143,6 +161,42 @@ def add_oracle(args):
   fee = args[2]
   OracleClient().add_oracle(pubkey, address, fee)
 
+def create_bounty_request(args):
+  """
+  Creates bounty request that has to be sent to Bitmessage network
+  Arguments:
+  1. tx_inputs string json
+  [
+    {
+      "txid": "ab45...",
+      "vout": 0
+    },
+    ...
+  ] WARNING add raw transaction first with {0} addrawtransaction
+  2. return_address string (where the cash should go after locktime if no-one solves riddle)
+  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction,
+    oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
+    no then add oracles with {0} addoracle)
+  4. password
+  5. locktime
+  """.format(START_COMMAND)
+  if len(args) < 5:
+    print "not enough arguments"
+    return
+  try:
+    json.loads(args[0])
+    json.loads(args[2])
+  except ValueError:
+    print "tx_inputs and oracle_addresses must be valid jsons"
+    return
+  try:
+    int(args[4])
+  except ValueError:
+    print "locktime must be int"
+    return
+  print OracleClient().create_bounty_request(json.loads(args[0]), args[1], json.loads(args[2]), args[3], int(args[4]))
+
+
 def create_request(args):
   """
   Creates transaction request that has to be sent to Bitmessage network
@@ -243,6 +297,21 @@ def send_request(args):
     return
   OracleClient().send_transaction(args[0])
 
+def send_bounty_request(args):
+  """
+  Create request with createbountyrequest.
+  1. request (string, json)
+  """
+  if len(args) < 1:
+    print "not enough arguments"
+    return
+  try:
+    json.loads(args[0])
+  except ValueError:
+    print "request must be valid json"
+    return
+  OracleClient().send_bounty_request(args[0])
+
 RAW_OPERATIONS = {
   'addmultisig': add_multisig,
   'describeprotocol': describe_protocol,
@@ -254,6 +323,9 @@ RAW_OPERATIONS = {
   'sendrequest': send_request,
   'checkpass': check_pass,
   'sendbountysolution': send_bounty_solution,
+  'addbountyaddress': add_bounty_multisig,
+  'createbountyrequest': create_bounty_request,
+  'sendbountyrequest': send_bounty_request,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
@@ -268,6 +340,9 @@ SHORT_DESCRIPTIONS = {
   'listbounties': "lists all available bounties",
   'checkpass': "checks password for given bounty",
   'sendbounty': "sends bounty solution to oracles",
+  'addbountyaddress': "adds multisig address prepared for given bounty",
+  'createbountyrequest': "(tx_inputs, return_address, oracle_addresses, password, locktime)",
+  'sendbountyrequest': "sends request to oracles via Bitmessage network",
 }
 
 

@@ -1,5 +1,5 @@
 from basehandler import BaseHandler
-from password_db import LockedPasswordTransaction, RSAKeyPairs, SentPasswordTransaction
+from password_db import LockedPasswordTransaction, RSAKeyPairs
 from util import Util
 
 import hashlib
@@ -75,6 +75,8 @@ class PasswordTransactionRequestHandler(BaseHandler):
 
     pub_key = self.get_public_key(pwtxid)
     message['rsa_pubkey'] = json.loads(pub_key)
+    message['operation'] = 'new_bounty'
+    message['pwtxid'] = pwtxid
 
     locktime = int(message['locktime'])
 

@@ -6,6 +6,7 @@ import time
 import json
 import logging
 
+from Crypto.PublicKey import RSA
 from decimal import Decimal, getcontext
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -17,7 +18,8 @@ from client_db import (
     MultisigRedeemDb,
     RawTransactionDb,
     OracleListDb,
-    OracleCheckDb)
+    OracleCheckDb,
+    BountyAvailable)
 
 URL_ORACLE_LIST = 'http://oracles.li/list-default.json'
 MINIMUM_DIFFERENCE = 3600 # in seconds
@@ -26,6 +28,9 @@ MINIMUM_DIFFERENCE = 3600 # in seconds
 MINERS_FEE = "0.0001"
 
 class OracleMissingError(Exception):
+  pass
+
+class PasswordNotMatchingError(Exception):
   pass
 
 class UnsupportedTransactionError(Exception):
@@ -51,6 +56,10 @@ class OracleClient:
     self.db = ClientDb()
     self.update_oracle_list()
 
+    self.operations = {
+        'new_bounty': self.new_bounty
+    }
+
   def update_oracle_list(self):
     last_check = OracleCheckDb(self.db).get_last()
     current_time = int(time.time())
@@ -69,6 +78,35 @@ class OracleClient:
         logging.error("oracle list json invalid")
       OracleCheckDb(self.db).save({"last_check": current_time})
 
+  def new_bounty(self, msg):
+    body = json.loads(msg.message)
+    pwtxid = body['pwtxid']
+    hsh = body['password_hash']
+
+    rsa_pubkey = body['rsa_pubkey']
+    req_sigs = body['req_sigs']
+    BountyAvailable(self.db).update_pwtxid(pwtxid, hsh, rsa_pubkey, req_sigs)
+
+  def handle_message(self, msg):
+    try:
+      body = json.loads(msg.message)
+    except ValueError:
+      logging.info('message doesnt contain json')
+      return
+
+    if not 'operation' in body:
+      logging.info('body doesnt have operation')
+      return
+
+    operation = body['operation']
+    func = self.operations[operation]
+    func(msg)
+
+  def read_messages(self):
+    messages = self.bm.get_unread_messages()
+    for msg in messages:
+      self.handle_message(msg)
+      self.bm.mark_message_as_read(msg)
 
   def create_multisig_address(self, client_pubkey, oracle_pubkey_list, min_sigs, blocking=True):
     """
@@ -271,3 +309,47 @@ class OracleClient:
     oracles = OracleListDb(self.db).get_all_oracles()
     return json.dumps(oracles)
 
+  def list_bounties(self):
+    bounties = BountyAvailable(self.db).get_all_available()
+    return json.dumps(bounties)
+
+  def check_pass(self, pwtxid, pwd):
+    new_hash = hashlib.sha256(pwd).hexdigest()
+    ba = BountyAvailable(self.db).get_by_pwtxid(pwtxid)
+    if new_hash == ba['hash']:
+      return True
+    return False
+
+  def prepare_bounty_request(self, pwtxid, passwords):
+    message = json.dumps({
+        'operation': 'guess_password',
+        'pwtxid': pwtxid,
+        'passwords': passwords
+    })
+    return message
+
+  def construct_pubkey_from_data(rsa_data):
+    key = RSA.construct((
+        long(rsa_data['n']),
+        long(rsa_data['e'])))
+    return key
+
+  def send_bounty_solution(self, pwtxid, pwd, address):
+    if not self.check_pass(pwtxid, pwd):
+      raise PasswordNotMatchingError()
+
+    ba = BountyAvailable(self.db).get_by_pwtxid(pwtxid)
+    keys = json.loads(ba['current_keys_json'])
+
+    passwords = {}
+    msg = json.dumps({
+      "password": pwd,
+      "address": address
+    })
+    for key in keys:
+      rsa_key = self.construct_pubkey_from_data(key)
+      base64_msg = base64.encodestring(rsa_key.encrypt(msg, 0))
+      rsa_hash = hashlib.sha256(json.dumps(key)).hexdigest()
+      passwords[rsa_hash] = base64_msg
+    request = self.prepare_bounty_request(pwtxid, passwords)
+    self.bm.send_message(self.bm.chan_address, "guess_password", request)

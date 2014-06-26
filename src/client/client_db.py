@@ -146,11 +146,66 @@ class OracleCheckDb(TableDb):
       row = dict(row)
     return row
 
+class BountyAvailable(TableDb):
+  """
+  Keeps info of available bounties
+  """
+  table_name = 'bounty_available'
+  create_sql = 'create table {0} ( \
+    id integer primary key autoincrement, \
+    ts datetime default current_timestamp, \
+    pwtxid text unique, \
+    hash text not null, \
+    current_keys_json text not null, \
+    ready integer default 0, \
+    done integer default 0)'
+  insert_sql = 'insert into {0} (pwtxid, hash, current_keys_json, ready, done) values (?,?,?,?,?)'
+  update_sql = 'update {0} set current_keys_json=?, ready=? where pwtxid=?'
 
+  def args_for_obj(self, obj):
+    return [obj['pwtxid'], obj['hash'], obj['current_keys_json', 'ready', 'done'], ]
 
+  def get_or_create(self, pwtxid, hsh):
+    row = self.get_by_pwtxid(pwtxid)
+    if row:
+      return row
+    new_bounty = {
+        "pwtxid": pwtxid,
+        "hash": hsh,
+        "current_keys_json": json.dumps([]),
+        "ready": 0,
+        "done": 0,
+    }
+    self.save(new_bounty)
+    return new_bounty
 
+  def get_by_pwtxid(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
 
+    row = cursor.execute(sql).fetchone()
+    if row:
+      return dict(row)
 
+  def update_pwtxid(self, pwtxid, hsh, rsa, req_sigs):
+    bounty = self.get_or_create(pwtxid, hsh)
+    keys = json.loads(bounty['current_keys_json'])
+    if rsa in keys:
+      return
+    keys.append(rsa)
+    ready = False
+    if len(keys) >= req_sigs:
+      ready = True
+    keys_json = json.dumps(keys)
 
+    cursor = self.db.get_cursor()
+    sql = self.update_sql.format(self.table_name)
+    cursor.execute(sql, (keys_json, ready, pwtxid))
 
+  def get_all_available(self):
+    cursor = self.db.get_cursor()
+    sql = self.available_sql.format(self.table_name)
+    rows = cursor.execute().fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
 

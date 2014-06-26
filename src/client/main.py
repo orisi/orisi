@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 from collections import defaultdict
-from client import OracleClient
+from client import OracleClient, PasswordNotMatchingError
 import sys
 import json
 
@@ -184,6 +184,50 @@ def list_oracles(args):
   """
   print OracleClient().list_oracles()
 
+def list_bounties(args):
+  """
+  Prints json list of all bounties that are currently available
+  """
+  print OracleClient().list_bounties()
+
+def check_pass(args):
+  """
+  Checks if given password unlocks given bounty
+  Arguments:
+  1. pwtxid (string, required) id of bounty
+  2. password (string, required) password you want to check
+  """
+  if len(args) < 2:
+    print "not enough arguments"
+    return
+  pwtxid = args[0]
+  password = args[1]
+  result = OracleClient().check_pass(pwtxid, password)
+  if result:
+    print "Your password unlocks bounty. Send it with {} sendbountysolution pwtxid password btc_address".format(START_COMMAND)
+  else:
+    print "Incorrect password"
+
+def send_bounty_solution(args):
+  """
+  Sends bounty solution to oracles so they can give you prize
+  Arguments:
+  1. pwtxid (string, required) id of bounty
+  2. password (string, required) password you want to check
+  3. btc_address (string, required) your bitcoin address on which you'll receive your money
+  """
+  if len(args) < 3:
+    print "not enough arguments"
+    return
+  pwtxid = args[0]
+  password = args[1]
+  address = args[2]
+  try:
+    OracleClient().send_bounty_solution(pwtxid, password, address)
+  except PasswordNotMatchingError:
+    print "Your password doesn't match bounty password"
+    return
+
 def send_request(args):
   """
   Takes one argument. You can create request with createrequest call
@@ -206,7 +250,10 @@ RAW_OPERATIONS = {
   'addoracle': add_oracle,
   'createrequest': create_request,
   'listoracles': list_oracles,
+  'listbounties': list_bounties,
   'sendrequest': send_request,
+  'checkpass': check_pass,
+  'sendbountysolution': send_bounty_solution,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
@@ -218,6 +265,9 @@ SHORT_DESCRIPTIONS = {
   'listoracles': "lists all available oracles",
   'createrequest': "(tx_inputs, receiver_address, oracle_addresses, locktime, condition) - creates json request",
   'sendrequest': "sends request to oracles via Bitmessage network",
+  'listbounties': "lists all available bounties",
+  'checkpass': "checks password for given bounty",
+  'sendbounty': "sends bounty solution to oracles",
 }
 
 

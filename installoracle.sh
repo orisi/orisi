@@ -35,7 +35,7 @@ echo apiinterface = 127.0.0.1 >> PyBitmessage/keys.dat
 echo apiusername = bitrpc >> PyBitmessage/keys.dat
 
 BMPW=`openssl rand -hex 32`
-echo "apipassword = $BMPW" >> keys.dat
+echo "apipassword = $BMPW" >> PyBitmessage/keys.dat
 echo BITMESSAGE_PASSWORD = \"$BMPW\" >> src/settings_local.py
 
 echo "done."

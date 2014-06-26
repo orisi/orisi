@@ -3,6 +3,7 @@ import json
 class OPERATION:
   TRANSACTION = 'conditioned_transaction'
   PASSWORD_TRANSACTION = 'password_transaction'
+  GUESS_PASSWORD = 'guess_password'
 
 class RESPONSE:
   CONFIRMED = 'transaction accepted and added to queue'
@@ -24,12 +25,14 @@ class SUBJECT:
 
 VALID_OPERATIONS = {
     'conditioned_transaction': OPERATION.TRANSACTION,
-    'password_transaction': OPERATION.PASSWORD_TRANSACTION
+    'password_transaction': OPERATION.PASSWORD_TRANSACTION,
+    'guess_password': OPERATION.GUESS_PASSWORD
 }
 
 OPERATION_REQUIRED_FIELDS = {
     OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
-    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address']
+    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
+    OPERATION.GUESS_PASSWORD: ['pwtxid', 'passwords']
 }
 
 PROTOCOL_VERSION = '0.11'

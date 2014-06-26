@@ -1,5 +1,6 @@
 from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction, RSAKeyPairs
+from util import Util
 
 import hashlib
 import json
@@ -41,17 +42,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
         'whole': whole_key_serialized})
     return public_key
 
-  def construct_key_from_data(self, rsa_data):
-    k = json.loads(rsa_data['whole'])
-    key = RSA.construct((
-        long(k['n']),
-        long(k['e']),
-        long(k['d']),
-        long(k['p']),
-        long(k['q']),
-        long(k['u'])))
-    return key
-
   def get_my_turn(self, oracle_fees):
     addresses = sorted([k for k,_ in oracle_fees.iteritems()])
     for idx, addr in enumerate(addresses):
@@ -76,7 +66,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     pwtxid = self.get_unique_id(request.message)
 
     pub_key = self.get_public_key(pwtxid)
-    message['rsa_pubkey'] = pub_key
+    message['rsa_pubkey'] = json.loads(pub_key)
 
     locktime = int(message['locktime'])
 
@@ -84,7 +74,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     add_time = my_turn * HEURISTIC_ADD_TIME + SAFETY_TIME
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
-    self.oracle.communication.broadcast(BOUNTY_SUBJECT, message)
+    self.oracle.communication.broadcast(BOUNTY_SUBJECT, json.dumps(message))
     self.oracle.task_queue.save({
         "operation": 'password_transaction',
         "json_data": request.message,
@@ -92,27 +82,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
         "done": 0,
         "next_check": locktime + add_time
     })
-
-  def prepare_transaction_request(self, message):
-    pass
-
-  def create_future_transaction(self, prevtx, outputs, sum_amount, return_address, locktime):
-    inputs = []
-    for tx in prevtx:
-      inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
-    cash_back = sum_amount
-    for oracle, fee in outputs.iteritems():
-      cash_back -= Decimal(fee)
-
-    outputs[return_address] = cash_back
-
-    vout = {}
-    for address, value in outputs.iteritems():
-      # My heart bleeds when I write it
-      vout[address] = float(value)
-
-    transaction = self.oracle.btc.create_multisig_transaction(inputs, vout)
-    return transaction
 
   def get_rqhs_of_future_transaction(self, transaction, locktime):
     inputs, outputs = self.oracle.get_inputs_outputs([transaction])
@@ -144,7 +113,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     outputs = message['oracle_fees']
     sum_amount = Decimal(message['sum_amount'])
     return_address = message['return_address']
-    future_transaction = self.create_future_transaction(prevtx, outputs, sum_amount, return_address, locktime)
+    future_transaction = Util.create_future_transaction(self.oracle.btc, prevtx, outputs, sum_amount, return_address, locktime)
 
     future_hash = self.get_rqhs_of_future_transaction(future_transaction, locktime)
 
@@ -169,6 +138,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     request = json.dumps(request)
     self.oracle.communication.broadcast('conditioned_transaction', request)
     LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
+    self.oracle.task_queue.done(task)
 
   def filter_tasks(self, task):
     return [task]

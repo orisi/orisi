@@ -76,3 +76,35 @@ class RSAKeyPairs(TableDb):
     return None
 
 
+class RightGuess(TableDb):
+  table_name = 'right_guess'
+  create_sql = 'create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      pwtxid text not null, \
+      guess text not null, \
+      received_time integer not null)'
+  insert_sql = 'insert into {0} (pwtxid, guess, received_time) values (?, ?, ?)'
+  all_sql = 'select * from {0} order by ts'
+  pwtxid_sql = 'select * from {0} where pwtxid=?'
+
+  def args_for_obj(self, obj):
+    return [obj['pwtxid'], obj['guess'], obj['received_time']]
+
+  def get_all(self):
+    cursor = self.db.get_cursor()
+    sql = self.all_sql.format(self.table_name)
+
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_by_pwtxid(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (pwtxid, )).fetchone()
+    if row:
+      return dict(row)
+    return None
+

@@ -1,6 +1,7 @@
 from condition_evaluator.evaluator import Evaluator
 from handlers.handlers import handlers
-from handlers.password_transaction.password_db import RSAKeyPairs, LockedPasswordTransaction
+from handlers.password_transaction.password_db import RSAKeyPairs, LockedPasswordTransaction, RightGuess, SentPasswordTransaction
+from handlers.password_transaction.util import Util
 from oracle import Oracle
 from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
@@ -297,7 +298,7 @@ class OracleTests(unittest.TestCase):
     msg_encrypted = key.encrypt(msg, 0)
 
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
-    key2 = handler.construct_key_from_data(rsa_key)
+    key2 = Util.construct_key_from_data(rsa_key)
 
     msg_decrypted = key2.decrypt(msg_encrypted)
     self.assertEqual(msg, msg_decrypted)
@@ -349,3 +350,82 @@ class OracleTests(unittest.TestCase):
     task = tasks[0]
 
     self.oracle.handle_task(task)
+
+  def create_guess_message(self, pwtxid, passwords):
+    msg_dict = defaultdict(lambda: 'dummy')
+    msg_dict['receivedTime'] = 1000
+    msg_dict['subject'] = base64.encodestring('dummy')
+    msg_dict['message'] = base64.encodestring("""
+    {{
+        "operation": "guess_password",
+        "pwtxid": "{0}",
+        "passwords": {1}
+    }}
+    """.format(pwtxid, passwords))
+    message = BitmessageMessage(
+      msg_dict,
+      'dummyaddress')
+    return message
+
+  def create_claim_password_request(self):
+    request = self.create_password_transaction_request()
+    self.oracle.handle_request(request)
+
+    transactions = LockedPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(transactions), 1)
+
+    transaction = transactions[0]
+    pwtxid = transaction['pwtxid']
+    data = json.loads(transaction['json_data'])
+
+    guess = {
+        'password': 'test',
+        'address': "1AtY44R7exbYnXARs3xSEJuFdEVUMXwpUN"
+    }
+    rsa_pubkey = data['rsa_pubkey']
+    key = Util.construct_pubkey_from_data(rsa_pubkey)
+
+    rsa_hash = hashlib.sha256(json.dumps(rsa_pubkey)).hexdigest()
+
+    encrypted_guess = key.encrypt(json.dumps(guess), 0)[0]
+    base64_encrypted_guess = base64.encodestring(encrypted_guess)
+    passwords = json.dumps({rsa_hash: base64_encrypted_guess})
+    message = self.create_guess_message(pwtxid, passwords)
+    request = ('guess_password', message)
+    return request
+
+  def test_claim_password_transaction(self):
+    request = self.create_claim_password_request()
+    self.oracle.handle_request(request)
+
+    tasks = self.oracle.task_queue.get_all_ignore_checks()
+    self.assertEqual(len(tasks), 2)
+
+    guess_tasks = [t for t in tasks if t['filter_field'].startswith('guess')]
+    self.assertEqual(len(guess_tasks), 1)
+    self.assertEqual(len(RightGuess(self.oracle.db).get_all()), 1)
+
+    task = guess_tasks[0]
+    self.oracle.handle_task(task)
+
+    data = json.loads(task['json_data'])
+    transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(data['pwtxid'])
+    self.assertEqual(transaction['done'], 1)
+
+    sent_transactions = SentPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(sent_transactions), 1)
+    transaction = sent_transactions[0]
+    tx = transaction['tx']
+    tx_dict = self.oracle.btc._get_json_transaction(tx)
+    vout = tx_dict['vout']
+    self.assertEqual(len(vout), 2)
+
+    receiver_exists = False
+    for o in vout:
+      addr = o['scriptPubKey']['addresses'][0]
+      if addr == "1AtY44R7exbYnXARs3xSEJuFdEVUMXwpUN":
+        self.assertEqual(o['value'], 0.1998)
+        receiver_exists = True
+      else:
+        self.assertEqual(o['value'], 0.0001)
+    self.assertTrue(receiver_exists)

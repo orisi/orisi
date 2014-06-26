@@ -108,3 +108,44 @@ class RightGuess(TableDb):
       return dict(row)
     return None
 
+class SentPasswordTransaction(TableDb):
+  table_name = 'sent'
+  create_sql = 'create table {0} ( \
+      id integer primary key autoincrement, \
+      ts datetime default current_timestamp, \
+      pwtxid text unique, \
+      rqhs text not null, \
+      tx text not null)'
+  insert_sql = 'insert into {0} (pwtxid, rqhs, tx) values (?, ?, ?)'
+  all_sql = 'select * from {0} order by ts'
+  pwtxid_sql = 'select * from {0} where pwtxid=?'
+  rqhs_sql = 'select * from {0} where rqhs=?'
+
+  def args_for_obj(self, obj):
+    return [obj['pwtxid'], obj['rqhs'], obj['tx']]
+
+  def get_all(self):
+    cursor = self.db.get_cursor()
+    sql = self.all_sql.format(self.table_name)
+
+    rows = cursor.execute(sql).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_by_pwtxid(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (pwtxid, )).fetchone()
+    if row:
+      return dict(row)
+    return None
+
+  def get_by_rqhs(self, rqhs):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (rqhs, )).fetchone()
+    if row:
+      return dict(row)
+    return None

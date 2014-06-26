@@ -17,11 +17,18 @@ class Util:
     return key
 
   @staticmethod
-  def create_future_transaction(btc, prevtx, outputs, sum_amount, receiver_address, locktime):
+  def construct_pubkey_from_data(rsa_data):
+    key = RSA.construct((
+        long(rsa_data['n']),
+        long(rsa_data['e'])))
+    return key
+
+  @staticmethod
+  def create_future_transaction(btc, prevtx, outputs, amount_available, receiver_address, locktime):
     inputs = []
     for tx in prevtx:
       inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
-    cash_back = sum_amount
+    cash_back = amount_available
     for oracle, fee in outputs.iteritems():
       cash_back -= Decimal(fee)
 

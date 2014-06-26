@@ -1,7 +1,12 @@
 from basehandler import BaseHandler
-from password_db import LockedPasswordTransaction, RSAKeyPairs, RightGuess
+from password_db import (
+    LockedPasswordTransaction,
+    RSAKeyPairs,
+    RightGuess,
+    SentPasswordTransaction)
 from util import Util
 
+import base64
 import hashlib
 import json
 import logging
@@ -21,7 +26,8 @@ class GuessPasswordHandler(BaseHandler):
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     return transaction['done'] == 1
 
-  def decrypt_message(self, pwtxid, msg):
+  def decrypt_message(self, pwtxid, base64_msg):
+    msg = base64.decodestring(base64_msg)
     rsa_key = Util.construct_key_from_data(
         RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid))
     message = rsa_key.decrypt(msg)
@@ -52,6 +58,7 @@ class GuessPasswordHandler(BaseHandler):
   def get_address(self, pwtxid, guess):
     # Assumes guess_is_right was already called and all the data is correct
     message = self.decrypt_message(pwtxid, guess)
+    message = json.loads(message)
     return message['address']
 
   def handle_request(self, request):
@@ -88,15 +95,27 @@ class GuessPasswordHandler(BaseHandler):
       self.oracle.task_queue.save({
           'operation': 'guess_password',
           'filter_field': 'guess:{}'.format(pwtxid),
-          'done':False,
+          'done':0,
           'next_check': int(time.time()) + HEURISTIC_WAIT_TIME,
           'json_data': json.dumps(guess_dict)})
 
+  def get_rqhs_of_future_transaction(self, transaction, locktime):
+    inputs, outputs = self.oracle.get_inputs_outputs([transaction])
+    future_hash = {
+        'inputs': inputs,
+        'outputs': outputs,
+        'locktime': locktime,
+        'condition': 'True'
+    }
+    future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
+    return future_hash
+
   def handle_task(self, task):
-    pwtxid = task['pwtxid']
-    address = self.get_address(pwtxid, task['guess'])
+    data = json.loads(task['json_data'])
+    pwtxid = data['pwtxid']
+    address = self.get_address(pwtxid, data['guess'])
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
-    if transaction['done'] == 0:
+    if transaction['done'] == 1:
       logging.info('someone was faster')
       return
     LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
@@ -106,11 +125,13 @@ class GuessPasswordHandler(BaseHandler):
     locktime = message['locktime']
     outputs = message['oracle_fees']
     sum_amount = Decimal(message['sum_amount'])
+    miners_fee = Decimal(message['miners_fee'])
+    available_amount = sum_amount - miners_fee
     future_transaction = Util.create_future_transaction(
         self.oracle.btc,
         prevtx,
         outputs,
-        sum_amount,
+        available_amount,
         address,
         locktime)
 
@@ -139,6 +160,11 @@ class GuessPasswordHandler(BaseHandler):
     self.oracle.communication.broadcast('conditioned_transaction', request)
     LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
     self.oracle.task_queue.done(task)
+    SentPasswordTransaction(self.oracle.db).save({
+        "pwtxid": pwtxid,
+        "rqhs": future_hash,
+        "tx": signed_transaction
+    })
 
   def filter_tasks(self, task):
     tasks = self.oracle.task_queue.get_similar(task)

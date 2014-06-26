@@ -1,5 +1,5 @@
 from basehandler import BaseHandler
-from password_db import LockedPasswordTransaction, RSAKeyPairs
+from password_db import LockedPasswordTransaction, RSAKeyPairs, SentPasswordTransaction
 from util import Util
 
 import hashlib
@@ -112,8 +112,10 @@ class PasswordTransactionRequestHandler(BaseHandler):
     locktime = message['locktime']
     outputs = message['oracle_fees']
     sum_amount = Decimal(message['sum_amount'])
+    miners_fee = Decimal(message['miners_fee'])
+    available_amount = sum_amount - miners_fee
     return_address = message['return_address']
-    future_transaction = Util.create_future_transaction(self.oracle.btc, prevtx, outputs, sum_amount, return_address, locktime)
+    future_transaction = Util.create_future_transaction(self.oracle.btc, prevtx, outputs, available_amount, return_address, locktime)
 
     future_hash = self.get_rqhs_of_future_transaction(future_transaction, locktime)
 

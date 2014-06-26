@@ -26,6 +26,10 @@ class PasswordTransactionRequestHandler(BaseHandler):
     return hashlib.sha256(message).hexdigest()
 
   def get_public_key(self, pwtxid):
+    key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
+    if key:
+      return key['public']
+
     random_generator = Random.new().read
     new_keypair = RSA.generate(KEY_SIZE, random_generator)
     public_key = json.dumps({'n':new_keypair.n, 'e':new_keypair.e})
@@ -64,6 +68,10 @@ class PasswordTransactionRequestHandler(BaseHandler):
       logging.debug("There is no fee for oracle, skipping")
       return
     pwtxid = self.get_unique_id(request.message)
+
+    if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
+      logging.info('pwtxid already in use')
+      return
 
     pub_key = self.get_public_key(pwtxid)
     message['rsa_pubkey'] = json.loads(pub_key)

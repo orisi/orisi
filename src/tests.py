@@ -6,7 +6,7 @@ import unittest
 
 TESTS = [
    OracleTests,
-   # ClientTests,
+   ClientTests,
 ]
 
 def test():

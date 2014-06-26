@@ -429,3 +429,24 @@ class OracleTests(unittest.TestCase):
       else:
         self.assertEqual(o['value'], 0.0001)
     self.assertTrue(receiver_exists)
+
+  def test_guesses_filter(self):
+    request = self.create_claim_password_request()
+    self.oracle.handle_request(request)
+
+    request = self.create_claim_password_request()
+    request[1].received_time_epoch = 800
+    self.oracle.handle_request(request)
+
+    tasks = self.oracle.task_queue.get_all_ignore_checks()
+    self.assertEqual(len(tasks), 3)
+    guess_tasks = [t for t in tasks if t['filter_field'].startswith('guess')]
+    self.assertEqual(len(guess_tasks), 2)
+    task = guess_tasks[0]
+
+    final_tasks = self.oracle.handlers['guess_password'](self.oracle).filter_tasks(task)
+    self.assertEqual(len(final_tasks), 1)
+    self.assertEqual(final_tasks[0], guess_tasks[1])
+    self.oracle.handle_task(final_tasks[0])
+
+    self.assertEqual(len(self.oracle.task_queue.get_all_ignore_checks()), 1)

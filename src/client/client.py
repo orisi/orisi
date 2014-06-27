@@ -2,6 +2,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+import base64
+import hashlib
 import time
 import json
 import logging
@@ -57,8 +59,9 @@ class OracleClient:
     self.update_oracle_list()
 
     self.operations = {
-        'new_bounty': self.new_bounty
+        'new_bounty': self.new_bounty,
     }
+    self.read_messages()
 
   def update_oracle_list(self):
     last_check = OracleCheckDb(self.db).get_last()
@@ -320,6 +323,9 @@ class OracleClient:
 
     amount = self.get_amount_from_inputs(tx_inputs)
     oracles = self.get_oracles(oracle_addresses)
+    oracle_fees = {}
+    for oracle in oracles:
+      oracle_fees[oracle['address']] = oracle['fee']
 
     pass_hash = hashlib.sha256(password).hexdigest()
 
@@ -336,7 +342,7 @@ class OracleClient:
       "sum_amount": float(amount),
       "miners_fee": float(MINERS_FEE),
       "prevtx": prevtx,
-      "oracle_fees": oracles,
+      "oracle_fees": oracle_fees,
       "password_hash": pass_hash,
       "return_address": return_address
     })
@@ -365,7 +371,7 @@ class OracleClient:
     })
     return message
 
-  def construct_pubkey_from_data(rsa_data):
+  def construct_pubkey_from_data(self, rsa_data):
     key = RSA.construct((
         long(rsa_data['n']),
         long(rsa_data['e'])))
@@ -385,7 +391,7 @@ class OracleClient:
     })
     for key in keys:
       rsa_key = self.construct_pubkey_from_data(key)
-      base64_msg = base64.encodestring(rsa_key.encrypt(msg, 0))
+      base64_msg = base64.encodestring(rsa_key.encrypt(msg, 0)[0])
       rsa_hash = hashlib.sha256(json.dumps(key)).hexdigest()
       passwords[rsa_hash] = base64_msg
     request = self.prepare_bounty_request(pwtxid, passwords)

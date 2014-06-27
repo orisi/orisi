@@ -60,6 +60,9 @@ class PasswordTransactionRequestHandler(BaseHandler):
     miners_fee = Decimal(message['miners_fee'])
 
     final_amount = sum_amount - miners_fee
+    if not isinstance(oracle_fees, dict):
+      return
+
     for oracle, fee in oracle_fees.iteritems():
       final_amount -= Decimal(fee)
 

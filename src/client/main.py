@@ -167,10 +167,10 @@ def create_bounty_request(args):
   Arguments:
   1. tx_inputs string json
   [
-    {
+    {{
       "txid": "ab45...",
       "vout": 0
-    },
+    }},
     ...
   ] WARNING add raw transaction first with {0} addrawtransaction
   2. return_address string (where the cash should go after locktime if no-one solves riddle)
@@ -299,18 +299,39 @@ def send_request(args):
 
 def send_bounty_request(args):
   """
-  Create request with createbountyrequest.
-  1. request (string, json)
-  """
-  if len(args) < 1:
+  Creates bounty request AND BROADCASTS IT, use createbountyrequest with same arguments to see raw outcome
+  Arguments:
+  1. tx_inputs string json
+  [
+    {{
+      "txid": "ab45...",
+      "vout": 0
+    }},
+    ...
+  ] WARNING add raw transaction first with {0} addrawtransaction
+  2. return_address string (where the cash should go after locktime if no-one solves riddle)
+  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction,
+    oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
+    no then add oracles with {0} addoracle)
+  4. password
+  5. locktime
+  """.format(START_COMMAND)
+  if len(args) < 5:
     print "not enough arguments"
     return
   try:
     json.loads(args[0])
+    json.loads(args[2])
   except ValueError:
-    print "request must be valid json"
+    print "tx_inputs and oracle_addresses must be valid jsons"
     return
-  OracleClient().send_bounty_request(args[0])
+  try:
+    int(args[4])
+  except ValueError:
+    print "locktime must be int"
+    return
+  request = OracleClient().create_bounty_request(json.loads(args[0]), args[1], json.loads(args[2]), args[3], int(args[4]))
+  OracleClient().send_bounty_request(request)
 
 RAW_OPERATIONS = {
   'addmultisig': add_multisig,

@@ -1,4 +1,5 @@
 from shared.db_classes import GeneralDb, TableDb
+import json
 
 CLIENT_DB_FILE = 'client.db'
 
@@ -161,9 +162,11 @@ class BountyAvailable(TableDb):
     done integer default 0)'
   insert_sql = 'insert into {0} (pwtxid, hash, current_keys_json, ready, done) values (?,?,?,?,?)'
   update_sql = 'update {0} set current_keys_json=?, ready=? where pwtxid=?'
+  available_sql = 'select * from {0} where ready=1'
+  pwtxid_sql = 'select * from {0} where pwtxid=?'
 
   def args_for_obj(self, obj):
-    return [obj['pwtxid'], obj['hash'], obj['current_keys_json', 'ready', 'done'], ]
+    return [obj['pwtxid'], obj['hash'], obj['current_keys_json'], obj['ready'], obj['done']]
 
   def get_or_create(self, pwtxid, hsh):
     row = self.get_by_pwtxid(pwtxid)
@@ -183,7 +186,8 @@ class BountyAvailable(TableDb):
     cursor = self.db.get_cursor()
     sql = self.pwtxid_sql.format(self.table_name)
 
-    row = cursor.execute(sql).fetchone()
+    row = cursor.execute(sql, (pwtxid, )).fetchone()
+    self.db.commit()
     if row:
       return dict(row)
 
@@ -201,11 +205,12 @@ class BountyAvailable(TableDb):
     cursor = self.db.get_cursor()
     sql = self.update_sql.format(self.table_name)
     cursor.execute(sql, (keys_json, ready, pwtxid))
+    self.db.commit()
 
   def get_all_available(self):
     cursor = self.db.get_cursor()
     sql = self.available_sql.format(self.table_name)
-    rows = cursor.execute().fetchall()
+    rows = cursor.execute(sql).fetchall()
     rows = [dict(row) for row in rows]
     return rows
 

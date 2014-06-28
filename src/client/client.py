@@ -102,6 +102,8 @@ class OracleClient:
       return
 
     operation = body['operation']
+    if not operation in self.operations:
+      return
     func = self.operations[operation]
     func(msg)
 

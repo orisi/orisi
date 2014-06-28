@@ -1,16 +1,23 @@
-from oracle import Oracle
-from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 from condition_evaluator.evaluator import Evaluator
+from handlers.handlers import handlers
+from handlers.password_transaction.password_db import RSAKeyPairs, LockedPasswordTransaction, RightGuess, SentPasswordTransaction
+from handlers.password_transaction.util import Util
+from oracle import Oracle
+from oracle_communication import OracleCommunication
+from oracle_db import OracleDb, TaskQueue, TransactionRequestDb, HandledTransaction, SignedTransaction
 
+from settings_local import ORACLE_ADDRESS
 from shared.bitmessage_communication.bitmessagemessage import BitmessageMessage
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 import base64
+import hashlib
 import json
 import os
 import unittest
 
 from collections import defaultdict
+from Crypto.PublicKey import RSA
 
 TEMP_DB_FILE = 'temp_db_file.db'
 TEST_ACCOUNT = 'oracle_test_account'
@@ -38,7 +45,7 @@ def create_message(tx, prevtx, pubkeys):
     }}],
     "pubkey_json": {2},
     "req_sigs": 4,
-    "operation": "transaction",
+    "operation": "conditioned_transaction",
     "locktime": 1402318623,
     "condition": "True"}}
     """.format(tx, prevtx, pubkeys))
@@ -47,18 +54,20 @@ def create_message(tx, prevtx, pubkeys):
       'dummyaddress')
   return message
 
-
 class MockOracleDb(OracleDb):
   def __init__(self):
     self._filename = TEMP_DB_FILE
     self.connect()
     operations = {
-      'TransactionRequest': TransactionRequestDb
+      'conditioned_transaction': TransactionRequestDb
     }
     self.operations = defaultdict(lambda: False, operations)
 
 class MockBitmessageCommunication:
   def broadcast_signed_transaction(self,msg_bd):
+    pass
+
+  def broadcast(self, sub, msg):
     pass
 
 class MockOracle(Oracle):
@@ -70,13 +79,12 @@ class MockOracle(Oracle):
 
     self.task_queue = TaskQueue(self.db)
 
-    self.operations = {
-      'TransactionRequest': self.add_transaction,
-    }
+    self.handlers = defaultdict(lambda: None, handlers)
 
 class OracleTests(unittest.TestCase):
   def setUp(self):
     self.oracle = MockOracle()
+    self.conditioned_request_handler = handlers['conditioned_transaction'](self.oracle)
 
   def tearDown(self):
     os.remove(TEMP_DB_FILE)
@@ -103,10 +111,10 @@ class OracleTests(unittest.TestCase):
     self.oracle.btc.add_multisig_address(4, all_addresses)
     return multisig, redeem_script, all_addresses
 
-  def create_fake_transaction(self, address):
+  def create_fake_transaction(self, address, txid=FAKE_TXID, amount=1.0):
     transaction = self.oracle.btc.create_multisig_transaction(
-        [{"txid":FAKE_TXID, "vout":0}],
-        {address:1.0}
+        [{"txid":txid, "vout":0}],
+        {address:amount}
     )
     return transaction
 
@@ -134,15 +142,15 @@ class OracleTests(unittest.TestCase):
     signed = self.oracle.btc.sign_transaction(unsigned, prevtx, FAKE_PRIVKEYS)
     return signed, prevtx, pubkeys
 
-  def create_request(self):
+  def create_conditioned_transaction_request(self):
     transaction, prevtx, pubkeys = self.create_signed_transaction()
     message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
-    rqhs = self.oracle.get_request_hash(json.loads(message.message))
-    request = ('TransactionRequest', message)
+    rqhs = self.conditioned_request_handler.get_request_hash(json.loads(message.message))
+    request = ('conditioned_transaction', message)
     return request, rqhs
 
   def add_request(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     self.oracle.handle_request(request)
     return rqhs
 
@@ -152,8 +160,7 @@ class OracleTests(unittest.TestCase):
 
   def test_add_task(self):
     self.add_request()
-    task = self.oracle.task_queue.get_oldest_task()
-    tasks = self.oracle.filter_tasks(task)
+    tasks = self.oracle.get_tasks()
     self.assertEqual(len(tasks), 1)
 
     self.oracle.task_queue.done(tasks[0])
@@ -162,7 +169,7 @@ class OracleTests(unittest.TestCase):
     self.assertIsNone(task)
 
   def test_reject_task_more_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs": 4})
@@ -172,7 +179,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(tasks), 0)
 
   def test_accept_task_same_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":3})
@@ -182,7 +189,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(tasks), 1)
 
   def test_update_task_less_sigs(self):
-    request, rqhs = self.create_request()
+    request, rqhs = self.create_conditioned_transaction_request()
     HandledTransaction(self.oracle.db).save({
         "rqhs": rqhs,
         "max_sigs":1})
@@ -200,7 +207,7 @@ class OracleTests(unittest.TestCase):
   def test_choosing_bigger_transaction(self):
     transaction, prevtx, pubkeys = self.create_unsigned_transaction()
     message = create_message(transaction, json.dumps(prevtx), json.dumps(pubkeys))
-    request = ('TransactionRequest', message)
+    request = ('conditioned_transaction', message)
     self.oracle.handle_request(request)
 
     rqhs = self.add_request()
@@ -257,3 +264,189 @@ class OracleTests(unittest.TestCase):
     signed_transaction = self.oracle.btc.sign_transaction(unsigned_transaction, prevtx)
     self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
 
+  # password_transaction tests
+  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash, pubkey_json):
+    msg_dict = defaultdict(lambda: 'dummy')
+    msg_dict['receivedTime'] = 1000
+    msg_dict['subject'] = base64.encodestring('dummy')
+    msg_dict['message'] = base64.encodestring("""
+    {{
+    "miners_fee": "0.0001",
+    "return_address": "1LocAwBWdEBDxSRGDAomWFBVFCYAiKfBVx",
+    "locktime": 0,
+    "sum_amount": "{0}",
+    "oracle_fees": {1},
+    "operation": "password_transaction",
+    "prevtx": {2},
+    "password_hash": "{3}",
+    "pubkey_json": {4},
+    "req_sigs": 4
+    }}
+    """.format(sum_amount, oracle_fees, prevtx, password_hash, pubkey_json))
+    message = BitmessageMessage(
+      msg_dict,
+      'dummyaddress')
+    return message
+
+  def test_rsa(self):
+    handler = handlers['password_transaction'](self.oracle)
+    pwtxid = hashlib.sha256('test').hexdigest()
+    rsa_public_key = json.loads(handler.get_public_key(pwtxid))
+    key = RSA.construct((long(rsa_public_key['n']), long(rsa_public_key['e'])))
+
+    msg = 'test message'
+    msg_encrypted = key.encrypt(msg, 0)
+
+    rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
+    key2 = Util.construct_key_from_data(rsa_key)
+
+    msg_decrypted = key2.decrypt(msg_encrypted)
+    self.assertEqual(msg, msg_decrypted)
+
+  def create_password_transaction_request(self):
+    multisig, redeem, pubkeys = self.create_multisig()
+    txids = ["1959375b1b7fe88f5c369bf9219370a33b23ce71f0b5923dc2722ffdd99c6cca","2bf37212b70c879d24740e5466fef0e9bb8f48eea6210e69d126fc1c7109aeca"]
+
+    fake_transactions = [self.create_fake_transaction(multisig, txids[i], 0.1) for i in range(2)]
+
+    prevtxs = []
+    for tx in fake_transactions:
+      tx_dict = self.oracle.btc._get_json_transaction(tx)
+      prevtx = {
+        "txid": tx_dict['txid'],
+        "vout": 0,
+        "redeemScript":redeem,
+        "scriptPubKey": tx_dict['vout'][0]['scriptPubKey']['hex']
+      }
+      prevtxs.append(prevtx)
+    prevtxs = json.dumps(prevtxs)
+
+    sum_amount = 0.2
+    password_hash = hashlib.sha256('test').hexdigest()
+    oracle_fees = json.dumps({ORACLE_ADDRESS:"0.0001"})
+    pubkeys = json.dumps(pubkeys)
+
+    message = self.create_password_transaction_message(sum_amount, oracle_fees, prevtxs, password_hash, pubkeys)
+    request = ('password_transaction', message)
+    return request
+
+  def test_create_password_transaction_request(self):
+    request = self.create_password_transaction_request()
+    self.oracle.handle_request(request)
+    locked_transactions = LockedPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(locked_transactions), 1)
+    self.assertEqual(len(self.oracle.task_queue.get_all_tasks()), 1)
+
+  def test_password_transaction_request_corresponds_to_protocol(self):
+    oc = OracleCommunication()
+    operation, message = self.create_password_transaction_request()
+    self.assertEqual(oc.corresponds_to_protocol(message), 'password_transaction')
+
+  def test_handle_expired_password_transaction(self):
+    request = self.create_password_transaction_request()
+    self.oracle.handle_request(request)
+    tasks = self.oracle.task_queue.get_all_tasks()
+    self.assertEqual(len(tasks), 1)
+    task = tasks[0]
+
+    self.oracle.handle_task(task)
+
+  def create_guess_message(self, pwtxid, passwords):
+    msg_dict = defaultdict(lambda: 'dummy')
+    msg_dict['receivedTime'] = 1000
+    msg_dict['subject'] = base64.encodestring('dummy')
+    msg_dict['message'] = base64.encodestring("""
+    {{
+        "operation": "guess_password",
+        "pwtxid": "{0}",
+        "passwords": {1}
+    }}
+    """.format(pwtxid, passwords))
+    message = BitmessageMessage(
+      msg_dict,
+      'dummyaddress')
+    return message
+
+  def create_claim_password_request(self):
+    request = self.create_password_transaction_request()
+    self.oracle.handle_request(request)
+
+    transactions = LockedPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(transactions), 1)
+
+    transaction = transactions[0]
+    pwtxid = transaction['pwtxid']
+    data = json.loads(transaction['json_data'])
+
+    guess = {
+        'password': 'test',
+        'address': "1AtY44R7exbYnXARs3xSEJuFdEVUMXwpUN"
+    }
+    rsa_pubkey = data['rsa_pubkey']
+    key = Util.construct_pubkey_from_data(rsa_pubkey)
+
+    rsa_hash = hashlib.sha256(json.dumps(rsa_pubkey)).hexdigest()
+
+    encrypted_guess = key.encrypt(json.dumps(guess), 0)[0]
+    base64_encrypted_guess = base64.encodestring(encrypted_guess)
+    passwords = json.dumps({rsa_hash: base64_encrypted_guess})
+    message = self.create_guess_message(pwtxid, passwords)
+    request = ('guess_password', message)
+    return request
+
+  def test_claim_password_transaction(self):
+    request = self.create_claim_password_request()
+    self.oracle.handle_request(request)
+
+    tasks = self.oracle.task_queue.get_all_ignore_checks()
+    self.assertEqual(len(tasks), 2)
+
+    guess_tasks = [t for t in tasks if t['filter_field'].startswith('guess')]
+    self.assertEqual(len(guess_tasks), 1)
+    self.assertEqual(len(RightGuess(self.oracle.db).get_all()), 1)
+
+    task = guess_tasks[0]
+    self.oracle.handle_task(task)
+
+    data = json.loads(task['json_data'])
+    transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(data['pwtxid'])
+    self.assertEqual(transaction['done'], 1)
+
+    sent_transactions = SentPasswordTransaction(self.oracle.db).get_all()
+    self.assertEqual(len(sent_transactions), 1)
+    transaction = sent_transactions[0]
+    tx = transaction['tx']
+    tx_dict = self.oracle.btc._get_json_transaction(tx)
+    vout = tx_dict['vout']
+    self.assertEqual(len(vout), 2)
+
+    receiver_exists = False
+    for o in vout:
+      addr = o['scriptPubKey']['addresses'][0]
+      if addr == "1AtY44R7exbYnXARs3xSEJuFdEVUMXwpUN":
+        self.assertEqual(o['value'], 0.1998)
+        receiver_exists = True
+      else:
+        self.assertEqual(o['value'], 0.0001)
+    self.assertTrue(receiver_exists)
+
+  def test_guesses_filter(self):
+    request = self.create_claim_password_request()
+    self.oracle.handle_request(request)
+
+    request = self.create_claim_password_request()
+    request[1].received_time_epoch = 800
+    self.oracle.handle_request(request)
+
+    tasks = self.oracle.task_queue.get_all_ignore_checks()
+    self.assertEqual(len(tasks), 3)
+    guess_tasks = [t for t in tasks if t['filter_field'].startswith('guess')]
+    self.assertEqual(len(guess_tasks), 2)
+    task = guess_tasks[0]
+
+    final_tasks = self.oracle.handlers['guess_password'](self.oracle).filter_tasks(task)
+    self.assertEqual(len(final_tasks), 1)
+    self.assertEqual(final_tasks[0], guess_tasks[1])
+    self.oracle.handle_task(final_tasks[0])
+
+    self.assertEqual(len(self.oracle.task_queue.get_all_ignore_checks()), 1)

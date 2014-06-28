@@ -5,8 +5,8 @@ from client.tests import ClientTests
 import unittest
 
 TESTS = [
-  OracleTests,
-  ClientTests,
+   OracleTests,
+   ClientTests,
 ]
 
 def test():

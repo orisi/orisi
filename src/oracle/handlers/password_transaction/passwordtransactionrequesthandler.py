@@ -72,6 +72,8 @@ class PasswordTransactionRequestHandler(BaseHandler):
       return
     pwtxid = self.get_unique_id(request.message)
 
+    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
+
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
       logging.info('pwtxid already in use')
       return
@@ -135,8 +137,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
     if len(self.oracle.task_queue.get_by_filter('rqhs:{}'.format(future_hash))) > 0:
       logging.info("transaction already pushed")
       return
-
-    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
 
     signed_transaction = self.oracle.btc.sign_transaction(future_transaction, prevtx)
 

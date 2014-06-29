@@ -236,7 +236,9 @@ def list_oracles(args):
   """
   Prints json list of oracles that are currently present in your database
   """
-  print OracleClient().list_oracles()
+  oracles = json.loads(OracleClient().list_oracles())
+  for oracle in oracles:
+    print "Id: {} Fee: {} Pubkey: {} Address: {}".format(oracle['id'], oracle['fee'], oracle['pubkey'], oracle['address'])
 
 def list_bounties(args):
   """

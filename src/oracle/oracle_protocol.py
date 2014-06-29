@@ -13,6 +13,7 @@ class RESPONSE:
   DIRECT = 'direct message unsupported'
   SIGNED = 'transaction signed by {0}'
   NO_FEE = 'transaction doesn\'t have oracle fee'
+  ADDRESS_DUPLICATE = 'this multisig address was already used'
 
 class SUBJECT:
   CONFIRMED = 'TransactionResponse'
@@ -22,6 +23,7 @@ class SUBJECT:
   DIRECT = 'DirectMessage'
   SIGNED = 'SignedTransaction'
   NO_FEE = 'MissingOracleFee'
+  ADDRESS_DUPLICATE = 'AddressDuplicate'
 
 VALID_OPERATIONS = {
     'conditioned_transaction': OPERATION.TRANSACTION,

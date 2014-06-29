@@ -226,6 +226,12 @@ class OracleClient:
       raise OracleMissingError()
     return oracles
 
+  def get_oracles_by_ids(self, oracle_ids):
+    oracles = OracleListDb(self.db).get_oracles_by_ids(oracle_ids)
+    if len(oracles) != len(oracle_ids):
+      raise OracleMissingError()
+    return oracles
+
   def prepare_prevtx(self, prevtxs):
     for tx in prevtxs:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
@@ -317,14 +323,14 @@ class OracleClient:
       self,
       tx_inputs,
       return_address,
-      oracle_addresses,
+      oracle_ids,
       password,
       locktime):
     if len(tx_inputs) == 0:
       raise NoInputsError()
 
     amount = self.get_amount_from_inputs(tx_inputs)
-    oracles = self.get_oracles(oracle_addresses)
+    oracles = self.get_oracles_by_ids(oracle_ids)
     oracle_fees = {}
     for oracle in oracles:
       oracle_fees[oracle['address']] = oracle['fee']

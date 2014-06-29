@@ -167,19 +167,19 @@ def create_bounty_request(args):
   Arguments:
   1. tx_inputs string json
   [
-    {{
+    {
       "txid": "ab45...",
       "vout": 0
-    }},
+    },
     ...
   ] WARNING add raw transaction first with {0} addrawtransaction
   2. return_address string (where the cash should go after locktime if no-one solves riddle)
-  3. oracle_addresses string json (list of addresses of oracles that are part of this transaction,
+  3. oracle_ids string json (list of ids of oracles that are part of this transaction,
     oracles are assumed to be taken from standard list (http://oracles.li/list-default.json), if
-    no then add oracles with {0} addoracle)
+    no then add oracles with ./client.sh addoracle)
   4. password
   5. locktime
-  """.format(START_COMMAND)
+  """
   if len(args) < 5:
     print "not enough arguments"
     return
@@ -368,6 +368,7 @@ OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
 SHORT_DESCRIPTIONS = {
   'addmultisig': "(client_pubkey, required_signatures, json_list_of_oracle_pubkeys) creates and adds multisig address to database and bitcoind, needed to create transaction request",
+  'addbountyaddress': "Same as addmultisig, but will create bounty address, which will be non-blocking - use this function for password transaction",
   'describeprotocol': "describes step by step how to create transaction request",
   'addrawtransaction': "(hextransaction) adds transaction to database, all transactions used later as input must be added that way",
   'addoracle': "(pubkey, address, fee) manualy add oracle to database",
@@ -378,7 +379,6 @@ SHORT_DESCRIPTIONS = {
   'listbounties': "lists all available bounties",
   'checkpass': "checks password for given bounty",
   'sendbounty': "sends bounty solution to oracles",
-  'addbountyaddress': "adds multisig address prepared for given bounty",
   'createbountyrequest': "(tx_inputs, return_address, oracle_addresses, password, locktime)",
   'sendbountyrequest': "sends request to oracles via Bitmessage network",
 }

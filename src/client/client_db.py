@@ -103,6 +103,7 @@ class OracleListDb(TableDb):
     fee text not null);'
   insert_sql = 'insert or replace into {0} (pubkey, address, fee) values (?,?,?)'
   get_oracles_sql = 'select * from {0} where address in ({1})'
+  get_oracles_ids_sql = 'select * from {0} where id in ({1})'
   get_all_oracles_sql = 'select * from {0}'
 
   def args_for_obj(self, obj):
@@ -113,6 +114,14 @@ class OracleListDb(TableDb):
     sql = self.get_oracles_sql.format(self.table_name, ','.join('?'*len(oracle_addresses)))
 
     rows = cursor.execute(sql, oracle_addresses).fetchall()
+    rows = [dict(row) for row in rows]
+    return rows
+
+  def get_oracles_by_ids(self, oracle_ids):
+    cursor = self.db.get_cursor()
+    sql = self.get_oracles_ids_sql.format(self.table_name, ','.join('?'*len(oracle_ids)))
+
+    rows = cursor.execute(sql, oracle_ids).fetchall()
     rows = [dict(row) for row in rows]
     return rows
 

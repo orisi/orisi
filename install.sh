@@ -28,7 +28,6 @@ $PYTHON_EXEC $DIR/PyBitmessage/src/bitmessagemain.py > /dev/null &
 sleep 5
 pkill -x $PYTHON_EXEC
 
-echo port = 2522 >> $DIR/PyBitmessage/keys.dat
 echo daemon = true >> $DIR/PyBitmessage/keys.dat
 echo apienabled = true >> $DIR/PyBitmessage/keys.dat
 echo apiport = 2523 >> $DIR/PyBitmessage/keys.dat

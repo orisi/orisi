@@ -149,7 +149,7 @@ class GuessPasswordHandler(BaseHandler):
     request = {
         "transactions": [
             {"raw_transaction":signed_transaction, "prevtx": prevtx},],
-        "locktime": message['locktime'],
+        "locktime": 0,
         "condition": "True",
         "pubkey_json": message['pubkey_json'],
         "req_sigs": message['req_sigs'],

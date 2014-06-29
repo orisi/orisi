@@ -227,7 +227,7 @@ class HashGuessed(TableDb):
   """
   Keeps info of available bounties
   """
-  table_name = 'bounty_available'
+  table_name = 'hash_guessed'
   create_sql = 'create table {0} ( \
     id integer primary key autoincrement, \
     ts datetime default current_timestamp, \

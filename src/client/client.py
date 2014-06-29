@@ -143,7 +143,7 @@ class OracleClient:
         "redeem_script": response['redeemScript'],
         "pubkey_json": json.dumps(sorted(key_list))})
 
-    self.btc.server.addmultisigaddress(real_min_sigs, key_list)
+    self.btc.add_multisig_address(real_min_sigs, key_list)
     return response
 
   def create_multisig_transaction(self, input_txids, outputs):

@@ -388,7 +388,9 @@ class OracleClient:
       if ba['hash'] == hashed:
         return True
 
-    for i in range(DIFFICULTY):
+    i = 0
+    while i < DIFFICULTY:
+      i += 1
       salted = "{}#{}".format(pwd, i)
       new_hash = hashlib.sha512(salted).hexdigest()
       if new_hash == ba['hash']:

@@ -40,11 +40,10 @@ class GuessPasswordHandler(BaseHandler):
     except ValueError:
       return False
 
-    if not 'password' in message or not 'address' in message:
+    if not 'pass_hash' in message or not 'address' in message:
       return False
 
-    password = message['password']
-    pass_hash = hashlib.sha256(password).hexdigest()
+    pass_hash = message['pass_hash']
 
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     details = json.loads(transaction['json_data'])

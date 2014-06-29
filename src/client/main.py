@@ -318,10 +318,10 @@ def send_bounty_request(args):
   Arguments:
   1. tx_inputs string json
   [
-    {{
+    {
       "txid": "ab45...",
       "vout": 0
-    }},
+    },
     ...
   ] WARNING add raw transaction first with {0} addrawtransaction
   2. return_address string (where the cash should go after locktime if no-one solves riddle)
@@ -330,7 +330,7 @@ def send_bounty_request(args):
     no then add oracles with {0} addoracle)
   4. password
   5. locktime
-  """.format(START_COMMAND)
+  """
   if len(args) < 5:
     print "not enough arguments"
     return

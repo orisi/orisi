@@ -10,6 +10,7 @@ import logging
 
 from Crypto.PublicKey import RSA
 from decimal import Decimal, getcontext
+from random import randrange
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
@@ -21,10 +22,12 @@ from client_db import (
     RawTransactionDb,
     OracleListDb,
     OracleCheckDb,
-    BountyAvailable)
+    BountyAvailable,
+    HashGuessed)
 
 URL_ORACLE_LIST = 'http://oracles.li/list-default.json'
 MINIMUM_DIFFERENCE = 3600 # in seconds
+DIFFICULTY = 1000000000
 
 # Fixed for now, TODO: get better estimation of how big fee should be
 MINERS_FEE = "0.0001"
@@ -319,6 +322,12 @@ class OracleClient:
         pubkey_list,
         req_sigs)
 
+  def get_password_hash(self, password):
+    rn = randrange(DIFFICULTY)
+    salted_password = "{}#{}".format(password, rn)
+    hashed = hashlib.sha512(salted_password).hexdigest()
+    return hashed
+
   def create_bounty_request(
       self,
       tx_inputs,
@@ -335,7 +344,7 @@ class OracleClient:
     for oracle in oracles:
       oracle_fees[oracle['address']] = oracle['fee']
 
-    pass_hash = hashlib.sha256(password).hexdigest()
+    pass_hash = self.get_password_hash(password)
 
     multisig_info = self.get_address(tx_inputs[0])
     req_sigs = multisig_info['min_sig']
@@ -370,11 +379,27 @@ class OracleClient:
     return json.dumps(bounties)
 
   def check_pass(self, pwtxid, pwd):
-    new_hash = hashlib.sha256(pwd).hexdigest()
     ba = BountyAvailable(self.db).get_by_pwtxid(pwtxid)
-    if new_hash == ba['hash']:
-      return True
+    hg = HashGuessed(self.db).get_by_pwtxid(pwtxid)
+
+    if hg:
+      hashed = "{}#{}".format(pwd, hg['number'])
+      hashed = hashlib.sha512(hashed).hexdigest()
+      if ba['hash'] == hashed:
+        return True
+
+    for i in range(DIFFICULTY):
+      salted = "{}#{}".format(pwd, i)
+      new_hash = hashlib.sha512(salted).hexdigest()
+      if new_hash == ba['hash']:
+        HashGuessed(self.db).save({"pwtxid":pwtxid,"password":pwd,"number":i})
+        return True
     return False
+
+  def get_number(self, pwtxid):
+    hg = HashGuessed(self.db).get_by_pwtxid(pwtxid)
+    if hg:
+      return hg['number']
 
   def prepare_bounty_request(self, pwtxid, passwords):
     message = json.dumps({
@@ -398,8 +423,13 @@ class OracleClient:
     keys = json.loads(ba['current_keys_json'])
 
     passwords = {}
+
+    number = self.get_number(pwtxid)
+
+    pass_hash = hashlib.sha512("{}#{}".format(pwd, number)).hexdigest()
+
     msg = json.dumps({
-      "password": pwd,
+      "pass_hash": pass_hash,
       "address": address
     })
     for key in keys:

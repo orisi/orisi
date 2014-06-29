@@ -223,3 +223,28 @@ class BountyAvailable(TableDb):
     rows = [dict(row) for row in rows]
     return rows
 
+class HashGuessed(TableDb):
+  """
+  Keeps info of available bounties
+  """
+  table_name = 'bounty_available'
+  create_sql = 'create table {0} ( \
+    id integer primary key autoincrement, \
+    ts datetime default current_timestamp, \
+    pwtxid text unique, \
+    password text not null, \
+    number integer not null)'
+  insert_sql = 'insert into {0} (pwtxid, password, number) values (?,?,?)'
+  pwtxid_sql = 'select * from {0} where pwtxid=?'
+
+  def args_for_obj(self, obj):
+    return [obj['pwtxid'], obj['password'], obj['number']]
+
+  def get_by_pwtxid(self, pwtxid):
+    cursor = self.db.get_cursor()
+    sql = self.pwtxid_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (pwtxid, )).fetchone()
+    self.db.commit()
+    if row:
+      return dict(row)

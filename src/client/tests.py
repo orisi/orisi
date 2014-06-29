@@ -68,14 +68,14 @@ class ClientTests(unittest.TestCase):
     addresses = self.get_all_addresses()[:n]
     return addresses
 
-  def create_multisig(self):
+  def create_multisig(self, blocking=True):
     client_pubkey, _ = self.get_client_pubkey_address()
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
 
     # 5 oracles, 3 signatures required
     req_sigs = 3
 
-    result = self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs)
+    result = self.client.create_multisig_address(client_pubkey, oracles_pubkeys, req_sigs, blocking)
     return result
 
   def create_fake_transaction(self, address=ADDRESSES['oracles'][0]['address'], amount=1.0):
@@ -132,6 +132,21 @@ class ClientTests(unittest.TestCase):
     self.assertEquals(db_object['redeem_script'], result['redeemScript'])
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
     self.assertEquals(db_object['pubkey_json'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
+
+  def test_create_multisig_address_blocking(self):
+    address_result = self.create_multisig(blocking=False)
+    script = address_result['redeemScript']
+    script_dict = self.client.btc.decode_script(script)
+    self.assertEquals(script_dict['reqSigs'], 3)
+    addresses = script_dict['addresses']
+    address_counter = Counter(addresses)
+    client_pubkey, client_address = self.get_client_pubkey_address()
+    expected_addresses = [e['address'] for e in ADDRESSES['oracles']]
+    expected_addresses.append(client_address)
+
+    self.assertEquals(len(expected_addresses), 6)
+    for addr in expected_addresses:
+      self.assertEquals(address_counter[addr], 1)
 
   def test_create_multisig_address_invalid_pubkey(self):
     client_pubkey = "020323notavalidpubkey234"
@@ -276,13 +291,13 @@ class ClientTests(unittest.TestCase):
     receiver_address = self.get_addresses(2)[-1]
 
     self.assertEquals(
-        'TransactionRequest',
+        'conditioned_transaction',
         MockOracleCommunication().corresponds_to_protocol(MockMessage(request)))
 
     request_dict = json.loads(request)
     self.assertEquals(request_dict['req_sigs'], 6)
     self.assertEquals(request_dict['locktime'], 100)
-    self.assertEquals(request_dict['operation'], 'transaction')
+    self.assertEquals(request_dict['operation'], 'conditioned_transaction')
 
     transactions = request_dict['transactions']
     self.assertEquals(len(transactions), 1)

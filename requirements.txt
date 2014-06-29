@@ -1,1 +1,2 @@
 jsonrpclib
+pycrypto

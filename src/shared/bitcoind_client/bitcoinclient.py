@@ -166,10 +166,12 @@ class BitcoinClient:
 
   @keep_alive
   def create_multisig_address(self, min_sigs, keys):
+    keys = sorted(keys)
     return self.server.createmultisig(min_sigs, keys)
 
   @keep_alive
   def add_multisig_address(self, min_sigs, keys):
+    keys = sorted(keys)
     if self.account:
       return self.server.addmultisigaddress(min_sigs, keys, self.account)
     return self.server.addmultisigaddress(min_sigs, keys)

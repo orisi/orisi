@@ -17,4 +17,4 @@ then
     sleep 2
 fi
 
-$PYTHON_EXEC $DIR/src/run_oracle.py $@
+$PYTHON_EXEC $DIR/src/client/main.py $@

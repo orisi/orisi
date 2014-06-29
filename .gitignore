@@ -9,3 +9,4 @@ PyBitmessage/
 keys.dat
 debug.log
 .bitcoin/
+*.swp

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTHON_EXEC=python2
+PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 wget --directory-prefix=$DIR https://bitcoin.org/bin/0.9.1/bitcoin-0.9.1-linux.tar.gz

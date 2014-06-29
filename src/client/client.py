@@ -354,6 +354,11 @@ class OracleClient:
     oracles = OracleListDb(self.db).get_all_oracles()
     return json.dumps(oracles)
 
+  def get_oracle_pubkeys(self, oracle_ids):
+    oracles = OracleListDb(self.db).get_all_oracles()
+    oracles = [o['pubkey'] for o in oracles if o['id'] in oracle_ids]
+    return json.dumps(oracles)
+
   def list_bounties(self):
     bounties = BountyAvailable(self.db).get_all_available()
     return json.dumps(bounties)

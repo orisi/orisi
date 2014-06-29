@@ -240,6 +240,19 @@ def list_oracles(args):
   for oracle in oracles:
     print "Id: {} Fee: {} Pubkey: {} Address: {}".format(oracle['id'], oracle['fee'], oracle['pubkey'], oracle['address'])
 
+def get_pubkeys(args):
+  """
+  Prints json list of oracles by id in arguments
+  """
+  ids = []
+  for arg in args:
+    try:
+      ids.append(int(arg))
+    except ValueError:
+      print "id value must be int"
+      return
+  print OracleClient().get_oracle_pubkeys(ids)
+
 def list_bounties(args):
   """
   Prints json list of all bounties that are currently available
@@ -342,6 +355,7 @@ RAW_OPERATIONS = {
   'addoracle': add_oracle,
   'createrequest': create_request,
   'listoracles': list_oracles,
+  'getpubkeys': get_pubkeys,
   'listbounties': list_bounties,
   'sendrequest': send_request,
   'checkpass': check_pass,
@@ -358,6 +372,7 @@ SHORT_DESCRIPTIONS = {
   'addrawtransaction': "(hextransaction) adds transaction to database, all transactions used later as input must be added that way",
   'addoracle': "(pubkey, address, fee) manualy add oracle to database",
   'listoracles': "lists all available oracles",
+  'getpubkeys': "(oracle_id1, oracle_id2, ...) returns json list of oracles pubkeys",
   'createrequest': "(tx_inputs, receiver_address, oracle_addresses, locktime, condition) - creates json request",
   'sendrequest': "sends request to oracles via Bitmessage network",
   'listbounties': "lists all available bounties",

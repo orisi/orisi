@@ -6,3 +6,7 @@ test_local.py
 bitcoin/
 PyBitmessage/
 *.tar.gz
+keys.dat
+debug.log
+.bitcoin/
+*.swp

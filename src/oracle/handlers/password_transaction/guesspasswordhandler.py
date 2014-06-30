@@ -66,19 +66,29 @@ class GuessPasswordHandler(BaseHandler):
 
     pwtxid = message['pwtxid']
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
-    rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
-
-    if not rsa_hash in message['passwords']:
-      logging.info('guess doesn\'t apply to me')
-      return
+    
 
     if self.unknown_tx(pwtxid):
       logging.info('unknown transaction')
       return
 
+    if not 'public' in rsa_key:
+      logging.warning('"public" missing in rsa_key. malformed transaction in the db?')
+
+
+    rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
+
+
+    if not rsa_hash in message['passwords']:
+      logging.info('guess doesn\'t apply to me')
+      return
+
     if self.transaction_done(pwtxid):
       logging.info('transaction_locked')
       return
+
+    rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
+
 
     guess = message['passwords'][rsa_hash]
 

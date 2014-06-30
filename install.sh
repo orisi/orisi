@@ -42,3 +42,5 @@ BMPW=`openssl rand -hex 32`
 echo "apipassword = $BMPW" >> $DIR/PyBitmessage/keys.dat
 echo BITMESSAGE_PASSWORD = \"$BMPW\" >> $DIR/src/settings_local.py
 
+mv bitcoin ..
+mv .bitcoin ..

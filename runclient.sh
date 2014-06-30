@@ -7,7 +7,7 @@ if [ -z $(pgrep $PYTHON_EXEC) ]
 then
     BITMESSAGE_HOME=$DIR/PyBitmessage/
     export BITMESSAGE_HOME
-    $PYTHON_EXEC $DIR/PyBitmessage/src/bitmessagemain.py > /dev/null &
+    $PYTHON_EXEC $DIR/PyBitmessage/src/bitmessagemain.py > bm_error.log &
     sleep 2
 fi
 

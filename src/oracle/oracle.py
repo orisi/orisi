@@ -89,7 +89,7 @@ class Oracle:
 
     if not ORACLE_ADDRESS:
       new_addr = self.btc.server.getnewaddress()
-      logging.error("first run? add '%s' to ORACLE_ADDRESS in settings_local.py" % new_addr)
+      logging.error("first run? add '%s' to ORACLE_ADDRESS in src/settings_local.py" % new_addr)
       exit()
 
     logging.info("my multisig address is %s" % ORACLE_ADDRESS)

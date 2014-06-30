@@ -13,6 +13,7 @@ ORGANIZATION_ADDRESS and FEE - details of organization that manages the contract
 
 ORGANIZATION_ADDRESS = '1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt'
 ORGANIZATION_FEE = "0.00006"
+ORGANIZATION_OWNER = "kolinko@gmail.com" # not used in the code, for information only
 
 # Bitmessage Settings
 

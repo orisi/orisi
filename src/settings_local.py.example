@@ -56,12 +56,12 @@ ORGANIZATION_FEE - fee - take from orisi site
 """
 
 ORACLE_FEE = 0.00003
-ORACLE_ADDRESS = "169coxx1uFytxT1njgDRwgew2s9Hma6j5z" # fill this in after the first oracle launch
+ORACLE_ADDRESS = "" # fill this in after the first oracle launch
 
 BITCOIND_RPC_PORT = '2521'
 BITCOIND_RPC_HOST = '127.0.0.1'
 BITCOIND_RPC_USERNAME = 'bitcoinrpc'
 BITCOIND_RPC_PASSWORD = ''
 
-ORGANIZATION_ADDRESS = 'FILLPLX'
+ORGANIZATION_ADDRESS = '1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt'
 ORGANIZATION_FEE = "0.00002"

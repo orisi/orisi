@@ -1,4 +1,19 @@
 
+"""
+ORACLE_FEE -- fee taken by this oracle
+ORACLE_ADDRESS -- the bitcoin address of this oracle, generated upon first launch
+"""
+
+ORACLE_FEE = 0.00003
+ORACLE_ADDRESS = "" # fill this in after the first oracle launch
+
+"""
+ORGANIZATION_ADDRESS and FEE - details of organization that manages the contract 
+"""
+
+ORGANIZATION_ADDRESS = '1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt'
+ORGANIZATION_FEE = "0.00006"
+
 # Bitmessage Settings
 
 """
@@ -49,19 +64,9 @@ BITCOIND_RPC_PORT - port for RPC server
 BITCOIND_RPC_HOST - host for RPC server
 BITCOIND_RPC_USERNAME - username for RPC server
 BITCOIND_RPC_PASSWORD - password for RPC server
-
-ORGANIZATION_ADDRESS - address of orisi organization that takes fee's for
-    further development of the project, take that from orisi site
-ORGANIZATION_FEE - fee - take from orisi site
 """
-
-ORACLE_FEE = 0.00003
-ORACLE_ADDRESS = "" # fill this in after the first oracle launch
 
 BITCOIND_RPC_PORT = '2521'
 BITCOIND_RPC_HOST = '127.0.0.1'
 BITCOIND_RPC_USERNAME = 'bitcoinrpc'
-BITCOIND_RPC_PASSWORD = ''
 
-ORGANIZATION_ADDRESS = '1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt'
-ORGANIZATION_FEE = "0.00002"

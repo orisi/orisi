@@ -2,7 +2,7 @@
 
 sudo apt-get update
 sudo apt-get install python-dev
-pip install pycrypto
+sudo pip install pycrypto
 
 PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

@@ -17,4 +17,6 @@ then
     sleep 2
 fi
 
+echo "running oracle"
+
 $PYTHON_EXEC $DIR/src/run_oracle.py $@

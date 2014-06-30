@@ -1,5 +1,9 @@
 #!/bin/bash
 
+sudo apt-get update
+sudo apt-get install python-dev
+pip install pycrypto
+
 PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -38,4 +42,3 @@ BMPW=`openssl rand -hex 32`
 echo "apipassword = $BMPW" >> $DIR/PyBitmessage/keys.dat
 echo BITMESSAGE_PASSWORD = \"$BMPW\" >> $DIR/src/settings_local.py
 
-echo "done."

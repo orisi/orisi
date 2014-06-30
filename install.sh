@@ -36,8 +36,6 @@ echo apiinterface = 127.0.0.1 >> $HOME/.config/PyBitmessage/keys.dat
 echo apiusername = bitrpc >> $HOME/.config/PyBitmessage/keys.dat
 
 BMPW=`openssl rand -hex 32`
-echo "apipassword = $BMPW" >> $Home/.config/PyBitmessage/keys.dat
+echo "apipassword = $BMPW" >> $HOME/.config/PyBitmessage/keys.dat
 echo BITMESSAGE_PASSWORD = \"$BMPW\" >> $DIR/src/settings_local.py
 
-mv bitcoin ..
-mv .bitcoin ..

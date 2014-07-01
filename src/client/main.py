@@ -4,11 +4,169 @@ from client import OracleClient, PasswordNotMatchingError
 import sys
 import json
 
+from shared import liburl_wrapper
+
+from math import ceil
+
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
+
 START_COMMAND = "./client.sh"
 
 def unknown(args):
   """unknown operation"""
   print "unknown operation, use {} help for possible operations".format(START_COMMAND)
+
+
+CHARTER_URL = 'http://oracles.li/list-default.json'
+
+def main(args):
+
+  btc = BitcoinClient()
+  tmp_address = btc.validate_address(btc.get_new_address())
+
+#  print btc.validate_address('1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt')
+
+  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
+  charter = json.loads(charter_json)
+
+  print "temp pubkey: %r" % tmp_address['pubkey']
+  print "charter: %r" % charter
+
+#  c = OracleClient()
+  client_pubkey = tmp_address['pubkey']
+  oracle_pubkeys = []
+  for o in charter['nodes']:
+    oracle_pubkeys.append(o['pubkey'])
+
+  min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
+
+  key_list = [client_pubkey] + oracle_pubkeys
+
+  print "min_sigs: %r" % min_sigs
+  print "keys_list: %r" % key_list
+
+
+  print "-------"
+
+  response = btc.create_multisig_address(min_sigs, key_list)
+
+  print "%r" % response
+
+
+def prepare_password_hash(password):
+    DIFFICULTY = 1000000000
+    rn = randrange(DIFFICULTY/100, DIFFICULTY) 
+    salted_password = "{}#{}".format(password, rn)
+    hashed = hashlib.sha512(salted_password).hexdigest()
+    return hashed
+
+def main2(args):
+
+  request = {}
+
+  btc = BitcoinClient()
+  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
+  charter = json.loads(charter_json)
+
+  client_pubkey = tmp_address['pubkey']
+  oracle_pubkeys = []
+  oracle_fees = {}
+
+  for o in charter['nodes']:
+    oracle_pubkeys.append(o['pubkey'])
+    oracle_fees[o['address']] = o['fee']
+
+  oracle_fees[charter['org_address']] = charter['org_fee']
+
+  min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
+
+  key_list = [client_pubkey] + oracle_pubkeys
+
+  ###
+
+  request['pubkey_json'] = key_list
+  request['miners_fee'] = 0.0001
+
+  prevtx = {
+
+    'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
+    'scriptPubKey' : '',
+    'vout':0,
+    'txid':'8b5eb0ea6a9bbbf7ecec66edb5d6b9e10cdf9e6ebe6f9bee35d630817b2fbce3',
+
+  }
+
+  request['prevtx'] = [ prevtx ]
+
+  request['password_hash'] = prepare_password_hash('satoshi')
+  request["req_sigs"] = min_sigs
+  request['operation'] = 'password_transaction'
+  request['sum_amount'] = 0.002
+  request['timelock'] = 1405418400
+  request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
+  request['oracle_fees'] = oracle_fees
+
+
+  ####
+
+    def create_bounty_request(
+      self,
+      tx_inputs,
+      return_address,
+      oracle_ids,
+      password,
+      locktime):
+    if len(tx_inputs) == 0:
+      raise NoInputsError()
+
+    amount = self.get_amount_from_inputs(tx_inputs)
+    oracles = self.get_oracles_by_ids(oracle_ids)
+    oracle_fees = {}
+    for oracle in oracles:
+      oracle_fees[oracle['address']] = oracle['fee']
+
+    pass_hash = self.get_password_hash(password)
+
+    multisig_info = self.get_address(tx_inputs[0])
+    req_sigs = multisig_info['min_sig']
+    pubkey_list = json.loads(multisig_info['pubkey_json'])
+
+    prevtx = self.prepare_prevtx(tx_inputs)
+    message = json.dumps({
+      "operation": "password_transaction",
+      "locktime": locktime,
+      "pubkey_json": pubkey_list,
+      "req_sigs": req_sigs,
+      "sum_amount": float(amount),
+      "miners_fee": float(MINERS_FEE),
+      "prevtx": prevtx,
+      "oracle_fees": oracle_fees,
+      "password_hash": pass_hash,
+      "return_address": return_address
+    })
+    return message
+
+
+#  MultisigRedeemDb(self.db).save({
+#      "multisig": response['address'],
+#      "min_sig": real_min_sigs,
+#      "redeem_script": response['redeemScript'],
+#      "pubkey_json": json.dumps(sorted(key_list))})
+
+#  self.btc.add_multisig_address(real_min_sigs, key_list)
+#  return response
+
+
+#  oracle_list = oracle_list['nodes']
+
+#  for oracle in oracle_list:
+
+#    self.add_oracle(oracle['public_key'], oracle['address'], oracle['fee'])
+
+
+#  oracles = json.loads(OracleClient().list_oracles())
+#  for oracle in oracles:
+#    print "Id: {} Fee: {} Pubkey: {} Address: {}".format(oracle['id'], oracle['fee'], oracle['pubkey'], oracle['address'])
 
 def __add_multisig(args, blocking):
   if len(args) < 3:
@@ -363,6 +521,8 @@ RAW_OPERATIONS = {
   'addbountyaddress': add_bounty_multisig,
   'createbountyrequest': create_bounty_request,
   'sendbountyrequest': send_bounty_request,
+  'main': main,
+  'main2': main2,
 }
 OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
@@ -381,6 +541,8 @@ SHORT_DESCRIPTIONS = {
   'sendbounty': "sends bounty solution to oracles",
   'createbountyrequest': "(tx_inputs, return_address, oracle_addresses, password, locktime)",
   'sendbountyrequest': "sends request to oracles via Bitmessage network",
+  'main': "main",
+  'main2': "main2",
 }
 
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install python-dev
+sudo apt-get install python-dev vim screen
 sudo pip install -r requirements.txt
 
 PYTHON_EXEC=python2.7

@@ -5,10 +5,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ -z $(pgrep $PYTHON_EXEC) ]
 then
-    BITMESSAGE_HOME=$DIR/PyBitmessage/
-    export BITMESSAGE_HOME
-    $PYTHON_EXEC $DIR/PyBitmessage/src/bitmessagemain.py > bm_error.log &
-    sleep 2
+
+	echo "bitmessage not running?"
+
 fi
 
 if [ -z $(pgrep bitcoind) ]

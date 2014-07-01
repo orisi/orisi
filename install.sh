@@ -6,7 +6,7 @@ sudo pip install -r requirements.txt
 
 PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-HOME="~/"
+HOME="$DIR/.."
 
 wget --directory-prefix=$HOME https://bitcoin.org/bin/0.9.1/bitcoin-0.9.1-linux.tar.gz
 tar -C $HOME -zxvf $HOME/bitcoin-0.9.1-linux.tar.gz

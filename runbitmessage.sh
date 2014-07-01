@@ -6,7 +6,10 @@ HOME="$DIR/.."
 
 if [ -z $(pgrep $PYTHON_EXEC) ]
 then
+
 	cd ..
+    cp .config/PyBitmessage/* PyBitmessage/
+	
     BITMESSAGE_HOME=$HOME/PyBitmessage/
     export BITMESSAGE_HOME
     $PYTHON_EXEC $HOME/PyBitmessage/src/bitmessagemain.py

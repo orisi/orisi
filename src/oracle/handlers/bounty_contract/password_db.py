@@ -5,7 +5,7 @@ class LockedPasswordTransaction(TableDb):
   Database entry will keep locked password transaction, anyone can try to unlock it,
   finally it will be unlocked with time
   """
-  table_name = 'locked_password_transaction'
+  table_name = 'locked_bounty_create'
   create_sql = 'create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \

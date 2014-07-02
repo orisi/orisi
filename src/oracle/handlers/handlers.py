@@ -1,9 +1,9 @@
 from conditionedtransactionhandler import ConditionedTransactionHandler
-from password_transaction.passwordtransactionrequesthandler import PasswordTransactionRequestHandler
-from password_transaction.guesspasswordhandler import GuessPasswordHandler
+from bounty_contract.bounty_create_handler import PasswordTransactionRequestHandler
+from bounty_contract.guesspasswordhandler import GuessPasswordHandler
 
 handlers = {
     'conditioned_transaction': ConditionedTransactionHandler,
-    'password_transaction': PasswordTransactionRequestHandler,
+    'bounty_create': PasswordTransactionRequestHandler,
     'guess_password': GuessPasswordHandler,
 }

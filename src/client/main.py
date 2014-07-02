@@ -112,7 +112,7 @@ def main2(args):
 
   request['password_hash'] = prepare_password_hash('satoshi')
   request["req_sigs"] = min_sigs
-  request['operation'] = 'password_transaction'
+  request['operation'] = 'bounty_create'
   request['sum_amount'] = 0.002
   request['locktime'] = 1405418400
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
@@ -124,7 +124,7 @@ def main2(args):
 
   request_content = json.dumps(request)
 
-  print bm.send_message(bm.chan_address, "password_transaction", request_content)
+  print bm.send_message(bm.chan_address, "bounty_create", request_content)
 
   print ""
   print '''Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour to few hours before the network
@@ -189,7 +189,7 @@ def main2(args):
 
     prevtx = self.prepare_prevtx(tx_inputs)
     message = json.dumps({
-      "operation": "password_transaction",
+      "operation": "bounty_create",
       "locktime": locktime,
       "pubkey_json": pubkey_list,
       "req_sigs": req_sigs,

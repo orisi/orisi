@@ -2,7 +2,7 @@ import json
 
 class OPERATION:
   TRANSACTION = 'conditioned_transaction'
-  PASSWORD_TRANSACTION = 'password_transaction'
+  PASSWORD_TRANSACTION = 'bounty_create'
   GUESS_PASSWORD = 'guess_password'
 
 class RESPONSE:
@@ -27,7 +27,7 @@ class SUBJECT:
 
 VALID_OPERATIONS = {
     'conditioned_transaction': OPERATION.TRANSACTION,
-    'password_transaction': OPERATION.PASSWORD_TRANSACTION,
+    'bounty_create': OPERATION.PASSWORD_TRANSACTION,
     'guess_password': OPERATION.GUESS_PASSWORD
 }
 

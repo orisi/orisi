@@ -34,7 +34,7 @@ class OracleCommunication:
       return False
 
     if not body['operation'] in VALID_OPERATIONS.iterkeys():
-      logging.info('operation not supported')
+      logging.info('operation %r not supported' % body['operation'])
       return False
 
     operation = VALID_OPERATIONS[body['operation']]

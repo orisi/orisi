@@ -3,12 +3,16 @@ from collections import defaultdict
 from client import OracleClient, PasswordNotMatchingError
 import sys
 import json
+import hashlib
+import time
 
 from shared import liburl_wrapper
 
 from math import ceil
+from random import randrange
 
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
+from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
 START_COMMAND = "./client.sh"
 
@@ -17,7 +21,7 @@ def unknown(args):
   print "unknown operation, use {} help for possible operations".format(START_COMMAND)
 
 
-CHARTER_URL = 'http://oracles.li/list-default.json'
+CHARTER_URL = 'http://oracles.li/bounty-charter.json'
 
 def main(args):
 
@@ -52,6 +56,8 @@ def main(args):
 
   print "%r" % response
 
+  print btc.validate_address(response['address'])
+
 
 def prepare_password_hash(password):
     DIFFICULTY = 1000000000
@@ -68,19 +74,25 @@ def main2(args):
   charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
   charter = json.loads(charter_json)
 
-  client_pubkey = tmp_address['pubkey']
+  client_pubkey = '03a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b7'
   oracle_pubkeys = []
   oracle_fees = {}
+  oracle_bms = []
 
   for o in charter['nodes']:
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
+    oracle_bms.append(o['bm'])
+    oracle_bms.append(o['bm'])
 
   oracle_fees[charter['org_address']] = charter['org_fee']
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
 
   key_list = [client_pubkey] + oracle_pubkeys
+
+  response = btc.create_multisig_address(min_sigs, key_list)
+  msig_addr = response['address'] # we're using this as an identificator
 
   ###
 
@@ -90,7 +102,7 @@ def main2(args):
   prevtx = {
 
     'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
-    'scriptPubKey' : '',
+    'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
     'vout':0,
     'txid':'8b5eb0ea6a9bbbf7ecec66edb5d6b9e10cdf9e6ebe6f9bee35d630817b2fbce3',
 
@@ -106,9 +118,47 @@ def main2(args):
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
   request['oracle_fees'] = oracle_fees
 
+  bm = BitmessageClient()
+  print "sending: %r" % json.dumps(request)
+  print bm.chan_address
+  print bm.send_message(bm.chan_address, "password_transaction", json.dumps(request))
+
+  print ""
+  print '''Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour to few hours before the network
+  forwards your message and you get the replies. All the future communication should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]'''
+  print ""
+
+  while oracle_bms:
+    messages = bm.get_unread_messages()
+    for msg in messages:
+      if msg.from_address in oracle_bms:
+        try:
+          content = json.loads(msg.message)
+        except:
+          print msg.message
+          print 'failed decoding message'
+          continue
+
+        response_keys = content['pubkey_json']  
+        response_addr = btc.create_multisig_address(min_sigs, response_keys)
+        response_addr = response_addr['address'] # msig address for the response
+
+        if response_addr == msig_addr:
+#            print response_addr
+            print "[%r] [%r][%r] %r" % (response_addr, msg.subject, msg.from_address, msg.message)
+            print ""
+            oracle_bms.remove(msg.from_address)
+
+    if oracle_bms:
+      print "waiting..."
+      time.sleep(5)
+
+    print "done"
+
+
 
   ####
-
+  '''
     def create_bounty_request(
       self,
       tx_inputs,
@@ -145,7 +195,7 @@ def main2(args):
       "return_address": return_address
     })
     return message
-
+'''
 
 #  MultisigRedeemDb(self.db).save({
 #      "multisig": response['address'],

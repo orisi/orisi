@@ -93,6 +93,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     add_time = my_turn * HEURISTIC_ADD_TIME + SAFETY_TIME
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
+    logging.debug('broadcasting reply')
     self.oracle.communication.broadcast(BOUNTY_SUBJECT, json.dumps(message))
     self.oracle.task_queue.save({
         "operation": 'password_transaction',

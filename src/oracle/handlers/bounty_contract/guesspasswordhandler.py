@@ -124,6 +124,9 @@ class GuessPasswordHandler(BaseHandler):
     pwtxid = data['pwtxid']
     address = self.get_address(pwtxid, data['guess'])
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
+    if not transaction:
+      logging.error('txid not found!')
+      return
     if transaction['done'] == 1:
       logging.info('someone was faster')
       return

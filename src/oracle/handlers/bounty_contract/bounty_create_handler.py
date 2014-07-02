@@ -72,7 +72,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
       return
 #    pwtxid = self.get_unique_id(request.message)
 
-    pwtxid = btc.create_multisig_address(min_sigs, response_keys)['address']
+    pwtxid = self.oracle.btc.create_multisig_address(min_sigs, response_keys)['address']
 
     self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
 

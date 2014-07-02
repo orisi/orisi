@@ -7,7 +7,7 @@ Every Oracle monitors Bitmessage chan that they use to communicate with the worl
 
 If they know how to handle operation they check if the JSON from message has all the fields required by the operation. Every operation define smart contract.
 
-When Oracle will see that there is a **handler** for the operation it will delegate methods responsible for handling operation requests to it. You can easily write your own *handlers*. They can define smart contracts. If smart contracts are a little bit more complicated - one smart contract can be defined by few handlers (you can see that behaviour with *password_transaction* that is handled by PasswordTransactionRequestHandler and GuessPasswordHandler). The more back and forth - the more handlers you should write.
+When Oracle will see that there is a **handler** for the operation it will delegate methods responsible for handling operation requests to it. You can easily write your own *handlers*. They can define smart contracts. If smart contracts are a little bit more complicated - one smart contract can be defined by few handlers (you can see that behaviour with *bounty_create* that is handled by PasswordTransactionRequestHandler and GuessPasswordHandler). The more back and forth - the more handlers you should write.
 
 ### How does a handler work?
 

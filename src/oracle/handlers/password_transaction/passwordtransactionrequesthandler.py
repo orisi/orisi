@@ -70,13 +70,17 @@ class PasswordTransactionRequestHandler(BaseHandler):
     if not oracle_fee > 0:
       logging.debug("There is no fee for oracle, skipping")
       return
-    pwtxid = self.get_unique_id(request.message)
+#    pwtxid = self.get_unique_id(request.message)
+
+    pwtxid = btc.create_multisig_address(min_sigs, response_keys)['address']
 
     self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
-      logging.info('pwtxid already in use')
+      logging.info('pwtxid already in use. did you resend the same request?')
       return
+
+
 
     pub_key = self.get_public_key(pwtxid)
     message['rsa_pubkey'] = json.loads(pub_key)

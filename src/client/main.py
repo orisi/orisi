@@ -114,22 +114,28 @@ def main2(args):
   request["req_sigs"] = min_sigs
   request['operation'] = 'password_transaction'
   request['sum_amount'] = 0.002
-  request['timelock'] = 1405418400
+  request['locktime'] = 1405418400
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
   request['oracle_fees'] = oracle_fees
 
   bm = BitmessageClient()
   print "sending: %r" % json.dumps(request)
   print bm.chan_address
-  print bm.send_message(bm.chan_address, "password_transaction", json.dumps(request))
+
+  request_content = json.dumps(request)
+
+  print bm.send_message(bm.chan_address, "password_transaction", request_content)
 
   print ""
   print '''Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour to few hours before the network
   forwards your message and you get the replies. All the future communication should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]'''
   print ""
 
+  msg_count = 0
+
   while oracle_bms:
     messages = bm.get_unread_messages()
+    print "unread messages: %r" % len(messages)
     for msg in messages:
       if msg.from_address in oracle_bms:
         try:
@@ -140,8 +146,8 @@ def main2(args):
           continue
 
         response_keys = content['pubkey_json']  
-        response_addr = btc.create_multisig_address(min_sigs, response_keys)
-        response_addr = response_addr['address'] # msig address for the response
+        response_addr = btc.create_multisig_address(min_sigs, response_keys)['address']
+#        response_addr = response_addr['address'] # msig address for the response
 
         if response_addr == msig_addr:
 #            print response_addr

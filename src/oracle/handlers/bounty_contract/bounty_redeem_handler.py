@@ -79,7 +79,7 @@ class GuessPasswordHandler(BaseHandler):
       logging.info('guess doesn\'t apply to me')
       return
 
-    if self.LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)['done']:
+    if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)['done']:
       logging.info('transaction_locked')
       return
 

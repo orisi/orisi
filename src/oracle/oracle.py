@@ -102,7 +102,7 @@ class Oracle:
       requests = self.communication.get_new_requests()
       if len(requests) == 0:
         count = count + 1
-        if count > 30 == 0:
+        if count > 30:
             logging.debug("{0} new requests".format(len(requests)))
             count = 0
       else:

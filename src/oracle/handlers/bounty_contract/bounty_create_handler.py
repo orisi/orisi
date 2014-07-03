@@ -10,7 +10,6 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from decimal import Decimal, getcontext
 
-BOUNTY_SUBJECT = "New bounty available!"
 KEY_SIZE = 4096
 HEURISTIC_ADD_TIME = 60 * 3
 
@@ -70,7 +69,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     if not oracle_fee > 0:
       logging.debug("There is no fee for oracle, skipping")
       return
-      
+
     pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_json'])['address']
 
     self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
@@ -93,7 +92,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
     logging.debug('broadcasting reply')
-    self.oracle.communication.broadcast(BOUNTY_SUBJECT, json.dumps(message))
+    self.oracle.communication.broadcast(message['operation'], json.dumps(message))
     self.oracle.task_queue.save({
         "operation": 'password_transaction',
         "json_data": request.message,

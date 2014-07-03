@@ -146,6 +146,9 @@ def main2(args):
           print 'failed decoding message'
           continue
 
+        if 'message_id' not in content:
+          continue
+
         if content['message_id'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""

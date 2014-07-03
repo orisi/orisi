@@ -70,8 +70,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     if not oracle_fee > 0:
       logging.debug("There is no fee for oracle, skipping")
       return
-#    pwtxid = self.get_unique_id(request.message)
-
+      
     pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_json'])['address']
 
     self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])

@@ -2,7 +2,7 @@ import json
 
 class OPERATION:
   TRANSACTION = 'conditioned_transaction'
-  PASSWORD_TRANSACTION = 'bounty_create'
+  BOUNTY_CREATE = 'bounty_create'
   GUESS_PASSWORD = 'guess_password'
 
 class RESPONSE:
@@ -27,13 +27,13 @@ class SUBJECT:
 
 VALID_OPERATIONS = {
     'conditioned_transaction': OPERATION.TRANSACTION,
-    'bounty_create': OPERATION.PASSWORD_TRANSACTION,
+    'bounty_create': OPERATION.BOUNTY_CREATE,
     'guess_password': OPERATION.GUESS_PASSWORD
 }
 
 OPERATION_REQUIRED_FIELDS = {
     OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
-    OPERATION.PASSWORD_TRANSACTION: ['prevtx', 'locktime', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
+    OPERATION.BOUNTY_CREATE: ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
     OPERATION.GUESS_PASSWORD: ['pwtxid', 'passwords']
 }
 

@@ -94,6 +94,8 @@ def main2(args):
   response = btc.create_multisig_address(min_sigs, key_list)
   msig_addr = response['address'] # we're using this as an identificator
 
+  request['message_id'] = "%s%s-" % (msig_addr, str(randrange(1000000000,9000000000)))
+
   ###
 
   request['pubkey_json'] = key_list
@@ -109,7 +111,6 @@ def main2(args):
   }
 
   request['prevtx'] = [ prevtx ]
-
   request['password_hash'] = prepare_password_hash('satoshi')
   request["req_sigs"] = min_sigs
   request['operation'] = 'bounty_create'
@@ -145,13 +146,8 @@ def main2(args):
           print 'failed decoding message'
           continue
 
-        response_keys = content['pubkey_json']  
-        response_addr = btc.create_multisig_address(min_sigs, response_keys)['address']
-#        response_addr = response_addr['address'] # msig address for the response
-
-        if response_addr == msig_addr:
-#            print response_addr
-            print "[%r] [%r][%r] %r" % (response_addr, msg.subject, msg.from_address, msg.message)
+        if content['message_id'] == request['message_id']:
+            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""
             oracle_bms.remove(msg.from_address)
 

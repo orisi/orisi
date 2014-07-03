@@ -130,8 +130,8 @@ class GuessPasswordHandler(BaseHandler):
     if transaction['done'] == 1:
       logging.info('someone was faster')
       return
-    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
 
+    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)  
     message = json.loads(transaction['json_data'])
     prevtx = message['prevtx']
     locktime = message['locktime']

@@ -42,7 +42,7 @@ class GuessPasswordHandler(BaseHandler):
     if not 'password' in message or not 'address' in message:
       return False
 
-    pass_hash = hashlib.sha256(message['password']).hexdigest()
+    pass_hash = hashlib.sha512(message['password']).hexdigest()
 
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     details = json.loads(transaction['json_data'])

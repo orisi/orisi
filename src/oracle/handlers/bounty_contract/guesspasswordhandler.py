@@ -126,12 +126,15 @@ class GuessPasswordHandler(BaseHandler):
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     if not transaction:
       logging.error('txid not found!')
-      return
-    if transaction['done'] == 1:
-      logging.info('someone was faster')
+      self.oracle.task_queue.done(task)
       return
 
     LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)  
+    if transaction['done'] == 1:
+      logging.info('someone was faster')
+      self.oracle.task_queue.done(task)
+      return
+
     message = json.loads(transaction['json_data'])
     prevtx = message['prevtx']
     locktime = message['locktime']

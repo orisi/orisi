@@ -47,6 +47,7 @@ class GuessPasswordHandler(BaseHandler):
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     details = json.loads(transaction['json_data'])
 
+    logging.debug("password hash %r" % pass_hash)
     logging.debug("original hash %r" % details['password_hash'])
 
     return pass_hash == details['password_hash']
@@ -84,7 +85,6 @@ class GuessPasswordHandler(BaseHandler):
       return
 
     rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
-
 
     guess = message['passwords'][rsa_hash]
 

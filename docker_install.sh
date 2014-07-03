@@ -2,7 +2,7 @@
 
 apt-get update
 apt-get install python-dev vim screen
-pip install -r requirements.txt
+pip install -r orisi/requirements.txt
 
 PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

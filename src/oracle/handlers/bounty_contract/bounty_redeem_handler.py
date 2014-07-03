@@ -22,10 +22,6 @@ class GuessPasswordHandler(BaseHandler):
       return False
     return True
 
-  def transaction_done(self, pwtxid):
-    transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
-    return transaction['done'] == 1
-
   def decrypt_message(self, pwtxid, base64_msg):
     msg = base64.decodestring(base64_msg)
     rsa_key = Util.construct_key_from_data(
@@ -38,7 +34,10 @@ class GuessPasswordHandler(BaseHandler):
     try:
       message = json.loads(message)
     except ValueError:
+      logging.debug('problem decoding the message')
       return False
+
+    logging.debug("message: %r" % message)
 
     if not 'password' in message or not 'address' in message:
       return False
@@ -48,11 +47,9 @@ class GuessPasswordHandler(BaseHandler):
     transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
     details = json.loads(transaction['json_data'])
 
-    original_hash = details['password_hash']
+    logging.debug("original hash": details['password_hash'])
 
-    if pass_hash == original_hash:
-      return True
-    return False
+    return pass_hash == details['password_hash']
 
   def get_address(self, pwtxid, guess):
     # Assumes guess_is_right was already called and all the data is correct
@@ -67,6 +64,7 @@ class GuessPasswordHandler(BaseHandler):
     pwtxid = message['pwtxid']
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
     
+    logging.info('attemting to decode %r' % pwtxid)
 
     if self.unknown_tx(pwtxid):
       logging.info('unknown transaction')
@@ -75,15 +73,13 @@ class GuessPasswordHandler(BaseHandler):
     if not 'public' in rsa_key:
       logging.warning('"public" missing in rsa_key. malformed transaction in the db?')
 
-
     rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
-
 
     if not rsa_hash in message['passwords']:
       logging.info('guess doesn\'t apply to me')
       return
 
-    if self.transaction_done(pwtxid):
+    if self.LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)['done']:
       logging.info('transaction_locked')
       return
 
@@ -92,7 +88,12 @@ class GuessPasswordHandler(BaseHandler):
 
     guess = message['passwords'][rsa_hash]
 
-    if self.guess_is_right(pwtxid, guess):
+    right = self.guess_is_right(pwtxid, guess)
+
+    logging.debug("guess is right: %r" % right)
+
+    if right:
+
       # Create RightGuess, create task
       guess_time = request.received_time_epoch
       guess_dict = {

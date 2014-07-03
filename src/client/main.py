@@ -28,15 +28,12 @@ def main(args):
   btc = BitcoinClient()
   tmp_address = btc.validate_address(btc.get_new_address())
 
-#  print btc.validate_address('1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt')
-
   charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
   charter = json.loads(charter_json)
 
   print "temp pubkey: %r" % tmp_address['pubkey']
   print "charter: %r" % charter
 
-#  c = OracleClient()
   client_pubkey = tmp_address['pubkey']
   oracle_pubkeys = []
   for o in charter['nodes']:
@@ -48,8 +45,6 @@ def main(args):
 
   print "min_sigs: %r" % min_sigs
   print "keys_list: %r" % key_list
-
-
   print "-------"
 
   response = btc.create_multisig_address(min_sigs, key_list)
@@ -162,66 +157,7 @@ def main2(args):
 
 
 
-  ####
-  '''
-    def create_bounty_request(
-      self,
-      tx_inputs,
-      return_address,
-      oracle_ids,
-      password,
-      locktime):
-    if len(tx_inputs) == 0:
-      raise NoInputsError()
 
-    amount = self.get_amount_from_inputs(tx_inputs)
-    oracles = self.get_oracles_by_ids(oracle_ids)
-    oracle_fees = {}
-    for oracle in oracles:
-      oracle_fees[oracle['address']] = oracle['fee']
-
-    pass_hash = self.get_password_hash(password)
-
-    multisig_info = self.get_address(tx_inputs[0])
-    req_sigs = multisig_info['min_sig']
-    pubkey_list = json.loads(multisig_info['pubkey_json'])
-
-    prevtx = self.prepare_prevtx(tx_inputs)
-    message = json.dumps({
-      "operation": "bounty_create",
-      "locktime": locktime,
-      "pubkey_json": pubkey_list,
-      "req_sigs": req_sigs,
-      "sum_amount": float(amount),
-      "miners_fee": float(MINERS_FEE),
-      "prevtx": prevtx,
-      "oracle_fees": oracle_fees,
-      "password_hash": pass_hash,
-      "return_address": return_address
-    })
-    return message
-'''
-
-#  MultisigRedeemDb(self.db).save({
-#      "multisig": response['address'],
-#      "min_sig": real_min_sigs,
-#      "redeem_script": response['redeemScript'],
-#      "pubkey_json": json.dumps(sorted(key_list))})
-
-#  self.btc.add_multisig_address(real_min_sigs, key_list)
-#  return response
-
-
-#  oracle_list = oracle_list['nodes']
-
-#  for oracle in oracle_list:
-
-#    self.add_oracle(oracle['public_key'], oracle['address'], oracle['fee'])
-
-
-#  oracles = json.loads(OracleClient().list_oracles())
-#  for oracle in oracles:
-#    print "Id: {} Fee: {} Pubkey: {} Address: {}".format(oracle['id'], oracle['fee'], oracle['pubkey'], oracle['address'])
 
 def __add_multisig(args, blocking):
   if len(args) < 3:

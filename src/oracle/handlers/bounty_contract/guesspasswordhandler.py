@@ -14,7 +14,7 @@ import time
 
 from decimal import Decimal
 
-HEURISTIC_WAIT_TIME = 60*60
+WAIT_TIME = 5 # seconds delay before checking responses
 
 class GuessPasswordHandler(BaseHandler):
   def unknown_tx(self, pwtxid):
@@ -105,7 +105,7 @@ class GuessPasswordHandler(BaseHandler):
           'operation': 'guess_password',
           'filter_field': 'guess:{}'.format(pwtxid),
           'done':0,
-          'next_check': int(time.time()) + HEURISTIC_WAIT_TIME,
+          'next_check': int(time.time()) + WAIT_TIME,
           'json_data': json.dumps(guess_dict)})
 
   def get_rqhs_of_future_transaction(self, transaction, locktime):

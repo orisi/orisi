@@ -97,7 +97,14 @@ class Oracle:
     while True:
       # Proceed all requests
       requests = self.communication.get_new_requests()
-      logging.debug("{0} new requests".format(len(requests)))
+      if len(requests) == 0:
+        count = count + 1
+        if count > 30 == 0:
+            logging.debug("{0} new requests".format(len(requests)))
+            count = 0
+      else:
+        logging.debug("{0} new requests".format(len(requests)))
+        
       for request in requests:
         self.handle_request(request)
         self.communication.mark_request_done(request)

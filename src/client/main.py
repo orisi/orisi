@@ -94,7 +94,7 @@ def main2(args):
   response = btc.create_multisig_address(min_sigs, key_list)
   msig_addr = response['address'] # we're using this as an identificator
 
-  request['message_id'] = "%s%s-" % (msig_addr, str(randrange(1000000000,9000000000)))
+  request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
 
   ###
 

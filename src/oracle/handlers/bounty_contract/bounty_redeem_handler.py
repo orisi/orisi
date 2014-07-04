@@ -68,7 +68,7 @@ class GuessPasswordHandler(BaseHandler):
     logging.info('attemting to decode %r' % pwtxid)
 
     if self.unknown_tx(pwtxid):
-      logging.info('unknown transaction')
+      logging.debug('unknown transaction id')
       return
 
     if not 'public' in rsa_key:
@@ -77,22 +77,19 @@ class GuessPasswordHandler(BaseHandler):
     rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
 
     if not rsa_hash in message['passwords']:
-      logging.info('guess doesn\'t apply to me')
+      logging.debug('guess doesn\'t apply to me')
       return
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)['done']:
-      logging.info('transaction_locked')
+      logging.debug('transaction locked -- guess already received?')
       return
 
     rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
 
     guess = message['passwords'][rsa_hash]
 
-    right = self.guess_is_right(pwtxid, guess)
-
-    logging.debug("guess is right: %r" % right)
-
-    if right:
+    if self.guess_is_right(pwtxid, guess):
+      logging.debug('guess correct')
 
       # Create RightGuess, create task
       guess_time = request.received_time_epoch
@@ -108,6 +105,8 @@ class GuessPasswordHandler(BaseHandler):
           'done':0,
           'next_check': int(time.time()) + WAIT_TIME,
           'json_data': json.dumps(guess_dict)})
+    else:
+      logging.debug('guess incorrect!')
 
   def get_rqhs_of_future_transaction(self, transaction, locktime):
     inputs, outputs = self.oracle.get_inputs_outputs([transaction])

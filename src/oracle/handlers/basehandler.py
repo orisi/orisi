@@ -8,5 +8,5 @@ class BaseHandler:
   def handle_task(self, task):
     raise NotImplementedError()
 
-  def filter_tasks(self, task):
-    raise NotImplementedError()
+  def valid_task(self, task):
+  	return True

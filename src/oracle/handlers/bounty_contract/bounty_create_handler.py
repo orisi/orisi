@@ -105,7 +105,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
         'inputs': inputs,
         'outputs': outputs,
         'locktime': locktime,
-        'condition': 'True'
     }
     future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
     return future_hash
@@ -156,5 +155,3 @@ class PasswordTransactionRequestHandler(BaseHandler):
     LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
     self.oracle.task_queue.done(task)
 
-  def filter_tasks(self, task):
-    return [task]

@@ -57,26 +57,28 @@ class Oracle:
 
   def handle_task(self, task):
     operation = task['operation']
+    assert(operation in self.handlers)
     handler = self.handlers[operation]
-    if handler:
-      handler(self).handle_task(task)
-    else:
-      logging.debug("Task has invalid operation")
-      self.task_queue.done(task)
+    handler(self).handle_task(task)
 
-  def get_tasks(self):
+  def get_task(self):
     task = self.task_queue.get_oldest_task()
     if not task:
-      return []
+      return None
 
     operation = task['operation']
     handler = self.handlers[operation]
     if handler:
-      tasks = handler(self).filter_tasks(task)
-      return tasks
+      if handler(self).filter_task(task):
+        return task
+      else:
+        logging.debug('Task marked as invalid by handler')
+        self.task_queue.done(task)
+        return None
     else:
       logging.debug("Task has invalid operation")
       self.task_queue.done(task)
+      return None
 
   def is_fee_sufficient(self, addr, fee):
     if addr != ORACLE_ADDRESS:
@@ -112,8 +114,9 @@ class Oracle:
         self.handle_request(request)
         self.communication.mark_request_done(request)
 
-      tasks = self.get_tasks()
-      for task in tasks:
+      task = self.get_task()
+      while task is not None:
         self.handle_task(task)
+        task = self.get_task()
 
       time.sleep(1)

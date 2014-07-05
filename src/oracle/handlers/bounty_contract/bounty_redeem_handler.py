@@ -147,7 +147,6 @@ class GuessPasswordHandler(BaseHandler):
         'inputs': inputs,
         'outputs': outputs,
         'locktime': locktime,
-        'condition': 'True'
     }
     future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
 
@@ -177,5 +176,3 @@ class GuessPasswordHandler(BaseHandler):
         "tx": signed_transaction
     })
 
-  def filter_tasks(self, task):
-    return [task]

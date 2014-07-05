@@ -32,7 +32,7 @@ class ConditionedTransactionHandler(BaseHandler):
     self.oracle.communication.broadcast_signed_transaction(json.dumps(body))
     self.oracle.task_queue.done(task)
 
-  def filter_tasks(self, task):
+  def valid_task(self, task):
     rqhs = task['filter_field']
     match = re.match(r'^rqhs:(.*)', rqhs)
     if not match:
@@ -53,13 +53,12 @@ class ConditionedTransactionHandler(BaseHandler):
     signs_for_transaction = HandledTransaction(self.oracle.db).signs_for_transaction(rqhs)
 
     if signs_for_transaction > signatures_for_this_tx:
-      self.oracle.task_queue.done(task)
-      tasks_to_do = []
+      valid_task = False
     else:
-      tasks_to_do = [task]
+      valid_task = True
 
     HandledTransaction(self.oracle.db).update_tx(rqhs, signatures_for_this_tx)
-    return tasks_to_do
+    return valid_task
 
   def inputs_from_same_address(self, prevtxs):
     addresses = self.inputs_addresses(prevtxs)

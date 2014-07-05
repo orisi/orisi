@@ -38,11 +38,11 @@ class ConditionedTransactionHandler(BaseHandler):
       return False
     rqhs = match.group(1)
 
-    body = json.loads(task['json_data'])
+    tx = json.loads(task['json_data'])['transaction']
 
-    tx = body['transaction']
     raw_transaction = tx['raw_transaction']
     prevtx = tx['prevtx']
+    
     signatures_for_this_tx = self.oracle.btc.signatures_number(
         raw_transaction,
         prevtx)
@@ -59,11 +59,6 @@ class ConditionedTransactionHandler(BaseHandler):
     HandledTransaction(self.oracle.db).update_tx(rqhs, signatures_for_this_tx)
     return valid_task
 
-  def inputs_from_same_address(self, prevtxs):
-    addresses = self.inputs_addresses(prevtxs)
-    if len(addresses) != 1:
-      return False
-    return True
 
   def inputs_addresses(self, prevtxs):
     addresses = set()
@@ -103,7 +98,7 @@ class ConditionedTransactionHandler(BaseHandler):
       logging.debug("transaction invalid")
       raise TransactionVerificationError()
 
-    if not self.inputs_from_same_address(prevtx):
+    if len(self.inputs_addresses(prevtx))>1:
       logging.debug("all inputs should go from the same multisig address")
       raise TransactionVerificationError()
 

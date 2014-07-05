@@ -39,35 +39,26 @@ class ConditionedTransactionHandler(BaseHandler):
       return
     rqhs = match.group(1)
 
-    other_tasks = self.oracle.task_queue.get_similar(task)
-    most_signatures = 0
-    task_sig = []
-    for task in other_tasks:
-      body = json.loads(task['json_data'])
+    body = json.loads(task['json_data'])
 
-      tx = body['transaction']
-      raw_transaction = tx['raw_transaction']
-      prevtx = tx['prevtx']
-      signatures_for_tx = self.oracle.btc.signatures_number(
-          raw_transaction,
-          prevtx)
-      task_sig.append((task, signatures_for_tx))
-      most_signatures = max(most_signatures, signatures_for_tx)
+    tx = body['transaction']
+    raw_transaction = tx['raw_transaction']
+    prevtx = tx['prevtx']
+    signatures_for_this_tx = self.oracle.btc.signatures_number(
+        raw_transaction,
+        prevtx)
 
     # If there is already a transaction that has MORE signatures than what we
     # have here - then ignore all tasks
     signs_for_transaction = HandledTransaction(self.oracle.db).signs_for_transaction(rqhs)
 
-    if signs_for_transaction > most_signatures:
+    if signs_for_transaction > signatures_for_this_tx:
+      self.oracle.task_queue.done(task)
       tasks_to_do = []
-      redundant = [t[0] for t in task_sig]
     else:
-      tasks_to_do = [t[0] for t in task_sig if t[1] == most_signatures]
-      redundant = [t[0] for t in task_sig if t not in tasks_to_do]
+      tasks_to_do = [task]
 
-    HandledTransaction(self.oracle.db).update_tx(rqhs, most_signatures)
-    for r in redundant:
-      self.oracle.task_queue.done(r)
+    HandledTransaction(self.oracle.db).update_tx(rqhs, signatures_for_this_tx)
     return tasks_to_do
 
   def inputs_from_same_address(self, prevtxs):

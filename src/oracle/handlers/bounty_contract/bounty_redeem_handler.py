@@ -178,15 +178,4 @@ class GuessPasswordHandler(BaseHandler):
     })
 
   def filter_tasks(self, task):
-    def faster_task(t1, t2):
-      d1 = json.loads(t1['json_data'])
-      d2 = json.loads(t2['json_data'])
-      if d1['received_time'] < d2['received_time']:
-        return t1
-      return t2
-    tasks = self.oracle.task_queue.get_similar_ignore_check(task)
-    final_task = reduce(faster_task, tasks)
-    for t in tasks:
-      if t != final_task:
-        self.oracle.task_queue.done(t)
-    return [final_task]
+    return [task]

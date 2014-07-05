@@ -32,7 +32,7 @@ VALID_OPERATIONS = {
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.TRANSACTION: ['transactions', 'locktime', 'condition', 'pubkey_json', 'req_sigs'],
+    OPERATION.TRANSACTION: ['transactions', 'locktime', 'pubkey_json', 'req_sigs'],
     OPERATION.BOUNTY_CREATE: ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
     OPERATION.GUESS_PASSWORD: ['pwtxid', 'passwords']
 }

@@ -33,10 +33,9 @@ class ConditionedTransactionHandler(BaseHandler):
     self.oracle.task_queue.done(task)
 
   def valid_task(self, task):
-    rqhs = task['filter_field']
-    match = re.match(r'^rqhs:(.*)', rqhs)
+    match = re.match(r'^rqhs:(.*)', task['filter_field'])
     if not match:
-      return
+      return False
     rqhs = match.group(1)
 
     body = json.loads(task['json_data'])

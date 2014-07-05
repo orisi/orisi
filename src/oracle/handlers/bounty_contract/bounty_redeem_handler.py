@@ -108,17 +108,6 @@ class GuessPasswordHandler(BaseHandler):
     else:
       logging.debug('guess incorrect!')
 
-  def get_rqhs_of_future_transaction(self, transaction, locktime):
-    inputs, outputs = self.oracle.get_inputs_outputs([transaction])
-    future_hash = {
-        'inputs': inputs,
-        'outputs': outputs,
-        'locktime': locktime,
-        'condition': 'True'
-    }
-    future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
-    return future_hash
-
   def handle_task(self, task):
     data = json.loads(task['json_data'])
     pwtxid = data['pwtxid']
@@ -151,14 +140,22 @@ class GuessPasswordHandler(BaseHandler):
         locktime)
 
     # Code repetition, should be removed!
-    future_hash = self.get_rqhs_of_future_transaction(future_transaction, locktime)
+
+
+    inputs, outputs = self.oracle.get_inputs_outputs([transaction])
+    future_hash = {
+        'inputs': inputs,
+        'outputs': outputs,
+        'locktime': locktime,
+        'condition': 'True'
+    }
+    future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
 
     if len(self.oracle.task_queue.get_by_filter('rqhs:{}'.format(future_hash))) > 0:
       logging.info("transaction already pushed")
       return
 
     self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
-
     signed_transaction = self.oracle.btc.sign_transaction(future_transaction, prevtx)
 
     # Prepare request corresponding with protocol
@@ -173,7 +170,6 @@ class GuessPasswordHandler(BaseHandler):
     }
     request = json.dumps(request)
     self.oracle.communication.broadcast('conditioned_transaction', request)
-    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
     self.oracle.task_queue.done(task)
     SentPasswordTransaction(self.oracle.db).save({
         "pwtxid": pwtxid,

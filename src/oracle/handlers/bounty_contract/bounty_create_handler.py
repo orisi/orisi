@@ -78,8 +78,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
       logging.info('pwtxid already in use. did you resend the same request?')
       return
 
-
-
     pub_key = self.get_public_key(pwtxid)
     message['rsa_pubkey'] = json.loads(pub_key)
     message['operation'] = 'new_bounty'

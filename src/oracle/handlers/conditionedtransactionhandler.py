@@ -20,16 +20,14 @@ class ConditionedTransactionHandler(BaseHandler):
 
   def handle_task(self, task):
     body = json.loads(task['json_data'])
-    transactions = body['transactions']
+    tx = body['transaction']
 
-    for idx, tx in enumerate(transactions):
-      transaction = tx['raw_transaction']
-      prevtx = tx['prevtx']
-      signed_transaction = self.oracle.btc.sign_transaction(transaction, prevtx)
-      body['transactions'][idx]['raw_transaction'] = signed_transaction
-      SignedTransaction(self.oracle.db).save({
-          "hex_transaction": signed_transaction,
-          "prevtx":json.dumps(prevtx)})
+    signed_transaction = self.oracle.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
+    body['transaction']['raw_transaction'] = signed_transaction
+
+    SignedTransaction(self.oracle.db).save({
+        "hex_transaction": signed_transaction,
+        "prevtx":json.dumps(tx['prevtx'])})
 
     self.oracle.communication.broadcast_signed_transaction(json.dumps(body))
     self.oracle.task_queue.done(task)
@@ -47,16 +45,13 @@ class ConditionedTransactionHandler(BaseHandler):
     for task in other_tasks:
       body = json.loads(task['json_data'])
 
-      transactions = body['transactions']
-      min_sig_for_tx = 999
-      for tx in transactions:
-        raw_transaction = tx['raw_transaction']
-        prevtx = tx['prevtx']
-        signatures_for_tx = self.oracle.btc.signatures_number(
-            raw_transaction,
-            prevtx)
-        min_sig_for_tx = min(min_sig_for_tx, signatures_for_tx)
-      task_sig.append((task, min_sig_for_tx))
+      tx = body['transaction']
+      raw_transaction = tx['raw_transaction']
+      prevtx = tx['prevtx']
+      signatures_for_tx = self.oracle.btc.signatures_number(
+          raw_transaction,
+          prevtx)
+      task_sig.append((task, signatures_for_tx))
       most_signatures = max(most_signatures, signatures_for_tx)
 
     # If there is already a transaction that has MORE signatures than what we
@@ -140,13 +135,12 @@ class ConditionedTransactionHandler(BaseHandler):
       raise TransactionVerificationError()
 
   def get_request_hash(self, request):
-    raw_transactions = [tx['raw_transaction'] for tx in request['transactions']]
-    inputs, outputs = self.oracle.get_inputs_outputs(raw_transactions)
+    raw_transaction = request['transaction']['raw_transaction']
+    inputs, outputs = self.oracle.get_inputs_outputs([ raw_transaction ])
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,
         "locktime": request['locktime'],
-        "condition": request['condition']
     }
     return hashlib.sha256(json.dumps(request_dict)).hexdigest()
 
@@ -172,15 +166,16 @@ class ConditionedTransactionHandler(BaseHandler):
       logging.debug("cant add multisig address")
       return
 
-    transactions = body['transactions']
-    for tx in transactions:
-      try:
-        self.verify_transaction(tx)
-      except TransactionVerificationError:
-        return
 
-    raw_transactions = [tx['raw_transaction'] for tx in transactions]
-    all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transactions)
+
+    tx = body['transaction']
+    try:
+      self.verify_transaction(tx)
+    except TransactionVerificationError:
+      return
+
+    raw_transaction = tx['raw_transaction']
+    all_inputs, all_outputs = self.oracle.get_inputs_outputs([raw_transaction])
 
     rq_hash = self.get_request_hash(body)
 
@@ -199,14 +194,10 @@ class ConditionedTransactionHandler(BaseHandler):
           'json_out': rq_hash
       })
 
-    all_turns = []
-    for transaction in transactions:
-      prevtx = transaction['prevtx']
-      turns = [self.get_my_turn(tx['redeemScript']) for tx in prevtx if 'redeemScript' in tx]
-      my_turn = max(turns)
-      all_turns.append(my_turn)
-
-    my_turn = max(all_turns)
+    prevtx = tx['prevtx']
+    turns = [self.get_my_turn(ptx['redeemScript']) for ptx in prevtx if 'redeemScript' in tx]
+    
+    my_turn = max(turns)
     add_time = my_turn * HEURISTIC_ADD_TIME
 
     self.oracle.task_queue.save({

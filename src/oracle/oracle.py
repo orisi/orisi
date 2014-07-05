@@ -2,7 +2,6 @@
 from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue
 from handlers.handlers import handlers
-from condition_evaluator.evaluator import Evaluator
 
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -21,7 +20,6 @@ class Oracle:
     self.communication = OracleCommunication()
     self.db = OracleDb()
     self.btc = BitcoinClient()
-    self.evaluator = Evaluator()
 
     self.task_queue = TaskQueue(self.db)
 
@@ -69,7 +67,7 @@ class Oracle:
     operation = task['operation']
     handler = self.handlers[operation]
     if handler:
-      if handler(self).filter_task(task):
+      if handler(self).valid_task(task):
         return task
       else:
         logging.debug('Task marked as invalid by handler')

@@ -60,15 +60,13 @@ class ConditionedTransactionHandler(BaseHandler):
     return valid_task
 
 
-  def inputs_addresses(self, prevtxs):
-    addresses = set()
+  def unique_scripts(self, prevtxs):
+    scripts = set()
     for prevtx in prevtxs:
       if not 'redeemScript' in prevtx:
         return False
-      script = prevtx['redeemScript']
-      address = self.oracle.btc.get_address_from_script(script)
-      addresses.add(address)
-    return list(addresses)
+      scripts.add(prevtx['redeemScript'])
+    return list(scripts)
 
   def includes_me(self, prevtx):
     for tx in prevtx:
@@ -98,7 +96,7 @@ class ConditionedTransactionHandler(BaseHandler):
       logging.debug("transaction invalid")
       raise TransactionVerificationError()
 
-    if len(self.inputs_addresses(prevtx))>1:
+    if len(self.unique_scripts(prevtx))>1:
       logging.debug("all inputs should go from the same multisig address")
       raise TransactionVerificationError()
 

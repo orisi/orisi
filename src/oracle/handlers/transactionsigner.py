@@ -119,7 +119,7 @@ class TransactionSigner(BaseHandler):
     assert( self.is_proper_transaction(tx) )
 
     raw_transaction = tx['raw_transaction']
-    all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transaction)
+    all_inputs, all_outputs = self.btc.get_inputs_outputs(raw_transaction)
 
     rq_hash = self.get_raw_tx_hash(raw_transaction, body['locktime'])
 

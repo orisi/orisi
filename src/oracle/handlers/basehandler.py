@@ -6,6 +6,7 @@ import hashlib
 class BaseHandler:
   def __init__(self, oracle):
     self.oracle = oracle
+    self.btc = oracle.btc
 
   def handle_request(self, task):
     raise NotImplementedError()
@@ -49,7 +50,7 @@ class BaseHandler:
     return True
 
   def get_raw_tx_hash(self, raw_transaction, locktime):
-    inputs, outputs = self.oracle.get_inputs_outputs(raw_transaction)
+    inputs, outputs = self.btc.get_inputs_outputs(raw_transaction)
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,

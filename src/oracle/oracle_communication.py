@@ -1,8 +1,7 @@
 # File responsible for sending messages according to protocol`
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
-from oracle_protocol import (
-    IDENTITY_SUBJECT,
-    IDENTITY_MESSAGE,
+from handlers.handlers import (
+    PROTOCOL_VERSION,
     VALID_OPERATIONS,
     OPERATION_REQUIRED_FIELDS,
     OPERATION,
@@ -86,7 +85,16 @@ class OracleCommunication:
   def broadcast(self, subject, message):
     self.client.send_message(self.client.chan_address, subject, message)
 
+
+
+
   def broadcast_identity(self):
+
+    IDENTITY_MESSAGE_RAW = {
+      "response": "active",
+      "version": PROTOCOL_VERSION
+    }
+
     self.client.send_broadcast(
-        IDENTITY_SUBJECT,
-        IDENTITY_MESSAGE)
+        'IdentityBroadcast',
+        json.dumps(IDENTITY_MESSAGE_RAW))

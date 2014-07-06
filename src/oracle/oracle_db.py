@@ -125,13 +125,12 @@ class UsedInput(TableDb):
   create_sql = "create table {0} ( \
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
-      input_hash text unique, \
-      json_out text not null);"
+      input_hash text unique);"
   insert_sql = "insert or ignore into {0} (input_hash, json_out) values (?, ?)"
   exists_sql = "select * from {0} where input_hash=?"
-  
+
   def args_for_obj(self, obj):
-    return [obj["input_hash"], obj["json_out"]]
+    return [obj["input_hash"]]
 
   def get_input(self, i):
     sql = self.exists_sql.format(self.table_name)

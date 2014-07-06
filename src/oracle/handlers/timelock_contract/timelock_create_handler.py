@@ -46,15 +46,14 @@ class ConditionedTransactionHandler(BaseHandler):
     used_input_db = UsedInput(self.oracle.db)
     for i in all_inputs:
       used_input = used_input_db.get_input(i)
-      if used_input and used_input["json_out"] != rq_hash:
+      if used_input:
           self.oracle.communication.broadcast(
               'AddressDuplicate',
               'this multisig address was already used in another transaction')
           return
     for i in all_inputs:
       used_input_db.save({
-          'input_hash': i,
-          'json_out': rq_hash
+          'input_hash': i
       })
 
     prevtx = tx['prevtx']

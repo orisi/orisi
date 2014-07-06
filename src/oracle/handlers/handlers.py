@@ -17,15 +17,15 @@ class OPERATION:
   GUESS_PASSWORD = 'guess_password'
 
 VALID_OPERATIONS = {
-    'conditioned_transaction': OPERATION.TRANSACTION,
-    'bounty_create': OPERATION.BOUNTY_CREATE,
-    'guess_password': OPERATION.GUESS_PASSWORD
+    : OPERATION.TRANSACTION,
+    : OPERATION.BOUNTY_CREATE,
+    : OPERATION.GUESS_PASSWORD
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    OPERATION.TRANSACTION: ['transaction', 'locktime', 'pubkey_json', 'req_sigs'],
-    OPERATION.BOUNTY_CREATE: ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
-    OPERATION.GUESS_PASSWORD: ['pwtxid', 'passwords']
+    'conditioned_transaction': ['transaction', 'locktime', 'pubkey_json', 'req_sigs'],
+    'bounty_create': ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
+    'guess_password': ['pwtxid', 'passwords']
 }
 
 PROTOCOL_VERSION = '0.12'

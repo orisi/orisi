@@ -121,7 +121,7 @@ class OracleTests(unittest.TestCase):
   def create_unsigned_transaction(self):
     multisig, redeem_script, pubkeys = self.create_multisig()
     fake_transaction = self.create_fake_transaction(multisig)
-    fake_transaction_dict = self.oracle.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.oracle.btc.get_json_transaction(fake_transaction)
     transaction = self.oracle.btc.create_multisig_transaction(
         [{"txid":fake_transaction_dict['txid'], "vout":0}],
         {"1NJJpSgp55nQKe6DZkzg4VqxRRYcUuJSHz":1.0}
@@ -311,7 +311,7 @@ class OracleTests(unittest.TestCase):
 
     prevtxs = []
     for tx in fake_transactions:
-      tx_dict = self.oracle.btc._get_json_transaction(tx)
+      tx_dict = self.oracle.btc.get_json_transaction(tx)
       prevtx = {
         "txid": tx_dict['txid'],
         "vout": 0,
@@ -416,7 +416,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(sent_transactions), 1)
     transaction = sent_transactions[0]
     tx = transaction['tx']
-    tx_dict = self.oracle.btc._get_json_transaction(tx)
+    tx_dict = self.oracle.btc.get_json_transaction(tx)
     vout = tx_dict['vout']
     self.assertEqual(len(vout), 2)
 

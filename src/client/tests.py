@@ -88,7 +88,7 @@ class ClientTests(unittest.TestCase):
   def create_transaction(self):
     result = self.create_multisig()
     input_transaction = self.create_fake_transaction(result['address'])
-    input_transaction_dict = self.client.btc._get_json_transaction(input_transaction)
+    input_transaction_dict = self.client.btc.get_json_transaction(input_transaction)
 
     inputs = [{'txid': input_transaction_dict['txid'], 'vout':0}]
     _, client_address = self.get_client_pubkey_address()
@@ -192,7 +192,7 @@ class ClientTests(unittest.TestCase):
   def test_get_amount_from_inputs_valid(self):
     fake_transaction = self.create_fake_transaction()
     self.client.add_raw_transaction(fake_transaction)
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     # We add the same transaction three times to see if client will count it only once
     inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}] * 3
 
@@ -201,7 +201,7 @@ class ClientTests(unittest.TestCase):
 
   def test_get_amount_from_inputs_invalid(self):
     fake_transaction = self.create_fake_transaction()
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}]
     with self.assertRaises(TransactionUnknownError):
       self.client.get_amount_from_inputs(inputs)
@@ -211,7 +211,7 @@ class ClientTests(unittest.TestCase):
     address = result['address']
     redeem = result['redeemScript']
     fake_transaction = self.create_fake_transaction(address)
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     self.client.add_raw_transaction(fake_transaction)
 
     tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
@@ -219,7 +219,7 @@ class ClientTests(unittest.TestCase):
 
   def test_get_address_invalid_missing_address(self):
     fake_transaction = self.create_fake_transaction()
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     self.client.add_raw_transaction(fake_transaction)
 
     tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
@@ -228,7 +228,7 @@ class ClientTests(unittest.TestCase):
 
   def test_get_address_invalid_unknown_transaction(self):
     fake_transaction = self.create_fake_transaction()
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
 
     tx_input = {'txid': fake_transaction_dict['txid'], 'vout': 0}
     with self.assertRaises(TransactionUnknownError):
@@ -239,7 +239,7 @@ class ClientTests(unittest.TestCase):
     address = result['address']
     redeem = result['redeemScript']
     fake_transaction = self.create_fake_transaction(address)
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     script = fake_transaction_dict['vout'][0]['scriptPubKey']['hex']
     self.client.add_raw_transaction(fake_transaction)
 
@@ -251,7 +251,7 @@ class ClientTests(unittest.TestCase):
 
   def test_prepare_prevtx_invalid_unknown_transaction(self):
     fake_transaction = self.create_fake_transaction()
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
 
     prevtx = [{'txid': fake_transaction_dict['txid'], 'vout': 0}]
     with self.assertRaises(TransactionUnknownError):
@@ -259,7 +259,7 @@ class ClientTests(unittest.TestCase):
 
   def test_prepare_prevtx_invalid_missing_address(self):
     fake_transaction = self.create_fake_transaction()
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     self.client.add_raw_transaction(fake_transaction)
 
     prevtx = [{'txid': fake_transaction_dict['txid'], 'vout': 0}]
@@ -270,7 +270,7 @@ class ClientTests(unittest.TestCase):
     result = self.create_multisig()
     address = result['address']
     fake_transaction = self.create_fake_transaction(address, amount)
-    fake_transaction_dict = self.client.btc._get_json_transaction(fake_transaction)
+    fake_transaction_dict = self.client.btc.get_json_transaction(fake_transaction)
     self.client.add_raw_transaction(fake_transaction)
 
     inputs = [{'txid':fake_transaction_dict['txid'], 'vout':0}]
@@ -304,7 +304,7 @@ class ClientTests(unittest.TestCase):
 
     transaction = transactions[0]
     self.assertEquals(self.client.btc.signatures_number(transaction['raw_transaction'], transaction['prevtx']), 3)
-    transaction_dict = self.client.btc._get_json_transaction(transaction['raw_transaction'])
+    transaction_dict = self.client.btc.get_json_transaction(transaction['raw_transaction'])
 
     outs = transaction_dict['vout']
     output_sum = sum([Decimal(o['value']) for o in outs])

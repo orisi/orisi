@@ -188,7 +188,7 @@ class OracleClient:
   def add_raw_transaction(self, raw_transaction):
     if not self.btc.is_valid_transaction(raw_transaction):
       logging.error("hex transaction is not valid transaction")
-    transaction_json = self.btc._get_json_transaction(raw_transaction)
+    transaction_json = self.btc.get_json_transaction(raw_transaction)
     txid = transaction_json['txid']
     RawTransactionDb(self.db).save({
         "txid": txid,
@@ -215,7 +215,7 @@ class OracleClient:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
         raise TransactionUnknownError()
-      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+      transaction_dict = self.btc.get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:
         if v['n'] == tx['vout']:
@@ -240,7 +240,7 @@ class OracleClient:
       raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
       if not raw_transaction:
         raise TransactionUnknownError()
-      transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+      transaction_dict = self.btc.get_json_transaction(raw_transaction['raw_transaction'])
       vouts = transaction_dict['vout']
       for v in vouts:
         if v['n'] == tx['vout']:
@@ -260,7 +260,7 @@ class OracleClient:
     raw_transaction = RawTransactionDb(self.db).get_tx(tx['txid'])
     if not raw_transaction:
       raise TransactionUnknownError()
-    transaction_dict = self.btc._get_json_transaction(raw_transaction['raw_transaction'])
+    transaction_dict = self.btc.get_json_transaction(raw_transaction['raw_transaction'])
     vouts = transaction_dict['vout']
     for v in vouts:
       if v['n'] == tx['vout']:

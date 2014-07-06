@@ -30,10 +30,6 @@ class BitcoinClient:
     return ping_and_reconnect
 
   @keep_alive
-  def _get_json_transaction(self, hex_transaction):
-    return self.server.decoderawtransaction(hex_transaction)
-
-  @keep_alive
   def sign_transaction(self, raw_transaction, prevtx = [], priv=None):
     if priv:
       result = self.server.signrawtransaction(raw_transaction, prevtx, priv)
@@ -43,12 +39,12 @@ class BitcoinClient:
 
   @keep_alive
   def get_txid(self, raw_transaction):
-    transaction_dict = self._get_json_transaction(raw_transaction)
+    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
     return transaction_dict['txid']
 
   @keep_alive
   def signatures_number(self, raw_transaction, prevtx):
-    transaction_dict = self._get_json_transaction(raw_transaction)
+    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
 
     prevtx_dict = {}
     for tx in prevtx:
@@ -79,7 +75,7 @@ class BitcoinClient:
   def is_valid_transaction(self, raw_transaction):
     # Is raw transaction valid and decodable?
     try:
-      self._get_json_transaction(raw_transaction)
+      self.server.decoderawtrwansaction(raw_transaction)
     except ProtocolError:
       return False
     return True
@@ -96,7 +92,7 @@ class BitcoinClient:
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):
-    transaction_dict = self._get_json_transaction(raw_transaction)
+    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
     vin = transaction_dict["vin"]
     vouts = transaction_dict["vout"]
     result = (
@@ -137,7 +133,7 @@ class BitcoinClient:
 
   @keep_alive
   def transaction_contains_output(self, raw_transaction, address, fee):
-    transaction_dict = self._get_json_transaction(raw_transaction)
+    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
     if not 'vout' in transaction_dict:
       return False
     for vout in transaction_dict['vout']:

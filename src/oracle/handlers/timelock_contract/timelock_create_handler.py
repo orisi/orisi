@@ -98,7 +98,7 @@ class ConditionedTransactionHandler(BaseHandler):
       raise TransactionVerificationError()
 
     if len(self.inputs_addresses(prevtx))>1:
-      logging.debug("all inputs should go from the same multisig address")
+      logging.debug("all inputs should come from the same multisig address")
       raise TransactionVerificationError()
 
     if not self.includes_me(prevtx):

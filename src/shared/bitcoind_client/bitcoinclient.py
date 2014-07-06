@@ -29,6 +29,7 @@ class BitcoinClient:
       return fun(self, *args, **kwargs)
     return ping_and_reconnect
 
+
   @keep_alive
   def sign_transaction(self, raw_transaction, prevtx = [], priv=None):
     if priv:

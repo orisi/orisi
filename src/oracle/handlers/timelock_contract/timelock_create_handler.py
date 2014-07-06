@@ -1,6 +1,5 @@
 from basehandler import BaseHandler
 from oracle.oracle_db import SignedTransaction, HandledTransaction, UsedInput
-from oracle.handlers import SUBJECT, RESPONSE
 
 import hashlib
 import json
@@ -169,8 +168,8 @@ class ConditionedTransactionHandler(BaseHandler):
       if used_input:
         if used_input["json_out"] != rq_hash:
           self.oracle.communication.broadcast(
-              SUBJECT.ADDRESS_DUPLICATE,
-              RESPONSE.ADDRESS_DUPLICATE)
+              'AddressDuplicate',
+              'this multisig address was already used')
           return
     for i in all_inputs:
       used_input_db.save({

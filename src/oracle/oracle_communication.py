@@ -4,10 +4,7 @@ from handlers.handlers import (
     PROTOCOL_VERSION,
     VALID_OPERATIONS,
     OPERATION_REQUIRED_FIELDS,
-    OPERATION,
-    SUBJECT,
-    RESPONSE,
-    RAW_RESPONSE)
+    OPERATION)
 
 import json
 import logging
@@ -52,7 +49,7 @@ class OracleCommunication:
     requests = []
     for msg in messages:
       if msg.direct:
-        self.response(msg, SUBJECT.DIRECT, RESPONSE.DIRECT)
+        self.response(msg, 'DirectMessage', 'direct message unsupported')
         continue
       operation = self.corresponds_to_protocol(msg)
       if operation:
@@ -71,7 +68,8 @@ class OracleCommunication:
     self.response_to_address(message.from_address, subject, response)
 
   def response_to_address(self, address, subject, response):
-    body = RAW_RESPONSE
+    body = {}
+    body['version'] = PROTOCOL_VERSION
     body['response'] = response
     body_json = json.dumps(body)
     self.client.send_message(

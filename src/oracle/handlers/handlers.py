@@ -8,14 +8,13 @@ op_handlers = {
 	'sign': TransactionSigner,
     'timelock_create': ConditionedTransactionHandler,
     'bounty_create': PasswordTransactionRequestHandler,
-    'bounty_redeem': PasswordTransactionRequestHandler,
-    'guess_password': GuessPasswordHandler,
+    'bounty_redeem': GuessPasswordHandler,
 }
 
 OPERATION_REQUIRED_FIELDS = {
     'timelock_create': ['transaction', 'locktime', 'pubkey_json', 'req_sigs'],
     'bounty_create': ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
-    'guess_password': ['pwtxid', 'passwords']
+    'bounty_redeem': ['pwtxid', 'passwords']
 }
 
 PROTOCOL_VERSION = '0.12'

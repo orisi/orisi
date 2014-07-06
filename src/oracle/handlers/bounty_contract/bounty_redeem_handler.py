@@ -100,7 +100,7 @@ class GuessPasswordHandler(BaseHandler):
       }
       RightGuess(self.oracle.db).save(guess_dict)
       self.oracle.task_queue.save({
-          'operation': 'guess_password',
+          'operation': 'bounty_redeem',
           'filter_field': 'guess:{}'.format(pwtxid),
           'done':0,
           'next_check': int(time.time()) + WAIT_TIME,

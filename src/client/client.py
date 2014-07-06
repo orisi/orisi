@@ -405,7 +405,7 @@ class OracleClient:
 
   def prepare_bounty_request(self, pwtxid, passwords):
     message = json.dumps({
-        'operation': 'guess_password',
+        'operation': 'bounty_redeem',
         'pwtxid': pwtxid,
         'passwords': passwords
     })
@@ -440,4 +440,4 @@ class OracleClient:
       rsa_hash = hashlib.sha256(json.dumps(key)).hexdigest()
       passwords[rsa_hash] = base64_msg
     request = self.prepare_bounty_request(pwtxid, passwords)
-    self.bm.send_message(self.bm.chan_address, "guess_password", request)
+    self.bm.send_message(self.bm.chan_address, "bounty_redeem", request)

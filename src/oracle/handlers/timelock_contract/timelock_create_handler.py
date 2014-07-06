@@ -127,8 +127,8 @@ class ConditionedTransactionHandler(BaseHandler):
     }
     return hashlib.sha256(json.dumps(request_dict)).hexdigest()
 
-  def add_transaction(self, message):
-    body = json.loads(message.message)
+  def add_transaction(self, request):
+    body = json.loads(request.message)
 
     pubkey_list = body['pubkey_json']
     try:
@@ -185,11 +185,8 @@ class ConditionedTransactionHandler(BaseHandler):
 
     self.oracle.task_queue.save({
         "operation": 'conditioned_transaction',
-        "json_data": message.message,
+        "json_data": request.message,
         "filter_field": 'rqhs:{}'.format(rq_hash),
         "done": 0,
         "next_check": locktime + add_time
     })
-
-  def handle_request(self, request):
-    self.add_transaction(request)

@@ -1,6 +1,6 @@
 # Password Transaction
 
-Password transaction is kind of smart contract you can use, where you create a request (called **password_transaction**) and pass it to Oracles. From now Oracles will monitor the network for every request that tries to guess the password (the requests called **guess_password**). If someone will guess password, Oracle will give him bounty, otherwise, after given time period, the cash will return to bounty creator.
+Password transaction is kind of smart contract you can use, where you create a request (called **password_transaction**) and pass it to Oracles. From now Oracles will monitor the network for every request that tries to guess the password (the requests called **bounty_redeem**). If someone will guess password, Oracle will give him bounty, otherwise, after given time period, the cash will return to bounty creator.
 ___
 
 ### Password Transaction Request
@@ -90,7 +90,7 @@ The protocol for guessing transactions states that the answers should be sent as
 ```json
 {
     "pwtxid": "882a1d913b4b5c60d5521bec869b4ce0649add0486ae5c209553ae5bc7cef1a8",
-    "operation": "guess_password",
+    "operation": "bounty_redeem",
     "passwords": {
         "rsa_hash": "answer"
     }
@@ -101,7 +101,7 @@ Ok, let's clear things out a bit.
 
 ```pwtxid``` as usual - is password transaction id
 
-```operation``` this time should be **guess_password**
+```operation``` this time should be **bounty_redeem**
 
 ```passwords``` is a dictionary. It's keys are SHA256 hashes of public key pair JSON client have received in **new_bounty**. So for example it's hashlib.sha256('{"n":1243567, "e":4093256476}').hexdigest(). Answer is message encrypted with this RSA public key and encoded with base64. Message should have following format:
 

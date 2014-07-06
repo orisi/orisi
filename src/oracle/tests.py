@@ -357,7 +357,7 @@ class OracleTests(unittest.TestCase):
     msg_dict['subject'] = base64.encodestring('dummy')
     msg_dict['message'] = base64.encodestring("""
     {{
-        "operation": "guess_password",
+        "operation": "bounty_redeem",
         "pwtxid": "{0}",
         "passwords": {1}
     }}
@@ -391,7 +391,7 @@ class OracleTests(unittest.TestCase):
     base64_encrypted_guess = base64.encodestring(encrypted_guess)
     passwords = json.dumps({rsa_hash: base64_encrypted_guess})
     message = self.create_guess_message(pwtxid, passwords)
-    request = ('guess_password', message)
+    request = ('bounty_redeem', message)
     return request
 
   def test_claim_password_transaction(self):
@@ -444,7 +444,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(len(guess_tasks), 2)
     task = guess_tasks[0]
 
-    final_tasks = self.oracle.handlers['guess_password'](self.oracle).filter_tasks(task)
+    final_tasks = self.oracle.handlers['bounty_redeem'](self.oracle).filter_tasks(task)
     self.assertEqual(len(final_tasks), 1)
     self.assertEqual(final_tasks[0], guess_tasks[1])
     self.oracle.handle_task(final_tasks[0])

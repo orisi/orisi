@@ -96,13 +96,13 @@ def main3(args): # guess password
       passwords[rsa_hash] = base64_msg
 
     request = json.dumps({
-        'operation': 'guess_password',
+        'operation': 'bounty_redeem',
         'pwtxid': pwtxid,
         'passwords': passwords
     })
 
     bm = BitmessageClient()
-    bm.send_message(bm.chan_address, "guess_password", request)
+    bm.send_message(bm.chan_address, "bounty_redeem", request)
 
 
 def main(args):

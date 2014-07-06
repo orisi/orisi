@@ -142,7 +142,7 @@ class GuessPasswordHandler(BaseHandler):
     # Code repetition, should be removed!
 
 
-    inputs, outputs = self.oracle.get_inputs_outputs([transaction])
+    inputs, outputs = self.oracle.get_inputs_outputs(transaction)
     future_hash = {
         'inputs': inputs,
         'outputs': outputs,

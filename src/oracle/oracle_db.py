@@ -126,7 +126,7 @@ class UsedInput(TableDb):
       id integer primary key autoincrement, \
       ts datetime default current_timestamp, \
       input_hash text unique);"
-  insert_sql = "insert or ignore into {0} (input_hash, json_out) values (?, ?)"
+  insert_sql = "insert or ignore into {0} (input_hash) values (?)"
   exists_sql = "select * from {0} where input_hash=?"
 
   def args_for_obj(self, obj):

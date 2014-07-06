@@ -39,7 +39,7 @@ class ConditionedTransactionHandler(BaseHandler):
       return
 
     raw_transaction = tx['raw_transaction']
-    all_inputs, all_outputs = self.oracle.get_inputs_outputs([raw_transaction])
+    all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transaction)
 
     rq_hash = self.get_request_hash(body)
 

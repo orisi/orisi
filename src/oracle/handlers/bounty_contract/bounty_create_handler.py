@@ -100,7 +100,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     })
 
   def get_rqhs_of_future_transaction(self, transaction, locktime):
-    inputs, outputs = self.oracle.get_inputs_outputs([transaction])
+    inputs, outputs = self.oracle.get_inputs_outputs(transaction)
     future_hash = {
         'inputs': inputs,
         'outputs': outputs,

@@ -50,7 +50,7 @@ class BaseHandler:
 
   def get_raw_tx_hash(self, request):
     raw_transaction = request['transaction']['raw_transaction']
-    inputs, outputs = self.oracle.get_inputs_outputs([ raw_transaction ])
+    inputs, outputs = self.oracle.get_inputs_outputs(raw_transaction)
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,

@@ -91,7 +91,7 @@ class TransactionSigner(BaseHandler):
 
   def get_request_hash(self, request):
     raw_transaction = request['transaction']['raw_transaction']
-    inputs, outputs = self.oracle.get_inputs_outputs([ raw_transaction ])
+    inputs, outputs = self.oracle.get_inputs_outputs(raw_transaction)
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,
@@ -129,7 +129,7 @@ class TransactionSigner(BaseHandler):
     assert( self.is_proper_transaction(tx) )
 
     raw_transaction = tx['raw_transaction']
-    all_inputs, all_outputs = self.oracle.get_inputs_outputs([raw_transaction])
+    all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transaction)
 
     rq_hash = self.get_request_hash(body)
 

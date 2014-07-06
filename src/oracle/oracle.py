@@ -24,15 +24,15 @@ class Oracle:
 
     self.handlers = op_handlers
 
-  def get_inputs_outputs(self, transactions):
+  def get_inputs_outputs(self, transaction):
     all_inputs = set()
     all_outputs = []
+    inputs, output = self.btc.get_inputs_outputs(transaction)
 
-    for transaction in transactions:
-      inputs, output = self.btc.get_inputs_outputs(transaction)
-      for i in inputs:
-        all_inputs.add(i)
-      all_outputs.append(sorted(output))
+    for i in inputs:
+      all_inputs.add(i)
+      
+    all_outputs.append(sorted(output))
 
     all_inputs = sorted(list(all_inputs))
     return (all_inputs, all_outputs)

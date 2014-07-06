@@ -89,34 +89,6 @@ class TransactionSigner(BaseHandler):
         return idx
     return -1
 
-  def verify_transaction(self, tx):
-    transaction = tx['raw_transaction']
-    prevtx = tx['prevtx']
-
-    if not self.oracle.btc.is_valid_transaction(transaction):
-      logging.debug("transaction invalid")
-      raise TransactionVerificationError()
-
-    if len(self.inputs_addresses(prevtx))>1:
-      logging.debug("all inputs should go from the same multisig address")
-      raise TransactionVerificationError()
-
-    if not self.includes_me(prevtx):
-      logging.debug("transaction does not include me")
-      raise TransactionVerificationError()
-
-    if not self.oracle.btc.transaction_contains_org_fee(transaction):
-      logging.debug("org fee not found")
-      raise TransactionVerificationError()
-
-    if not self.oracle.btc.transaction_contains_oracle_fee(transaction):
-      logging.debug("oracle fee not found")
-      raise TransactionVerificationError()
-
-    if self.oracle.btc.transaction_already_signed(transaction, prevtx):
-      logging.debug("transaction already signed")
-      raise TransactionVerificationError()
-
   def get_request_hash(self, request):
     raw_transaction = request['transaction']['raw_transaction']
     inputs, outputs = self.oracle.get_inputs_outputs([ raw_transaction ])
@@ -152,10 +124,9 @@ class TransactionSigner(BaseHandler):
 
 
     tx = body['transaction']
-    try:
-      self.verify_transaction(tx)
-    except TransactionVerificationError:
-      return
+
+    # validity of the transaciton should be checked by handlers
+    assert( self.is_proper_transaction(tx) )
 
     raw_transaction = tx['raw_transaction']
     all_inputs, all_outputs = self.oracle.get_inputs_outputs([raw_transaction])

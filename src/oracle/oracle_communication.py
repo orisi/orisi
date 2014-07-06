@@ -30,17 +30,20 @@ class OracleCommunication:
       logging.info('message has no operation')
       return False
 
-    if not body['operation'] in op_handlers.iterkeys():
+    if not body['operation'] in op_handlers:
       logging.info('operation %r not supported' % body['operation'])
       return False
 
     operation = body['operation']
 
-    required_fields = OPERATION_REQUIRED_FIELDS[operation]
-    for field in required_fields:
-      if not field in body:
-        logging.info('required field {0} for operation {1} missing'.format(field, operation))
-        return False
+    if operation in OPERATION_REQUIRED_FIELDS:
+      required_fields = OPERATION_REQUIRED_FIELDS[operation]
+      for field in required_fields:
+        if not field in body:
+          logging.info('required field {0} for operation {1} missing'.format(field, operation))
+          return False
+    else:
+      logging.warning('operation %r has no OPERATION_REQUIRED_FIELDS defined' % operation)
 
     logging.info('operation {0}'.format(operation))
     return operation

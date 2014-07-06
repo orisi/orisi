@@ -4,8 +4,6 @@ from oracle.oracle_db import SignedTransaction, UsedInput
 import json
 import logging
 
-from xmlrpclib import ProtocolError
-
 HEURISTIC_ADD_TIME = 60 * 3
 
 class TransactionVerificationError(Exception):
@@ -14,12 +12,13 @@ class TransactionVerificationError(Exception):
 class ConditionedTransactionHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
+    self.btc = oracle.btc
 
   def handle_task(self, task):
     body = json.loads(task['json_data'])
     tx = body['transaction']
 
-    signed_transaction = self.oracle.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
+    signed_transaction = self.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
     body['transaction']['raw_transaction'] = signed_transaction
 
     SignedTransaction(self.oracle.db).save({
@@ -33,7 +32,7 @@ class ConditionedTransactionHandler(BaseHandler):
     body = json.loads(request.message)
 
     locktime = int(body['locktime'])
-    self.oracle.btc.add_multisig_address(body['req_sigs'], body['pubkey_list'])
+    self.btc.add_multisig_address(body['req_sigs'], body['pubkey_list'])
 
     tx = body['transaction']
     if not self.is_proper_transaction(tx):

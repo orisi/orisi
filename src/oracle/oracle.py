@@ -9,7 +9,6 @@ from shared.bitcoind_client.bitcoinclient import BitcoinClient
 import time
 import logging
 
-from collections import defaultdict
 from decimal import Decimal
 
 # 3 minutes between oracles should be sufficient
@@ -23,7 +22,7 @@ class Oracle:
 
     self.task_queue = TaskQueue(self.db)
 
-    self.handlers = defaultdict(lambda: None, op_handlers)
+    self.handlers = op_handlers
 
   def get_inputs_outputs(self, transactions):
     all_inputs = set()
@@ -40,11 +39,12 @@ class Oracle:
 
   def handle_request(self, request):
     operation, message = request
-    handler = self.handlers[operation]
-
-    if not handler:
+    
+    if not operation in self.handlers:
       logging.debug("operation {} not supported".format(operation))
       return
+
+    handler = self.handlers[operation]
 
     try:
       handler(self).handle_request(message)

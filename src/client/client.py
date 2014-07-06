@@ -141,7 +141,7 @@ class OracleClient:
         "multisig": response['address'],
         "min_sig": real_min_sigs,
         "redeem_script": response['redeemScript'],
-        "pubkey_json": json.dumps(sorted(key_list))})
+        "pubkey_list": json.dumps(sorted(key_list))})
 
     self.btc.add_multisig_address(real_min_sigs, key_list)
     return response
@@ -165,7 +165,7 @@ class OracleClient:
       ],
       "locktime": locktime,
       "condition": condition,
-      "pubkey_json": pubkey_list,
+      "pubkey_list": pubkey_list,
       "req_sigs": req_sigs
     })
     return message
@@ -311,7 +311,7 @@ class OracleClient:
 
     multisig_info = self.get_address(tx_inputs[0])
     req_sigs = multisig_info['min_sig']
-    pubkey_list = json.loads(multisig_info['pubkey_json'])
+    pubkey_list = json.loads(multisig_info['pubkey_list'])
 
     # Now we have all we need to create proper request
     return self.prepare_request(
@@ -348,13 +348,13 @@ class OracleClient:
 
     multisig_info = self.get_address(tx_inputs[0])
     req_sigs = multisig_info['min_sig']
-    pubkey_list = json.loads(multisig_info['pubkey_json'])
+    pubkey_list = json.loads(multisig_info['pubkey_list'])
 
     prevtx = self.prepare_prevtx(tx_inputs)
     message = json.dumps({
       "operation": "password_transaction",
       "locktime": locktime,
-      "pubkey_json": pubkey_list,
+      "pubkey_list": pubkey_list,
       "req_sigs": req_sigs,
       "sum_amount": float(amount),
       "miners_fee": float(MINERS_FEE),

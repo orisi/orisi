@@ -131,7 +131,7 @@ class ClientTests(unittest.TestCase):
     self.assertEquals(db_object['min_sig'], 6)
     self.assertEquals(db_object['redeem_script'], result['redeemScript'])
     oracles_pubkeys = [e['pubkey'] for e in ADDRESSES['oracles']]
-    self.assertEquals(db_object['pubkey_json'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
+    self.assertEquals(db_object['pubkey_list'], json.dumps(sorted(oracles_pubkeys + 3 * [client_pubkey])))
 
   def test_create_multisig_address_blocking(self):
     address_result = self.create_multisig(blocking=False)

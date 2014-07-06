@@ -1,7 +1,7 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue
-from handlers.handlers import handlers
+from handlers.handlers import op_handlers
 
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
@@ -23,7 +23,7 @@ class Oracle:
 
     self.task_queue = TaskQueue(self.db)
 
-    self.handlers = defaultdict(lambda: None, handlers)
+    self.handlers = defaultdict(lambda: None, op_handlers)
 
   def get_inputs_outputs(self, transactions):
     all_inputs = set()

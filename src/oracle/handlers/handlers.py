@@ -4,22 +4,12 @@ from bounty_contract.bounty_redeem_handler import GuessPasswordHandler
 from transactionsigner import TransactionSigner
 
 
-handlers = {
+op_handlers = {
 	'sign': TransactionSigner,
     'timelock_create': ConditionedTransactionHandler,
     'bounty_create': PasswordTransactionRequestHandler,
+    'bounty_redeem': PasswordTransactionRequestHandler,
     'guess_password': GuessPasswordHandler,
-}
-
-class OPERATION:
-  TRANSACTION = 'conditioned_transaction'
-  BOUNTY_CREATE = 'bounty_create'
-  GUESS_PASSWORD = 'guess_password'
-
-VALID_OPERATIONS = {
-    : OPERATION.TRANSACTION,
-    : OPERATION.BOUNTY_CREATE,
-    : OPERATION.GUESS_PASSWORD
 }
 
 OPERATION_REQUIRED_FIELDS = {

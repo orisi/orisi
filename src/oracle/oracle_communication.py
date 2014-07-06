@@ -1,10 +1,11 @@
 # File responsible for sending messages according to protocol`
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
+
+from handlers.handlers import op_handlers
+
 from handlers.handlers import (
     PROTOCOL_VERSION,
-    VALID_OPERATIONS,
-    OPERATION_REQUIRED_FIELDS,
-    OPERATION)
+    OPERATION_REQUIRED_FIELDS)
 
 import json
 import logging
@@ -29,11 +30,11 @@ class OracleCommunication:
       logging.info('message has no operation')
       return False
 
-    if not body['operation'] in VALID_OPERATIONS.iterkeys():
+    if not body['operation'] in op_handlers.iterkeys():
       logging.info('operation %r not supported' % body['operation'])
       return False
 
-    operation = VALID_OPERATIONS[body['operation']]
+    operation = body['operation']
 
     required_fields = OPERATION_REQUIRED_FIELDS[operation]
     for field in required_fields:

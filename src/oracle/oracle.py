@@ -46,7 +46,11 @@ class Oracle:
       logging.debug("operation {} not supported".format(operation))
       return
 
-    handler(self).handle_request(message)
+    try:
+      handler(self).handle_request(message)
+    except:
+      logging.exception('error handling the request')
+
 
     # Save object to database for future reference
     db_class = self.db.operations[operation]

@@ -32,24 +32,8 @@ class ConditionedTransactionHandler(BaseHandler):
   def handle_request(self, request):
     body = json.loads(request.message)
 
-    pubkey_list = body['pubkey_list']
-    try:
-      req_sigs = int(body['req_sigs'])
-    except ValueError:
-      logging.debug("req_sigs must be a number")
-      return
-
-    try:
-      locktime = int(body['locktime'])
-    except ValueError:
-      logging.debug("locktime must be a number")
-      return
-
-    try:
-      self.oracle.btc.add_multisig_address(req_sigs, pubkey_list)
-    except ProtocolError:
-      logging.debug("cant add multisig address")
-      return
+    locktime = int(body['locktime'])
+    self.oracle.btc.add_multisig_address(body['req_sigs'], body['pubkey_list'])
 
     tx = body['transaction']
     if not self.is_proper_transaction(tx):

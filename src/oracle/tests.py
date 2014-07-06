@@ -43,7 +43,7 @@ def create_message(tx, prevtx, pubkeys):
         "raw_transaction": "{0}",
         "prevtx": {1}
     }}],
-    "pubkey_json": {2},
+    "pubkey_list": {2},
     "req_sigs": 4,
     "operation": "conditioned_transaction",
     "locktime": 1402318623,
@@ -265,7 +265,7 @@ class OracleTests(unittest.TestCase):
     self.assertEqual(self.oracle.btc.signatures_number(signed_transaction, prevtx), 2)
 
   # password_transaction tests
-  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash, pubkey_json):
+  def create_password_transaction_message(self, sum_amount, oracle_fees, prevtx, password_hash, pubkey_list):
     msg_dict = defaultdict(lambda: 'dummy')
     msg_dict['receivedTime'] = 1000
     msg_dict['subject'] = base64.encodestring('dummy')
@@ -279,10 +279,10 @@ class OracleTests(unittest.TestCase):
     "operation": "password_transaction",
     "prevtx": {2},
     "password_hash": "{3}",
-    "pubkey_json": {4},
+    "pubkey_list": {4},
     "req_sigs": 4
     }}
-    """.format(sum_amount, oracle_fees, prevtx, password_hash, pubkey_json))
+    """.format(sum_amount, oracle_fees, prevtx, password_hash, pubkey_list))
     message = BitmessageMessage(
       msg_dict,
       'dummyaddress')

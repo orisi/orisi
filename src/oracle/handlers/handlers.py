@@ -12,8 +12,8 @@ op_handlers = {
 }
 
 OPERATION_REQUIRED_FIELDS = {
-    'timelock_create': ['transaction', 'locktime', 'pubkey_json', 'req_sigs'],
-    'bounty_create': ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_json', 'req_sigs', 'password_hash', 'return_address'],
+    'timelock_create': ['transaction', 'locktime', 'pubkey_list', 'req_sigs'],
+    'bounty_create': ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_list', 'req_sigs', 'password_hash', 'return_address'],
     'bounty_redeem': ['pwtxid', 'passwords']
 }
 

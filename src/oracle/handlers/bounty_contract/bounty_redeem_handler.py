@@ -154,7 +154,7 @@ class GuessPasswordHandler(BaseHandler):
       logging.info("transaction already pushed")
       return
 
-    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
+    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
     signed_transaction = self.oracle.btc.sign_transaction(future_transaction, prevtx)
 
     # Prepare request corresponding with protocol
@@ -163,7 +163,7 @@ class GuessPasswordHandler(BaseHandler):
             {"raw_transaction":signed_transaction, "prevtx": prevtx},],
         "locktime": 0,
         "condition": "True",
-        "pubkey_json": message['pubkey_json'],
+        "pubkey_list": message['pubkey_list'],
         "req_sigs": message['req_sigs'],
         "operation": 'conditioned_transaction'
     }

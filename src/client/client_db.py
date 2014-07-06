@@ -41,12 +41,12 @@ class MultisigRedeemDb(TableDb):
     multisig text not null, \
     redeem_script text not null, \
     min_sig integer not null, \
-    pubkey_json text not null);'
-  insert_sql = 'insert into {0} (multisig, redeem_script, min_sig, pubkey_json) values (?, ?, ?, ?)'
+    pubkey_list text not null);'
+  insert_sql = 'insert into {0} (multisig, redeem_script, min_sig, pubkey_list) values (?, ?, ?, ?)'
   get_address_sql = 'select * from {0} where multisig=? order by ts desc limit 1'
 
   def args_for_obj(self, obj):
-    return [obj['multisig'], obj['redeem_script'], obj["min_sig"], obj['pubkey_json']]
+    return [obj['multisig'], obj['redeem_script'], obj["min_sig"], obj['pubkey_list']]
 
   def get_address(self, address):
     cursor = self.db.get_cursor()

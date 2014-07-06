@@ -174,7 +174,7 @@ def main2(args):
 
   ###
 
-  request['pubkey_json'] = key_list
+  request['pubkey_list'] = key_list
   request['miners_fee'] = 0.0001
 
   prevtx = {

@@ -102,7 +102,7 @@ class TransactionSigner(BaseHandler):
   def handle_request(self, request):
     body = json.loads(request.message)
 
-    pubkey_list = body['pubkey_json']
+    pubkey_list = body['pubkey_list']
     try:
       req_sigs = int(body['req_sigs'])
     except ValueError:

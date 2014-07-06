@@ -10,7 +10,7 @@ To create password transaction you'll need to send JSON to Bitmessage network on
 
 ```json
 {
-    "pubkey_json": [
+    "pubkey_list": [
         "0281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c15163",
         "02e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f0",
         "039558d46a42499ae695b70f99d43d0dd960698448d5dd9ddac1585fcc66e1bdd8",
@@ -41,7 +41,7 @@ To create password transaction you'll need to send JSON to Bitmessage network on
 
 The json above is absolutely valid JSON with request transaction that actually took place.
 
-```pubkey_json``` is a list of public keys of all oracles that take part in this transaction. It also contains one additional public key generated for client (orisi client takes care of that). These public keys will be used to generate multisignature address for that transaction.
+```pubkey_list``` is a list of public keys of all oracles that take part in this transaction. It also contains one additional public key generated for client (orisi client takes care of that). These public keys will be used to generate multisignature address for that transaction.
 
 ```req_sigs``` tells oracles how many signatures it is needed for transaction to be valid
 

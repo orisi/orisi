@@ -70,9 +70,9 @@ class PasswordTransactionRequestHandler(BaseHandler):
       logging.debug("There is no fee for oracle, skipping")
       return
 
-    pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_json'])['address']
+    pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_list'])['address']
 
-    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_json'])
+    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
       logging.info('pwtxid already in use. did you resend the same request?')
@@ -146,7 +146,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
             {"raw_transaction":signed_transaction, "prevtx": prevtx},],
         "locktime": message['locktime'],
         "condition": "True",
-        "pubkey_json": message['pubkey_json'],
+        "pubkey_list": message['pubkey_list'],
         "req_sigs": message['req_sigs'],
         "operation": 'conditioned_transaction'
     }

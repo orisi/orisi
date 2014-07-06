@@ -48,13 +48,12 @@ class BaseHandler:
 
     return True
 
-  def get_raw_tx_hash(self, request):
-    raw_transaction = request['transaction']['raw_transaction']
+  def get_raw_tx_hash(self, raw_transaction, locktime):
     inputs, outputs = self.oracle.get_inputs_outputs(raw_transaction)
     request_dict= {
         "inputs": inputs,
         "outputs": outputs,
-        "locktime": request['locktime'],
+        "locktime": locktime,
     }
 
     return hashlib.sha256(json.dumps(request_dict)).hexdigest()

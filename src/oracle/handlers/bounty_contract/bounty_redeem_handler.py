@@ -139,16 +139,7 @@ class GuessPasswordHandler(BaseHandler):
         address,
         locktime)
 
-    # Code repetition, should be removed!
-
-
-    inputs, outputs = self.oracle.get_inputs_outputs(transaction)
-    future_hash = {
-        'inputs': inputs,
-        'outputs': outputs,
-        'locktime': locktime,
-    }
-    future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
+    future_hash = self.get_raw_tx_hash(transaction, locktime)
 
     if len(self.oracle.task_queue.get_by_filter('rqhs:{}'.format(future_hash))) > 0:
       logging.info("transaction already pushed")

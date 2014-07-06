@@ -89,16 +89,6 @@ class TransactionSigner(BaseHandler):
         return idx
     return -1
 
-  def get_request_hash(self, request):
-    raw_transaction = request['transaction']['raw_transaction']
-    inputs, outputs = self.oracle.get_inputs_outputs(raw_transaction)
-    request_dict= {
-        "inputs": inputs,
-        "outputs": outputs,
-        "locktime": request['locktime'],
-    }
-    return hashlib.sha256(json.dumps(request_dict)).hexdigest()
-
   def handle_request(self, request):
     body = json.loads(request.message)
 
@@ -131,7 +121,7 @@ class TransactionSigner(BaseHandler):
     raw_transaction = tx['raw_transaction']
     all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transaction)
 
-    rq_hash = self.get_request_hash(body)
+    rq_hash = self.get_raw_tx_hash(raw_transaction, body['locktime'])
 
     used_input_db = UsedInput(self.oracle.db)
     for i in all_inputs:

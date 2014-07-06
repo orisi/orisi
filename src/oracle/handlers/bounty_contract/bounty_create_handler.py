@@ -99,15 +99,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
         "next_check": locktime + add_time
     })
 
-  def get_rqhs_of_future_transaction(self, transaction, locktime):
-    inputs, outputs = self.oracle.get_inputs_outputs(transaction)
-    future_hash = {
-        'inputs': inputs,
-        'outputs': outputs,
-        'locktime': locktime,
-    }
-    future_hash = hashlib.sha256(json.dumps(future_hash)).hexdigest()
-    return future_hash
 
   def handle_task(self, task):
     message = json.loads(task['json_data'])
@@ -132,7 +123,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     return_address = message['return_address']
     future_transaction = Util.create_future_transaction(self.oracle.btc, prevtx, outputs, available_amount, return_address, locktime)
 
-    future_hash = self.get_rqhs_of_future_transaction(future_transaction, locktime)
+    future_hash = self.get_raw_tx_hash(future_transaction, locktime)
 
     if len(self.oracle.task_queue.get_by_filter('rqhs:{}'.format(future_hash))) > 0:
       logging.info("transaction already pushed")

@@ -41,7 +41,10 @@ class ConditionedTransactionHandler(BaseHandler):
     raw_transaction = tx['raw_transaction']
     all_inputs, all_outputs = self.oracle.get_inputs_outputs(raw_transaction)
 
-    rq_hash = self.get_request_hash(body)
+    logging.info('transaction: %r' % tx)
+    logging.info('raw_transaction: %r' % raw_transaction)
+
+    rq_hash = self.get_raw_tx_hash(body, locktime)
 
     used_input_db = UsedInput(self.oracle.db)
     for i in all_inputs:
@@ -51,6 +54,7 @@ class ConditionedTransactionHandler(BaseHandler):
               'AddressDuplicate',
               'this multisig address was already used in another transaction')
           return
+
     for i in all_inputs:
       used_input_db.save({
           'input_hash': i

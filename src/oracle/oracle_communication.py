@@ -81,8 +81,6 @@ class OracleCommunication:
         subject,
         body_json)
 
-  def broadcast_signed_transaction(self, message_body):
-    self.client.send_message(self.client.chan_address, 'conditioned_transaction', message_body)
 
   def broadcast(self, subject, message):
     self.client.send_message(self.client.chan_address, subject, message)

@@ -6,6 +6,8 @@ from handlers.handlers import op_handlers
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
+from handlers.transactionsigner import TransactionSigner
+
 import time
 import logging
 
@@ -23,6 +25,7 @@ class Oracle:
     self.task_queue = TaskQueue(self.db)
 
     self.handlers = op_handlers
+    self.signer = TransactionSigner(self)
 
   def handle_request(self, request):
     operation, message = request

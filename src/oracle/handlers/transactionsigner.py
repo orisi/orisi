@@ -1,14 +1,11 @@
 from basehandler import BaseHandler
-from oracle.oracle_db import SignedTransaction, HandledTransaction, UsedInput
+from oracle.oracle_db import KeyValue
 
-import hashlib
 import json
 import logging
-import re
+import time
 
-from xmlrpclib import ProtocolError
-
-HEURISTIC_ADD_TIME = 60 * 3
+TURN_LENGTH_TIME = 60 * 3
 
 class TransactionVerificationError(Exception):
   pass
@@ -17,47 +14,7 @@ class TransactionSigner(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     self.btc = oracle.btc
-
-  def handle_task(self, task):
-    body = json.loads(task['json_data'])
-    tx = body['transaction']
-
-    signed_transaction = self.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
-    body['transaction']['raw_transaction'] = signed_transaction
-
-    SignedTransaction(self.oracle.db).save({
-        "hex_transaction": signed_transaction,
-        "prevtx":json.dumps(tx['prevtx'])})
-
-    self.oracle.communication.broadcast_signed_transaction(json.dumps(body))
-    self.oracle.task_queue.done(task)
-
-  def valid_task(self, task):
-    match = re.match(r'^rqhs:(.*)', task['filter_field'])
-    if not match:
-      return False
-    rqhs = match.group(1)
-
-    tx = json.loads(task['json_data'])['transaction']
-
-    raw_transaction = tx['raw_transaction']
-    prevtx = tx['prevtx']
-    
-    signatures_for_this_tx = self.btc.signatures_number(
-        raw_transaction,
-        prevtx)
-
-    # If there is already a transaction that has MORE signatures than what we
-    # have here - then ignore all tasks
-    signs_for_transaction = HandledTransaction(self.oracle.db).signs_for_transaction(rqhs)
-
-    if signs_for_transaction > signatures_for_this_tx:
-      valid_task = False
-    else:
-      valid_task = True
-
-    HandledTransaction(self.oracle.db).update_tx(rqhs, signatures_for_this_tx)
-    return valid_task
+    self.kv = KeyValue(self.oracle.db)
 
 
   def includes_me(self, prevtx):
@@ -80,48 +37,104 @@ class TransactionSigner(BaseHandler):
         return idx
     return -1
 
-  def handle_request(self, request):
-    body = json.loads(request.message)
 
-    pubkey_list = body['pubkey_list']
-    req_sigs = int(body['req_sigs'])
-    self.btc.add_multisig_address(req_sigs, pubkey_list)
-    
-    tx = body['transaction']
+  def is_proper_transaction(self, tx):
 
-    # validity of the transaciton should be checked by handlers
-    assert( self.is_proper_transaction(tx) )
+    if not self.oracle.btc.is_valid_transaction(tx):
+      logging.debug("transaction invalid")
+      return False
 
-    raw_transaction = tx['raw_transaction']
-    all_inputs, all_outputs = self.btc.get_inputs_outputs(raw_transaction)
+    inputs, outputs = self.btc.get_inputs_outputs(tx)
 
-    rq_hash = self.get_raw_tx_hash(raw_transaction, body['locktime'])
+    if not self.includes_me(inputs):
+      logging.debug("transaction does not include me")
+      return False
 
-    used_input_db = UsedInput(self.oracle.db)
-    for i in all_inputs:
-      used_input = used_input_db.get_input(i)
-      if used_input:
-        if used_input["json_out"] != rq_hash:
-          self.oracle.communication.broadcast(
-              'AddressDuplicate',
-              'this multisig address was already used')
-          return
-    for i in all_inputs:
-      used_input_db.save({
-          'input_hash': i,
-          'json_out': rq_hash
-      })
+    if self.oracle.btc.transaction_already_signed(tx, inputs):
+      logging.debug("transaction already signed")
+      return False
 
-    prevtx = tx['prevtx']
-    turns = [self.get_my_turn(ptx['redeemScript']) for ptx in prevtx if 'redeemScript' in tx]
-    
+    return True
+
+
+  def sign(self, tx, inputs, req_sigs):
+
+    tx_inputs, tx_outputs = self.btc.get_inputs_outputs(tx)
+
+    #todo: shouldn't all the input scripts be guaranteed to be exactly the same by now?
+    turns = [self.get_my_turn(vin['redeemScript']) for vin in inputs if 'redeemScript' in vin]
+
     my_turn = max(turns)
-    add_time = my_turn * HEURISTIC_ADD_TIME
+    add_time = my_turn * TURN_LENGTH_TIME
+
+    rq_hash = self.get_tx_hash(tx)
+
+    self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } ) # TODO: add min sigs
 
     self.oracle.task_queue.save({
-        "operation": 'conditioned_transaction',
-        "json_data": request.message,
-        "filter_field": 'rqhs:{}'.format(rq_hash),
-        "done": 0,
-        "next_check": locktime + add_time
+        "operation": 'sign',
+        "transaction": tx,
+        "next_check": time.time() + add_time
     })
+
+  def sign_now(self, tx):
+    assert( self.is_proper_transaction(tx) )
+
+    inputs, outputs = self.btc.get_inputs_outputs(tx)
+
+    rq_hash = self.get_tx_hash(tx)
+
+    rq_data = self.kv.get_by_section_key('signable', rq_hash)
+    if rq_data is None:
+      logging.debug("not scheduled to sign this")
+      return
+
+    inputs = rq_data['inputs']
+    sigs_so_far = rq_data['sigs_so_far']
+    req_sigs = rq_data['req_sigs']
+
+    tx_sigs_count = self.btc.signatures_number(
+        tx,
+        inputs)
+
+    if sigs_so_far >= tx_sigs_count: # or > not >=? TODO
+      logging.debug('already signed a transaction with more sigs')
+      return
+
+    if tx_sigs_count >= req_sigs:
+      logging.debug('already signed with enough keys')
+      return
+
+    signed_transaction = self.btc.sign_transaction(tx, inputs)
+
+    body = {
+      'transaction': signed_transaction
+    }
+
+    self.oracle.communication.broadcast('sign' if tx_sigs_count else 'final-sign', body)
+
+    rq_data['sigs_so_far'] += 1
+    self.kv.update('signable', rq_hash, rq_data)
+
+  def handle_request(self, request):
+
+    body = json.loads(request.message)
+    tx = body['transaction']
+
+    self.sign_now(tx)
+
+  def handle_task(self, task): 
+    self.oracle.task_queue.done(task)
+    message = json.loads(task['json_data'])
+    tx = message['transaction']
+
+    rq_hash = self.get_tx_hash(tx)
+
+    rq_data = self.kv.get_by_section_key('signable', rq_hash)
+    assert(rq_data is not None)
+ 
+    if rq_data['sigs_so_far'] > 0:
+      logging.debug('I already signed more popular txs')
+      return
+
+    self.sign_now(tx)

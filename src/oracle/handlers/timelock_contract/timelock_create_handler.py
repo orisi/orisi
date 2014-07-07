@@ -23,7 +23,6 @@ class ConditionedTransactionHandler(BaseHandler):
       addresses.add(address)
     return list(addresses)
 
-
   def try_prepare_transaction(self, message):
     inputs = []
     for tx in message['prevtx']:
@@ -96,30 +95,9 @@ class ConditionedTransactionHandler(BaseHandler):
 
   def handle_task(self, task):
     message = json.loads(task['json_data'])
-    pwtxid = message['pwtxid']
 
-    locktime = message['locktime']
     future_transaction = self.try_prepare_transaction(message)
 
-    future_hash = self.get_raw_tx_hash(future_transaction, locktime)
+    logging.debug('transaction ready to be signed')
 
-    if len(self.oracle.task_queue.get_by_filter('rqhs:{}'.format(future_hash))) > 0:
-      logging.info("transaction already pushed")
-      return
-
-    signed_transaction = self.btc.sign_transaction(future_transaction, message['prevtx'])
-
-    # Prepare request corresponding with protocol
-    request = {
-        "transactions": [
-            {"raw_transaction":signed_transaction, "prevtx": message['prevtx']},],
-        "locktime": message['locktime'],
-        "condition": "True",
-        "pubkey_list": message['pubkey_list'],
-        "req_sigs": message['req_sigs'],
-        "operation": 'conditioned_transaction'
-    }
-    request = json.dumps(request)
-    self.oracle.communication.broadcast('conditioned_transaction', request)
-    self.oracle.task_queue.done(task)
-
+    self.oracle.signer.sign(future_transaction, message['prevtx'], message['req_sigs'])

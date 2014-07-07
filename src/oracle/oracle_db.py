@@ -1,9 +1,46 @@
 from collections import defaultdict
 from shared.db_classes import TableDb, GeneralDb
 
+import json
 import time
 
 ORACLE_FILE = 'oracle.db'
+
+class KeyValue(TableDb):
+  table_name = 'key_value'
+  create_sql = 'create table {0} ( \
+      id integer primary key autoincrement, \
+      section varchar(255) not null, \
+      keyid varchar(255) not null, \
+      value text not null )'
+  insert_sql = 'insert into {0} (section, keyid, value) values (?, ?, ?)'
+  all_sql = 'select * from {0} order by id'
+  get_sql = 'select * from {0} where section=? and keyid=? order by id desc'
+
+
+  def args_for_obj(self, obj):
+    return [obj['section'], obj['keyid'], json.dumps(obj['value'])]
+
+  def store ( self, section, keyid, value ):
+    assert( self.get_by_section_key(section, keyid) is None )
+    return self.save({ 'section': section, 'keyid': keyid, 'value': value })
+
+  def update ( self, section, keyid, value ):
+    #tbd: replace this with an actual "update" sql
+    return self.save({ 'section': section, 'keyid': keyid, 'value': value })
+
+
+  def get_by_section_key(self, section, keyid):
+    cursor = self.db.get_cursor()
+    sql = self.get_sql.format(self.table_name)
+
+    row = cursor.execute(sql, (section, keyid, )).fetchone()
+    if row:
+      d = dict(row)
+      d['value'] = json.loads(d['value'])
+      return d
+    return None
+  
 
 class OracleDb(GeneralDb):
 

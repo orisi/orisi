@@ -17,7 +17,6 @@ class KeyValue(TableDb):
   all_sql = 'select * from {0} order by id'
   get_sql = 'select * from {0} where section=? and keyid=? order by id desc'
 
-
   def args_for_obj(self, obj):
     return [obj['section'], obj['keyid'], json.dumps(obj['value'])]
 
@@ -38,7 +37,7 @@ class KeyValue(TableDb):
     if row:
       d = dict(row)
       d['value'] = json.loads(d['value'])
-      return d
+      return d['value']
     return None
   
 

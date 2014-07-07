@@ -195,7 +195,7 @@ def main2(args):
 #  request['operation'] = 'bounty_create'
   request['operation'] = 'timelock_create'
   request['sum_amount'] = 0.002
-  request['locktime'] = 1405418400
+  request['locktime'] = time.time() + 5*60 #1405418400
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
 
   bm = BitmessageClient()

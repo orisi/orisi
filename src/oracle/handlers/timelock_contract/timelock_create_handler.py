@@ -3,6 +3,7 @@ from password_db import LockedPasswordTransaction
 
 import json
 import logging
+import datetime
 
 from decimal import Decimal, getcontext
 
@@ -86,6 +87,8 @@ class ConditionedTransactionHandler(BaseHandler):
 
     locktime = int(message['locktime'])
 
+    logging.debug("awaiting %r" % datetime.datetime.fromtimestamp(locktime).strftime('%Y-%m-%d %H:%M:%S'))
+
     self.oracle.task_queue.save({
         "operation": 'timelock_create',
         "json_data": request.message,
@@ -96,10 +99,13 @@ class ConditionedTransactionHandler(BaseHandler):
 
 
   def handle_task(self, task):
+
     message = json.loads(task['json_data'])
 
     future_transaction = self.try_prepare_transaction(message)
 
     logging.debug('transaction ready to be signed')
+
+    assert(future_transaction is not None) # should've been verified gracefully in handle_requested
 
     self.oracle.signer.sign(future_transaction, message['prevtxs'], message['req_sigs'])

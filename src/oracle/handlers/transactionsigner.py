@@ -55,6 +55,8 @@ class TransactionSigner(BaseHandler):
 
   def sign(self, tx, inputs, req_sigs):
 
+    logging.debug("tx: %r" % tx)
+
     tx_inputs, tx_outputs = self.btc.get_inputs_outputs(tx)
 
     #todo: shouldn't all the input scripts be guaranteed to be exactly the same by now?

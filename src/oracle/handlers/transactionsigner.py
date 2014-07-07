@@ -67,13 +67,13 @@ class TransactionSigner(BaseHandler):
 
     rq_hash = self.get_tx_hash(tx)
 
-    self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } ) # TODO: add min sigs
+    self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
 
     self.oracle.task_queue.save({
         "operation": 'sign',
         "json_data": {"transaction": tx},
         "next_check": time.time() + add_time,
-        "done": 0, # to be removed TODO
+        "done": 0,
     })
 
   def sign_now(self, tx):

@@ -104,11 +104,7 @@ class TransactionSigner(BaseHandler):
       return
 
     signed_transaction = self.btc.sign_transaction(tx, inputs)
-
-    body = {
-      'transaction': signed_transaction
-    }
-
+    body = { 'transaction': signed_transaction }
     self.oracle.communication.broadcast('sign' if tx_sigs_count else 'final-sign', body)
 
     rq_data['sigs_so_far'] += 1

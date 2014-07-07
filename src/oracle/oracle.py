@@ -53,11 +53,6 @@ class Oracle:
     handler = self.handlers[operation]
     handler(self).handle_task(task)
 
-  def get_task(self):
-    task = self.task_queue.get_oldest_task()
-    if not task:
-      return None
-
     operation = task['operation']
     handler = self.handlers[operation]
     if handler:
@@ -107,9 +102,11 @@ class Oracle:
         self.handle_request(request)
         self.communication.mark_request_done(request)
 
-      task = self.get_task()
+      task = self.task_queue.get_oldest_task()
       while task is not None:
         self.handle_task(task)
-        task = self.get_task()
+        self.task_queue.done(task)
+        task = self.task_queue.get_oldest_task()
+
 
       time.sleep(1)

@@ -90,9 +90,8 @@ class BitcoinClient:
     return result['ismine']
 
   @keep_alive
-  def addresses_for_redeem(self, redeem_script):
-    redeem_dict = self.server.decodescript(redeem_script)
-    return redeem_dict['addresses']
+  def decode_script(self, script):
+    return self.server.decodescript(redeem_script)
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):
@@ -179,11 +178,6 @@ class BitcoinClient:
   @keep_alive
   def create_multisig_transaction(self, tx_inputs, outputs):
     return self.server.createrawtransaction(tx_inputs, outputs)
-
-  @keep_alive
-  def get_address_from_script(self, script):
-    script_dict = self.server.decodescript(script)
-    return script_dict['p2sh']
 
   @keep_alive
   def get_new_address(self):

@@ -45,12 +45,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
         'whole': whole_key_serialized})
     return public_key
 
-  def get_my_turn(self, oracle_fees):
-    addresses = sorted([k for k,_ in oracle_fees.iteritems()])
-    for idx, addr in enumerate(addresses):
-      if self.oracle.btc.address_is_mine(addr):
-        return idx
-
   def handle_request(self, request):
     message = json.loads(request.message)
 

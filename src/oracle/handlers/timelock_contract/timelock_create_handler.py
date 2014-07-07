@@ -13,10 +13,25 @@ class ConditionedTransactionHandler(BaseHandler):
     getcontext().prec=8
 
 
+  def input_addresses(self, prevtxs):
+    addresses = set()
+    for prevtx in prevtxs:
+      if not 'redeemScript' in prevtx:
+        return False
+      script = prevtx['redeemScript']
+      address = self.btc.decode_script(script)['p2sh']
+      addresses.add(address)
+    return list(addresses)
+
+
   def try_prepare_transaction(self, message):
     inputs = []
     for tx in message['prevtx']:
       inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
+
+    if len(self.input_addresses(message['prevtx']))>1:
+      logging.debug("all inputs should come from the same multisig address")
+      return False
 
     cash_back = Decimal(message['sum_amount']) - Decimal(message['miners_fee'])
 
@@ -35,6 +50,7 @@ class ConditionedTransactionHandler(BaseHandler):
     if cash_back < 0:
       logging.debug("BTC amount not high enough to cover expenses")
       return None
+
 
     outputs[ message['return_address'] ] = cash_back
 
@@ -57,9 +73,8 @@ class ConditionedTransactionHandler(BaseHandler):
     pwtxid = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
-      logging.debug('pwtxid already in use. did you resend the same request?')
+      logging.debug('pwtxid/multisig address already in use. did you resend the same request?')
       return
-
 
     message['operation'] = 'timelock_created'
     message['pwtxid'] = pwtxid

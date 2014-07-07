@@ -16,12 +16,13 @@ class TransactionVerificationError(Exception):
 class TransactionSigner(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
+    self.btc = oracle.btc
 
   def handle_task(self, task):
     body = json.loads(task['json_data'])
     tx = body['transaction']
 
-    signed_transaction = self.oracle.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
+    signed_transaction = self.btc.sign_transaction(tx['raw_transaction'], tx['prevtx'])
     body['transaction']['raw_transaction'] = signed_transaction
 
     SignedTransaction(self.oracle.db).save({
@@ -42,7 +43,7 @@ class TransactionSigner(BaseHandler):
     raw_transaction = tx['raw_transaction']
     prevtx = tx['prevtx']
     
-    signatures_for_this_tx = self.oracle.btc.signatures_number(
+    signatures_for_this_tx = self.btc.signatures_number(
         raw_transaction,
         prevtx)
 
@@ -59,16 +60,6 @@ class TransactionSigner(BaseHandler):
     return valid_task
 
 
-  def inputs_addresses(self, prevtxs):
-    addresses = set()
-    for prevtx in prevtxs:
-      if not 'redeemScript' in prevtx:
-        return False
-      script = prevtx['redeemScript']
-      address = self.oracle.btc.get_address_from_script(script)
-      addresses.add(address)
-    return list(addresses)
-
   def includes_me(self, prevtx):
     for tx in prevtx:
       if not 'redeemScript' in tx:
@@ -83,9 +74,9 @@ class TransactionSigner(BaseHandler):
     Returns which one my address is in sorted (lexicographically) list of all
     addresses included in redeem_script.
     """
-    addresses = sorted(self.oracle.btc.addresses_for_redeem(redeem_script))
+    addresses = sorted(self.btc.decode_script(redeem_script)['addresses'])
     for idx, addr in enumerate(addresses):
-      if self.oracle.btc.address_is_mine(addr):
+      if self.btc.address_is_mine(addr):
         return idx
     return -1
 
@@ -93,26 +84,9 @@ class TransactionSigner(BaseHandler):
     body = json.loads(request.message)
 
     pubkey_list = body['pubkey_list']
-    try:
-      req_sigs = int(body['req_sigs'])
-    except ValueError:
-      logging.debug("req_sigs must be a number")
-      return
-
-    try:
-      locktime = int(body['locktime'])
-    except ValueError:
-      logging.debug("locktime must be a number")
-      return
-
-    try:
-      self.oracle.btc.add_multisig_address(req_sigs, pubkey_list)
-    except ProtocolError:
-      logging.debug("cant add multisig address")
-      return
-
-
-
+    req_sigs = int(body['req_sigs'])
+    self.btc.add_multisig_address(req_sigs, pubkey_list)
+    
     tx = body['transaction']
 
     # validity of the transaciton should be checked by handlers

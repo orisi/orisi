@@ -27,10 +27,6 @@ class TransactionSigner(BaseHandler):
     return True
 
   def get_my_turn(self, redeem_script):
-    """
-    Returns which one my address is in sorted (lexicographically) list of all
-    addresses included in redeem_script.
-    """
     addresses = sorted(self.btc.decode_script(redeem_script)['addresses'])
     for idx, addr in enumerate(addresses):
       if self.btc.address_is_mine(addr):
@@ -73,8 +69,10 @@ class TransactionSigner(BaseHandler):
 
     self.oracle.task_queue.save({
         "operation": 'sign',
-        "transaction": tx,
-        "next_check": time.time() + add_time
+        "json_data": {"transaction": tx},
+        "next_check": time.time() + add_time,
+        "done": 0, # to be removed TODO
+        "filter_field": 'rqhash:{}'.format(rq_hash) # to be removed TODO
     })
 
   def sign_now(self, tx):

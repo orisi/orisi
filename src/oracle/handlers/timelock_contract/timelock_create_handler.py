@@ -75,10 +75,12 @@ class ConditionedTransactionHandler(BaseHandler):
       logging.debug('pwtxid/multisig address already in use. did you resend the same request?')
       return
 
-    message['operation'] = 'timelock_created'
-    message['pwtxid'] = pwtxid
+    reply_msg = { 'operation' : 'timelock_created',
+        'pwtxid' : pwtxid,
+        'in_reply_to' : message['message_id'] }
+
     logging.debug('broadcasting reply')
-    self.oracle.communication.broadcast(message['operation'], json.dumps(message))
+    self.oracle.communication.broadcast(reply_msg['operation'], json.dumps(reply_msg))
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
 

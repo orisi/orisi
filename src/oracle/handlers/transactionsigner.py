@@ -34,7 +34,7 @@ class TransactionSigner(BaseHandler):
     return -1
 
 
-  def is_proper_transaction(self, tx):
+  def is_proper_transaction(self, tx, prevtxs):
 
     logging.info('testing tx: %r' % tx)
 
@@ -44,11 +44,11 @@ class TransactionSigner(BaseHandler):
 
     inputs, outputs = self.btc.get_inputs_outputs(tx)
 
-    if not self.includes_me(inputs):
+    if not self.includes_me(prevtxs):
       logging.debug("transaction does not include me")
       return False
 
-    if self.oracle.btc.transaction_already_signed(tx, inputs):
+    if self.oracle.btc.transaction_already_signed(tx, prevtxs):
       logging.debug("transaction already signed")
       return False
 
@@ -82,7 +82,6 @@ class TransactionSigner(BaseHandler):
     })
 
   def sign_now(self, tx):
-    assert( self.is_proper_transaction(tx) )
 
     inputs, outputs = self.btc.get_inputs_outputs(tx)
 
@@ -96,6 +95,8 @@ class TransactionSigner(BaseHandler):
     inputs = rq_data['inputs']
     sigs_so_far = rq_data['sigs_so_far']
     req_sigs = rq_data['req_sigs']
+
+    assert( self.is_proper_transaction(tx, inputs) )
 
     tx_sigs_count = self.btc.signatures_number(
         tx,

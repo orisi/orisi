@@ -67,11 +67,14 @@ class TransactionSigner(BaseHandler):
 
     rq_hash = self.get_tx_hash(tx)
 
-    self.kv.update( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
+    try:
+      self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
+    except:
+      logging.warning('duplicate sign task? this try..except should be removed ultimately!')
 
     self.oracle.task_queue.save({
         "operation": 'sign',
-        "json_data": {"transaction": tx},
+        "json_data": json.dumps({"transaction": tx}),
         "next_check": time.time() + add_time,
         "done": 0,
     })

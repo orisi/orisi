@@ -82,6 +82,7 @@ class BitcoinClient:
     try:
       self.server.decoderawtransaction(raw_transaction)
     except ProtocolError:
+      logging.exception('tx invalid')
       return False
     return True
 

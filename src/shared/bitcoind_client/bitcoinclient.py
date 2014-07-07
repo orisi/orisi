@@ -80,9 +80,8 @@ class BitcoinClient:
   def is_valid_transaction(self, raw_transaction):
     # Is raw transaction valid and decodable?
     try:
-      self.server.decoderawtrwansaction(raw_transaction)
+      self.server.decoderawtransaction(raw_transaction)
     except ProtocolError:
-      logging.exception('tx invalid')
       return False
     return True
 

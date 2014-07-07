@@ -65,7 +65,7 @@ class ConditionedTransactionHandler(BaseHandler):
   def handle_request(self, request):
     message = json.loads(request.message)
 
-    if not self.try_prepare_transaction(request.message):
+    if not self.try_prepare_transaction(message):
       logging.debug('transaction looks invalid, ignoring')
       return
 

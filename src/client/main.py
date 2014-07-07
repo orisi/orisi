@@ -1,6 +1,11 @@
 #!/usr/bin/env python2.7
 from collections import defaultdict
-from client import OracleClient, PasswordNotMatchingError
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+
 import sys
 import json
 import hashlib
@@ -220,14 +225,14 @@ def main2(args):
           print 'failed decoding message'
           continue
 
-        if 'message_id' not in content:
+        if 'in_reply_to' not in content:
           continue
 
-        if content['message_id'] == request['message_id']:
+        if content['in_reply_to'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""
             oracle_bms.remove(msg.from_address)
-            keys.append(content['rsa_pubkey'])
+#            keys.append(content['rsa_pubkey'])
 
     if oracle_bms:
       print "waiting..."

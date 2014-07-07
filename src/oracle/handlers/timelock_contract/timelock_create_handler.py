@@ -34,7 +34,7 @@ class ConditionedTransactionHandler(BaseHandler):
 
     cash_back = Decimal(message['sum_amount']) - Decimal(message['miners_fee'])
 
-    outputs = message['oracle_fees']
+    outputs = message['outputs']
 
     for oracle, fee in outputs.iteritems():
       cash_back -= Decimal(fee)

@@ -111,6 +111,8 @@ class TransactionSigner(BaseHandler):
       logging.debug('already signed with enough keys')
       return
 
+    tx_sigs_count += 1
+
     signed_transaction = self.btc.sign_transaction(tx, inputs)
     body = { 'transaction': signed_transaction }
 
@@ -120,7 +122,7 @@ class TransactionSigner(BaseHandler):
 
     self.oracle.communication.broadcast(subject, json.dumps(body))
 
-    rq_data['sigs_so_far'] += 1
+    rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
 
   def handle_request(self, request):

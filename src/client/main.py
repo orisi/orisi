@@ -25,7 +25,7 @@ def unknown(args):
   print "unknown operation, use {} help for possible operations".format(START_COMMAND)
 
 
-CHARTER_URL = 'http://oracles.li/bounty-charter.json'
+CHARTER_URL = 'http://oracles.li/test-charter.json'
 
 DIFFICULTY = 1000000000
 
@@ -64,15 +64,15 @@ def main3(args): # guess password
 
     keys = json.loads(keys_json)['keys']
 
-    passwd = 'satoshi'
-    hash_str = 'c9a52f5adc317fd07ae181bc96acf2b9d4898788a54ad09abc831ba446d3c7d84a7948b4c5bf0f098850f35d97de460e5bd11e5339d837b69ee58c6c36498a50'
+#    passwd = 'satoshi'
+#    hash_str = 'c9a52f5adc317fd07ae181bc96acf2b9d4898788a54ad09abc831ba446d3c7d84a7948b4c5bf0f098850f35d97de460e5bd11e5339d837b69ee58c6c36498a50'
+#     secret = find_secret(hash_str, passwd)
+    secret = "satoshi#349798192"
 
     pwtxid = '33QfFivxapNeJQgGhxQvh8Hhmhg8AMGN7Z'
 
     address = '1FhCLQK2ZXtCUQDtG98p6fVH7S6mxAsEey'
 
-    secret = "satoshi#349798192"   #satoshi#475436126"
-#     secret = find_secret(hash_str, passwd)
 
     if not secret:
       print "secret not found. bad pass? bad DIFFICULTY limit?"
@@ -159,7 +159,6 @@ def main2(args):
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
     oracle_bms.append(o['bm'])
-    oracle_bms.append(o['bm'])
 
   oracle_fees[charter['org_address']] = charter['org_fee']
 
@@ -189,7 +188,8 @@ def main2(args):
   request['prevtx'] = [ prevtx ]
   request['password_hash'] = prepare_password_hash('satoshi')
   request["req_sigs"] = min_sigs
-  request['operation'] = 'bounty_create'
+#  request['operation'] = 'bounty_create'
+  request['operation'] = 'timelock_create'
   request['sum_amount'] = 0.002
   request['locktime'] = 1405418400
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
@@ -201,14 +201,12 @@ def main2(args):
 
   request_content = json.dumps(request)
 
-  print bm.send_message(bm.chan_address, "bounty_create", request_content)
+  print bm.send_message(bm.chan_address, request['operation'], request_content)
 
   print ""
   print '''Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour to few hours before the network
   forwards your message and you get the replies. All the future communication should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]'''
   print ""
-
-  msg_count = 0
 
   keys = []
 

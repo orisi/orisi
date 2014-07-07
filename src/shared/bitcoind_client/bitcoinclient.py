@@ -34,9 +34,9 @@ class BitcoinClient:
     return self.server.decoderawtransaction(hex_transaction)
 
   @keep_alive
-  def sign_transaction(self, raw_transaction, prevtx = [], priv=None):
-    if priv:
-      result = self.server.signrawtransaction(raw_transaction, prevtx, priv)
+  def sign_transaction(self, raw_transaction, prevtx = [], priv_keys=None):
+    if priv_keys:
+      result = self.server.signrawtransaction(raw_transaction, prevtx, priv_keys)
     else:
       result = self.server.signrawtransaction(raw_transaction, prevtx)
     return result['hex']

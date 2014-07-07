@@ -44,12 +44,12 @@ class BitcoinClient:
 
   @keep_alive
   def get_txid(self, raw_transaction):
-    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
+    transaction_dict = self.server.decoderawtransaction(raw_transaction)
     return transaction_dict['txid']
 
   @keep_alive
   def signatures_number(self, raw_transaction, prevtx):
-    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
+    transaction_dict = self.server.decoderawtransaction(raw_transaction)
 
     prevtx_dict = {}
     for tx in prevtx:
@@ -138,7 +138,7 @@ class BitcoinClient:
 
   @keep_alive
   def transaction_contains_output(self, raw_transaction, address, fee):
-    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
+    transaction_dict = self.server.decoderawtransaction(raw_transaction)
     if not 'vout' in transaction_dict:
       return False
     for vout in transaction_dict['vout']:

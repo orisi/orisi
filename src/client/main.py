@@ -182,7 +182,7 @@ def main2(args):
 
   prevtxs = [ {
     'redeemScript' : '5121022cf5e247fff0c71f98c1df0e202df7eaec94ca66b5f24b66d6b2676d7f6b9b4c2102826552f97262f90397b20f6fe398012d2950591228de6553d61cae0da5a8b4c252ae',
-    'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
+    'scriptPubKey' : 'a914b0c7e6ba3ca46d58c9e30e39d14a178897b5583d87',
     'vout':0,
     'txid':'d0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050',
   } ]

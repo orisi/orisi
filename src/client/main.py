@@ -181,11 +181,18 @@ def main2(args):
   request['miners_fee'] = 0.0001
 
   prevtxs = [ {
-    'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
+    'redeemScript' : '5121022cf5e247fff0c71f98c1df0e202df7eaec94ca66b5f24b66d6b2676d7f6b9b4c2102826552f97262f90397b20f6fe398012d2950591228de6553d61cae0da5a8b4c252ae',
+    'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
+    'vout':0,
+    'txid':'d0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050',
+  } ]
+
+
+  '''    'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
     'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
     'vout':0,
     'txid':'8b5eb0ea6a9bbbf7ecec66edb5d6b9e10cdf9e6ebe6f9bee35d630817b2fbce3',
-  } ]
+  '''
 
   request['prevtxs'] = prevtxs
   request['outputs'] = oracle_fees

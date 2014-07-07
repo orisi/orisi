@@ -36,6 +36,8 @@ class TransactionSigner(BaseHandler):
 
   def is_proper_transaction(self, tx):
 
+    logging.info('testing tx: %r' % tx)
+
     if not self.oracle.btc.is_valid_transaction(tx):
       logging.debug("transaction invalid")
       return False

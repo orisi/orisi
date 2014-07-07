@@ -175,16 +175,16 @@ def main2(args):
   request['pubkey_list'] = key_list
   request['miners_fee'] = 0.0001
 
-  prevtx = {
-
+  prevtxs = [ {
     'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
     'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
     'vout':0,
     'txid':'8b5eb0ea6a9bbbf7ecec66edb5d6b9e10cdf9e6ebe6f9bee35d630817b2fbce3',
+  } ]
 
-  }
+  request['prevtxs'] = prevtxs
+  request['outputs'] = oracle_fees
 
-  request['prevtx'] = [ prevtx ]
   request['password_hash'] = prepare_password_hash('satoshi')
   request["req_sigs"] = min_sigs
 #  request['operation'] = 'bounty_create'
@@ -192,7 +192,6 @@ def main2(args):
   request['sum_amount'] = 0.002
   request['locktime'] = 1405418400
   request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
-  request['oracle_fees'] = oracle_fees
 
   bm = BitmessageClient()
   print "sending: %r" % json.dumps(request)

@@ -25,10 +25,10 @@ class ConditionedTransactionHandler(BaseHandler):
 
   def try_prepare_transaction(self, message):
     inputs = []
-    for tx in message['prevtx']:
+    for tx in message['prevtxs']:
       inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
 
-    if len(self.input_addresses(message['prevtx']))>1:
+    if len(self.input_addresses(message['prevtxs']))>1:
       logging.debug("all inputs should come from the same multisig address")
       return False
 
@@ -43,7 +43,7 @@ class ConditionedTransactionHandler(BaseHandler):
         has_my_fee = True
 
     if not has_my_fee:
-      logging.debug("No fee for this oracle, skipping")
+      logging.debug("no fee for this oracle, skipping")
       return None
 
     if cash_back < 0:
@@ -102,4 +102,4 @@ class ConditionedTransactionHandler(BaseHandler):
 
     logging.debug('transaction ready to be signed')
 
-    self.oracle.signer.sign(future_transaction, message['prevtx'], message['req_sigs'])
+    self.oracle.signer.sign(future_transaction, message['prevtxs'], message['req_sigs'])

@@ -6,12 +6,6 @@ import logging
 
 from decimal import Decimal, getcontext
 
-KEY_SIZE = 4096
-HEURISTIC_ADD_TIME = 60 * 3
-
-# 15 minutes just to be sure no one claimed it
-SAFETY_TIME = 15 * 60
-
 class ConditionedTransactionHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle

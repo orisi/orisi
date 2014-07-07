@@ -27,6 +27,8 @@ class TransactionSigner(BaseHandler):
     return True
 
   def get_my_turn(self, redeem_script):
+    # oracles sign transactions based on the order of their signatures
+
     addresses = sorted(self.btc.decode_script(redeem_script)['addresses'])
     for idx, addr in enumerate(addresses):
       if self.btc.address_is_mine(addr):
@@ -35,7 +37,6 @@ class TransactionSigner(BaseHandler):
 
 
   def is_proper_transaction(self, tx, prevtxs):
-
     logging.info('testing tx: %r' % tx)
     logging.info('with prevtxs: %r' % prevtxs)
 
@@ -57,6 +58,9 @@ class TransactionSigner(BaseHandler):
 
 
   def sign(self, tx, inputs, req_sigs):
+    # sign is being called by external contracts to initiate signing procedure
+    # it marks the transaction as being ready to be signed if received from bitmessage
+    # and schedules signing -- in case oracles previous in line didn't want to sign it
 
     logging.debug("tx: %r" % tx)
 
@@ -83,6 +87,7 @@ class TransactionSigner(BaseHandler):
     })
 
   def sign_now(self, tx):
+    # sign now signs the transaction and broadcasts it over the network
 
     inputs, outputs = self.btc.get_inputs_outputs(tx)
 
@@ -126,13 +131,19 @@ class TransactionSigner(BaseHandler):
     self.kv.update('signable', rq_hash, rq_data)
 
   def handle_request(self, request):
+    # if the oracle received a transaction from bitmessage, it attempts to sign it
+    # all the validity checks are being handled by sign_now 
 
     body = json.loads(request.message)
     tx = body['transaction']
 
     self.sign_now(tx)
 
-  def handle_task(self, task): 
+  def handle_task(self, task):
+    # handles scheduled signing
+    # in a perfect world only the first oracle would have to call this
+    # and all the others would sign through handle_request
+
     self.oracle.task_queue.done(task)
     message = json.loads(task['json_data'])
     tx = message['transaction']

@@ -2,7 +2,6 @@ from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction
 from util import Util
 
-import hashlib
 import json
 import logging
 
@@ -18,10 +17,6 @@ class ConditionedTransactionHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     getcontext().prec=8
-
-  def get_unique_id(self, message):
-    return hashlib.sha256(message).hexdigest()
-
 
   def handle_request(self, request):
     message = json.loads(request.message)
@@ -41,27 +36,29 @@ class ConditionedTransactionHandler(BaseHandler):
         has_my_fee = True
 
     if not has_my_fee:
-      logging.debug("There is no fee for oracle, skipping")
+      logging.debug("No fee for this oracle, skipping")
+      return
+
+    if final_amount < 0:
+      logging.debug("BTC amount not high enough to cover expenses")
       return
 
     pwtxid = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
-      logging.info('pwtxid already in use. did you resend the same request?')
+      logging.debug('pwtxid already in use. did you resend the same request?')
       return
 
-    pub_key = self.get_public_key(pwtxid)
-    message['rsa_pubkey'] = json.loads(pub_key)
-    message['operation'] = 'new_bounty'
+    message['operation'] = 'timelock_created'
     message['pwtxid'] = pwtxid
+    logging.debug('broadcasting reply')
+    self.oracle.communication.broadcast(message['operation'], json.dumps(message))
+
 
     locktime = int(message['locktime'])
 
-    LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
-    logging.debug('broadcasting reply')
-    self.oracle.communication.broadcast(message['operation'], json.dumps(message))
     self.oracle.task_queue.save({
-        "operation": 'password_transaction',
+        "operation": 'timelock_create',
         "json_data": request.message,
         "filter_field": 'pwtxid:{}'.format(pwtxid),
         "done": 0,
@@ -71,17 +68,7 @@ class ConditionedTransactionHandler(BaseHandler):
 
   def handle_task(self, task):
     message = json.loads(task['json_data'])
-    pwtxid = self.get_unique_id(task['json_data'])
-
-    transaction = LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)
-    if not transaction:
-      # This should be weird
-      logging.error('task doesn\'t apply to any transaction')
-      return
-
-    if transaction['done']:
-      logging.info('transaction done')
-      return
+    pwtxid = message['pwtxid']
 
     prevtx = message['prevtx']
     locktime = message['locktime']

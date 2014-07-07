@@ -67,7 +67,7 @@ class TransactionSigner(BaseHandler):
 
     rq_hash = self.get_tx_hash(tx)
 
-    self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
+    self.kv.update( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
 
     self.oracle.task_queue.save({
         "operation": 'sign',

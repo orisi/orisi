@@ -131,6 +131,8 @@ class TransactionSigner(BaseHandler):
     rq_data = self.kv.get_by_section_key('signable', rq_hash)
     assert(rq_data is not None)
  
+    logging.info("rq_data: %r" % rq_data)
+
     if rq_data['sigs_so_far'] > 0:
       logging.debug('I already signed more popular txs')
       return

@@ -61,7 +61,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
 
     oracle_fee = sum([self.oracle.is_fee_sufficient(oracle, fee) for (oracle, fee) in list(oracle_fees.iteritems())])
     if not oracle_fee > 0:
-      logging.debug("There is no fee for oracle, skipping")
+      logging.debug("There is no fee for this oracle, skipping")
       return
 
     pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_list'])['address']

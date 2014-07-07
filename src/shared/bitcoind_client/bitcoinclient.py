@@ -5,6 +5,7 @@ import jsonrpclib
 from xmlrpclib import ProtocolError
 from decimal import Decimal
 
+import logging
 
 class BitcoinClient:
 

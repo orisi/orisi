@@ -226,9 +226,7 @@ def main2(args):
     messages = bm.get_unread_messages()
     print "unread messages: %r" % len(messages)
     for msg in messages:
-      print msg.from_address
       if msg.from_address in oracle_bms:
-        print "msg in bms"
         try:
           content = json.loads(msg.message)
         except:
@@ -240,7 +238,7 @@ def main2(args):
         if 'in_reply_to' not in content:
           continue
 
-        print "b"
+        print "b %r %r" % (content['in_reply_to'], request['message_id'])
         if content['in_reply_to'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""

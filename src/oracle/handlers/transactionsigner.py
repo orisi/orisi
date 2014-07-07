@@ -116,7 +116,9 @@ class TransactionSigner(BaseHandler):
 
     logging.debug('broadcasting: %r' % body)
 
-    self.oracle.communication.broadcast('sign' if tx_sigs_count else 'final-sign', body)
+    subject = 'sign' if tx_sigs_count < req_sigs else 'final-sign'
+
+    self.oracle.communication.broadcast(subject, json.dumps(body))
 
     rq_data['sigs_so_far'] += 1
     self.kv.update('signable', rq_hash, rq_data)

@@ -220,11 +220,15 @@ def main2(args):
 
   keys = []
 
+  print "%r" % oracle_bms
+
   while oracle_bms:
     messages = bm.get_unread_messages()
     print "unread messages: %r" % len(messages)
     for msg in messages:
+      print msg.from_address
       if msg.from_address in oracle_bms:
+        print "msg in bms"
         try:
           content = json.loads(msg.message)
         except:
@@ -232,9 +236,11 @@ def main2(args):
           print 'failed decoding message'
           continue
 
+        print "a"
         if 'in_reply_to' not in content:
           continue
 
+        print "b"
         if content['in_reply_to'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""

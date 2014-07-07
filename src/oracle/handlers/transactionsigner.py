@@ -103,7 +103,7 @@ class TransactionSigner(BaseHandler):
         tx,
         inputs)
 
-    if sigs_so_far >= tx_sigs_count: # or > not >=? TODO
+    if sigs_so_far > tx_sigs_count: # or > not >=? TODO
       logging.debug('already signed a transaction with more sigs')
       return
 

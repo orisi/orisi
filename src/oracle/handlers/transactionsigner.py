@@ -5,7 +5,7 @@ import json
 import logging
 import time
 
-TURN_LENGTH_TIME = 60 * 3
+TURN_LENGTH_TIME = 60 * 1
 
 class TransactionVerificationError(Exception):
   pass
@@ -65,7 +65,7 @@ class TransactionSigner(BaseHandler):
     turns = [self.get_my_turn(vin['redeemScript']) for vin in inputs if 'redeemScript' in vin]
 
     my_turn = max(turns)
-    add_time = my_turn * TURN_LENGTH_TIME
+    add_time = (my_turn - 1) * TURN_LENGTH_TIME
 
     rq_hash = self.get_tx_hash(tx)
 

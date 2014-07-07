@@ -95,7 +95,7 @@ class BitcoinClient:
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):
-    transaction_dict = self.server.decoderawtrwansaction(raw_transaction)
+    transaction_dict = self.server.decoderawtransaction(raw_transaction)
     vin = transaction_dict["vin"]
     vouts = transaction_dict["vout"]
     result = (

@@ -92,7 +92,6 @@ class ConditionedTransactionHandler(BaseHandler):
     self.oracle.task_queue.save({
         "operation": 'timelock_create',
         "json_data": request.message,
-        "filter_field": 'pwtxid:{}'.format(pwtxid),
         "done": 0,
         "next_check": locktime
     })

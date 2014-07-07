@@ -85,19 +85,15 @@ class TaskQueue(TableDb):
       operation text not null, \
       json_data text not null, \
       next_check integer not null, \
-      filter_field text not null, \
       done integer default 0);"
-  insert_sql = "insert into {0} (operation, json_data, filter_field, next_check, done) values (?,?,?,?,?)"
+  insert_sql = "insert into {0} (operation, json_data, next_check, done) values (?,?,?,?)"
   oldest_sql = "select * from {0} where next_check<? and done=0 order by ts limit 1"
   all_sql = "select * from {0} where next_check<? and done=0 order by ts"
   all_ignore_sql = "select * from {0} where done=0 order by ts"
-  similar_sql = "select * from {0} where next_check<? and filter_field=? and done=0"
-  similar_ignore_sql = "select * from {0} where filter_field=? and done=0"
-  filter_sql = "select * from {0} where filter_field=?"
   mark_done_sql = "update {0} set done=1 where id=?"
 
   def args_for_obj(self, obj):
-    return [obj['operation'], obj['json_data'], obj['filter_field'], obj['next_check'], obj['done']]
+    return [obj['operation'], obj['json_data'], obj['next_check'], obj['done']]
 
   def get_oldest_task(self):
     cursor = self.db.get_cursor()
@@ -121,30 +117,6 @@ class TaskQueue(TableDb):
     sql = self.all_ignore_sql.format(self.table_name)
 
     rows = cursor.execute(sql).fetchall()
-    rows = [dict(row) for row in rows]
-    return rows
-
-  def get_similar(self, task):
-    cursor = self.db.get_cursor()
-    sql = self.similar_sql.format(self.table_name)
-
-    rows = cursor.execute(sql, (int(time.time()), task['filter_field'])).fetchall()
-    rows = [dict(row) for row in rows]
-    return rows
-
-  def get_similar_ignore_check(self, task):
-    cursor = self.db.get_cursor()
-    sql = self.similar_ignore_sql.format(self.table_name)
-
-    rows = cursor.execute(sql, (task['filter_field'],)).fetchall()
-    rows = [dict(row) for row in rows]
-    return rows
-
-  def get_by_filter(self, filter_field):
-    cursor = self.db.get_cursor()
-    sql = self.filter_sql.format(self.table_name)
-
-    rows = cursor.execute(sql, (filter_field,)).fetchall()
     rows = [dict(row) for row in rows]
     return rows
 

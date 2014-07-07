@@ -74,7 +74,6 @@ class TransactionSigner(BaseHandler):
         "json_data": {"transaction": tx},
         "next_check": time.time() + add_time,
         "done": 0, # to be removed TODO
-        "filter_field": 'rqhash:{}'.format(rq_hash) # to be removed TODO
     })
 
   def sign_now(self, tx):

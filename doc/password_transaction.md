@@ -1,3 +1,6 @@
+
+# This docs are no longer valid. New ones in the works.
+
 # Password Transaction
 
 Password transaction is kind of smart contract you can use, where you create a request (called **password_transaction**) and pass it to Oracles. From now Oracles will monitor the network for every request that tries to guess the password (the requests called **bounty_redeem**). If someone will guess password, Oracle will give him bounty, otherwise, after given time period, the cash will return to bounty creator.

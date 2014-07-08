@@ -169,7 +169,13 @@ def main2(args):
   request['pubkey_list'] = key_list
   request['miners_fee'] = 0.0001
 
+
+  tx_id = 'd0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050'
   # TODO: use https://blockchain.info/rawtx/d0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050
+  # or: https://blockchain.info/address/3HokKgzNy8XY5F5r8vTqvozcpR9K3bD18N?format=json
+
+  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
+  charter = json.loads(charter_json)
 
   prevtxs = [ {
     'redeemScript' : '5121022cf5e247fff0c71f98c1df0e202df7eaec94ca66b5f24b66d6b2676d7f6b9b4c2102826552f97262f90397b20f6fe398012d2950591228de6553d61cae0da5a8b4c252ae',

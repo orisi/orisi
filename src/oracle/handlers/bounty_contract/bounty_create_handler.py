@@ -88,7 +88,6 @@ class PasswordTransactionRequestHandler(BaseHandler):
     self.oracle.task_queue.save({
         "operation": 'password_transaction',
         "json_data": request.message,
-        "filter_field": 'pwtxid:{}'.format(pwtxid),
         "done": 0,
         "next_check": locktime + add_time
     })

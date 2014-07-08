@@ -103,7 +103,11 @@ def main(args):
   btc = BitcoinClient()
   tmp_address = btc.validate_address(btc.get_new_address())
 
+  print "CHARTER_URL"
+
   charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
+
+  print "charter_json %r" % charter_json
   charter = json.loads(charter_json)
 
   print "temp pubkey: %r" % tmp_address['pubkey']
@@ -161,35 +165,33 @@ def main2(args):
 
   response = btc.create_multisig_address(min_sigs, key_list)
   msig_addr = response['address'] # we're using this as an identificator
+  redeemScript = response['redeemScript']
 
   request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
-
-  ###
-
   request['pubkey_list'] = key_list
   request['miners_fee'] = 0.0001
 
 
-  tx_id = 'd0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050'
-  # TODO: use https://blockchain.info/rawtx/d0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050
-  # or: https://blockchain.info/address/3HokKgzNy8XY5F5r8vTqvozcpR9K3bD18N?format=json
+  # for production purposes you might want to fetch the data using bitcoind, but that's expensive
+  address_json = liburl_wrapper.safe_read("https://blockchain.info/address/%s?format=json" % msig_addr, timeout_time=10)
+  print address_json
+  address_history = json.loads(address_json)
 
-  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
-  charter = json.loads(charter_json)
+  prevtxs = []
 
-  prevtxs = [ {
-    'redeemScript' : '5121022cf5e247fff0c71f98c1df0e202df7eaec94ca66b5f24b66d6b2676d7f6b9b4c2102826552f97262f90397b20f6fe398012d2950591228de6553d61cae0da5a8b4c252ae',
-    'scriptPubKey' : 'a914b0c7e6ba3ca46d58c9e30e39d14a178897b5583d87',
-    'vout':0,
-    'txid':'d0d41f7ec8435ed65ed078facbd92a9684021751f76735de2d8457dfa5a24050',
-  } ]
+  print msig_addr
 
-
-  '''    'redeemScript' : '52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f02103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb306086182103a9f6c8107a174f451fc7101e95fd1e1003d2b435d94b80b7ff8ebfbfba1841b754ae',
-    'scriptPubKey' : 'a91412d857a1778be8ad4b2e548a2632aac14f3063a587',
-    'vout':0,
-    'txid':'8b5eb0ea6a9bbbf7ecec66edb5d6b9e10cdf9e6ebe6f9bee35d630817b2fbce3',
-  '''
+  for tx in address_history['txs']:
+    for vout in tx['outputs']:
+      print vout
+      if vout['addr'] == msig_addr:
+        prevtx = {
+          'scriptPubKey' : vout['script'],
+          'vout': vout['n'],
+          'txid': tx['hash'],
+          'redeemScript': redeemScript,
+        }
+        prevtxs.append(prevtx)
 
   request['prevtxs'] = prevtxs
   request['outputs'] = oracle_fees

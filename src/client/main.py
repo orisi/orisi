@@ -1,12 +1,9 @@
 #!/usr/bin/env python2.7
-from collections import defaultdict
 
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-
-import sys
 import json
 import hashlib
 import time
@@ -214,8 +211,9 @@ def main2(args):
   print bm.send_message(bm.chan_address, request['operation'], request_content)
 
   print ""
-  print '''Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour to few hours before the network
-  forwards your message and you get the replies. All the future communication should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]'''
+  print "Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour \
+          to few hours before the network forwards your message and you get the replies. All the future communication \
+           should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]"
   print ""
 
   keys = []
@@ -257,12 +255,11 @@ def main2(args):
   print json.dumps(keys)
 
 
-RAW_OPERATIONS = {
+OPERATIONS = {
   'main': main,
   'main2': main2,
   'main3': main3,
 }
-OPERATIONS = defaultdict(lambda:unknown, RAW_OPERATIONS)
 
 SHORT_DESCRIPTIONS = {
   'main': "prepares the first multisig",
@@ -270,16 +267,11 @@ SHORT_DESCRIPTIONS = {
   "main3": "broadcasts bounty_redeem",
 }
 
-
 def help():
   print "You can use one of the following functions:"
   for name, desc in SHORT_DESCRIPTIONS.iteritems():
     print "{0} - {1}".format(name, desc)
   print "Learn more by using {0} help functionname".format(START_COMMAND)
-
-def help_fun(fun_name):
-  fun = OPERATIONS[fun_name]
-  print fun.__doc__
 
 def main(args):
   if len(args) == 0:
@@ -289,8 +281,10 @@ def main(args):
     if len(args) == 1:
       help()
     else:
-      help_fun(args[1])
+      if args[1] in OPERATIONS:
+        print OPERATIONS[args[1]].__doc__
     return
+
   operation = OPERATIONS[args[0]]
   #special case
   operation(args[1:])

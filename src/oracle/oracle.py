@@ -1,10 +1,11 @@
 # Main Oracle file
 from oracle_communication import OracleCommunication
-from oracle_db import OracleDb, TaskQueue
+from oracle_db import OracleDb, TaskQueue, KeyValue
 from handlers.handlers import op_handlers
 
-from settings_local import ORACLE_ADDRESS, ORACLE_FEE
+from settings_local import ORACLE_ADDRESS_FORCE, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
+
 
 from handlers.transactionsigner import TransactionSigner
 
@@ -21,6 +22,7 @@ class Oracle:
     self.communication = OracleCommunication()
     self.db = OracleDb()
     self.btc = BitcoinClient()
+    self.kv = KeyValue(self.db)
 
     self.task_queue = TaskQueue(self.db)
 
@@ -68,7 +70,7 @@ class Oracle:
       return None
 
   def is_fee_sufficient(self, addr, fee):
-    if addr != ORACLE_ADDRESS:
+    if addr != self.oracle_address:
       return False
     if fee < Decimal(ORACLE_FEE):
       return False
@@ -76,13 +78,19 @@ class Oracle:
 
   def run(self):
 
-    if not ORACLE_ADDRESS:
-      new_addr = self.btc.server.getnewaddress()
-      logging.error("first run? please add '%s' to ORACLE_ADDRESS in src/settings_local.py" % new_addr)
-      exit()
+    if not ORACLE_ADDRESS_FORCE:
+      self.oracle_address = self.kv.get_by_section_key('config','ORACLE_ADDRESS')
 
-    logging.info("my multisig address is %s" % ORACLE_ADDRESS)
-    logging.info( "my pubkey: %r" % self.btc.validate_address(ORACLE_ADDRESS)['pubkey'] )
+      if self.oracle_address is None:
+        new_addr = self.btc.server.getnewaddress()
+        self.oracle_address = new_addr
+        logging.error("created a new address: '%s'" % new_addr)
+        self.kv.store('config','ORACLE_ADDRESS',new_addr)
+    else:
+      self.oracle_address = ORACLE_ADDRESS_FORCE
+
+    logging.info("my multisig address is %s" % self.oracle_address)
+    logging.info( "my pubkey: %r" % self.btc.validate_address(self.oracle_address)['pubkey'] )
 
     logging.debug("awaiting requests...")
     count = 0

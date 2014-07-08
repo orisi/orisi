@@ -37,6 +37,7 @@ class ConditionedTransactionHandler(BaseHandler):
 
     outputs = message['outputs']
 
+    has_my_fee = False
     for oracle, fee in outputs.iteritems():
       cash_back -= Decimal(fee)
 

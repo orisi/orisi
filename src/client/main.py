@@ -276,6 +276,14 @@ def help():
   print "Learn more by using {0} help functionname".format(START_COMMAND)
 
 def main(args):
+
+  print "Keep in mind that this is an alpha stage software, with known security issues"
+  print "https://github.com/orisi/orisi/issues?labels=security&milestone=&page=1&state=open"
+  print ""
+  print "Also, please remember that the code of oracles will be changed, and there are no promises\
+ of any kind from their side for now. Check out http://github.com/orisi/orisi/ for project status."
+  print ""
+
   if len(args) == 0:
     print "no arguments given, use {0} help for possible operations".format(START_COMMAND)
     return

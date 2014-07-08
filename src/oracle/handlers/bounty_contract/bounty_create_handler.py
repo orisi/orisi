@@ -46,7 +46,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     return public_key
 
   def handle_request(self, request):
-    message = json.loads(request.message)
+    message = request.message
 
     sum_amount = Decimal(message['sum_amount'])
     oracle_fees = message['oracle_fees']
@@ -87,7 +87,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
     self.oracle.communication.broadcast(message['operation'], json.dumps(message))
     self.oracle.task_queue.save({
         "operation": 'password_transaction',
-        "json_data": request.message,
+        "json_data": json.dumps(request.message),
         "done": 0,
         "next_check": locktime + add_time
     })

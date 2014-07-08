@@ -85,9 +85,6 @@ class OracleCommunication:
   def broadcast(self, subject, message):
     self.client.send_message(self.client.chan_address, subject, message)
 
-
-
-
   def broadcast_identity(self):
 
     IDENTITY_MESSAGE_RAW = {

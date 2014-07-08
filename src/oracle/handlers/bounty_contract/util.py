@@ -39,5 +39,5 @@ class Util:
       # My heart bleeds when I write it
       vout[address] = float(value)
 
-    transaction = btc.create_multisig_transaction(inputs, vout)
+    transaction = btc.create_raw_transaction(inputs, vout)
     return transaction

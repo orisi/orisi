@@ -79,7 +79,7 @@ class ClientTests(unittest.TestCase):
     return result
 
   def create_fake_transaction(self, address=ADDRESSES['oracles'][0]['address'], amount=1.0):
-    transaction = self.client.btc.create_multisig_transaction(
+    transaction = self.client.btc.create_raw_transaction(
         [{"txid":FAKE_TXID, "vout":0}],
         {address:amount}
     )
@@ -104,7 +104,7 @@ class ClientTests(unittest.TestCase):
     }
     prevtxs.append(prevtx)
 
-    return self.client.create_multisig_transaction(inputs, outputs), prevtxs
+    return self.client.create_raw_transaction(inputs, outputs), prevtxs
 
   def test_create_multisig_address_correct(self):
     result = self.create_multisig()

@@ -6,6 +6,7 @@ from handlers.handlers import op_handlers
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
+import json
 
 from handlers.transactionsigner import TransactionSigner
 
@@ -39,6 +40,8 @@ class Oracle:
     handler = self.handlers[operation]
 
     try:
+      request.message = json.loads(request.message)
+      logging.info('parsing message_id: %r' % message['message_id'])
       handler(self).handle_request(message)
     except:
       logging.exception('error handling the request')

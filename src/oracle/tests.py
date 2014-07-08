@@ -112,7 +112,7 @@ class OracleTests(unittest.TestCase):
     return multisig, redeem_script, all_addresses
 
   def create_fake_transaction(self, address, txid=FAKE_TXID, amount=1.0):
-    transaction = self.oracle.btc.create_multisig_transaction(
+    transaction = self.oracle.btc.create_raw_transaction(
         [{"txid":txid, "vout":0}],
         {address:amount}
     )
@@ -122,7 +122,7 @@ class OracleTests(unittest.TestCase):
     multisig, redeem_script, pubkeys = self.create_multisig()
     fake_transaction = self.create_fake_transaction(multisig)
     fake_transaction_dict = self.oracle.btc.get_json_transaction(fake_transaction)
-    transaction = self.oracle.btc.create_multisig_transaction(
+    transaction = self.oracle.btc.create_raw_transaction(
         [{"txid":fake_transaction_dict['txid'], "vout":0}],
         {"1NJJpSgp55nQKe6DZkzg4VqxRRYcUuJSHz":1.0}
     )

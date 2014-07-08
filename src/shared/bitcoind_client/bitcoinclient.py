@@ -178,7 +178,7 @@ class BitcoinClient:
     return self.server.addmultisigaddress(min_sigs, keys)
 
   @keep_alive
-  def create_multisig_transaction(self, tx_inputs, outputs):
+  def create_raw_transaction(self, tx_inputs, outputs):
     return self.server.createrawtransaction(tx_inputs, outputs)
 
   @keep_alive
@@ -197,6 +197,3 @@ class BitcoinClient:
   def validate_address(self, address):
     return self.server.validateaddress(address)
 
-  @keep_alive
-  def decode_script(self, script):
-    return self.server.decodescript(script)

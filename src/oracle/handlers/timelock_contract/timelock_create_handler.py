@@ -5,71 +5,17 @@ import json
 import logging
 import datetime
 
-from decimal import Decimal, getcontext
 
 class ConditionedTransactionHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     self.btc = oracle.btc
-    getcontext().prec=8
-
-
-  def input_addresses(self, prevtxs):
-    addresses = set()
-    for prevtx in prevtxs:
-      if not 'redeemScript' in prevtx:
-        return False
-      script = prevtx['redeemScript']
-      address = self.btc.decode_script(script)['p2sh']
-      addresses.add(address)
-    return list(addresses)
-
-  def try_prepare_transaction(self, message):
-    inputs = []
-    for tx in message['prevtxs']:
-      inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
-
-    if len(self.input_addresses(message['prevtxs']))>1:
-      logging.debug("all inputs should come from the same multisig address")
-      return False
-
-    cash_back = Decimal(message['sum_amount']) - Decimal(message['miners_fee'])
-
-    outputs = message['outputs']
-
-    has_my_fee = False
-    for oracle, fee in outputs.iteritems():
-      cash_back -= Decimal(fee)
-
-      if self.oracle.is_fee_sufficient(oracle, fee):
-        has_my_fee = True
-
-    if not has_my_fee:
-      logging.debug("no fee for this oracle, skipping")
-      return None
-
-    if cash_back < 0:
-      logging.debug("BTC amount not high enough to cover expenses")
-      return None
-
-
-    outputs[ message['return_address'] ] = cash_back
-
-    for address, value in outputs.iteritems():
-      # My heart bleeds when I write it
-      # but btc expects float as input for the currency amount
-      outputs[address] = float(value)
-
-    transaction = self.btc.create_multisig_transaction(inputs, outputs)
-    return transaction
 
 
   def handle_request(self, request):
-    message = json.loads(request.message)
+    message = request.message
 
-    logging.info('mid: %r' % message['message_id'])
-
-    if not self.try_prepare_transaction(message):
+    if not self.try_prepare_raw_transaction(message):
       logging.debug('transaction looks invalid, ignoring')
       return
 
@@ -94,7 +40,7 @@ class ConditionedTransactionHandler(BaseHandler):
 
     self.oracle.task_queue.save({
         "operation": 'timelock_create',
-        "json_data": request.message,
+        "json_data": message,
         "done": 0,
         "next_check": locktime
     })
@@ -103,11 +49,9 @@ class ConditionedTransactionHandler(BaseHandler):
   def handle_task(self, task):
 
     message = json.loads(task['json_data'])
-
-    future_transaction = self.try_prepare_transaction(message)
+    future_transaction = self.try_prepare_raw_transaction(message)
+    assert(future_transaction is not None) # should've been verified gracefully in handle_request
 
     logging.debug('transaction ready to be signed')
-
-    assert(future_transaction is not None) # should've been verified gracefully in handle_requested
 
     self.oracle.signer.sign(future_transaction, message['prevtxs'], message['req_sigs'])

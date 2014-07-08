@@ -60,7 +60,6 @@ class GuessPasswordHandler(BaseHandler):
 
   def handle_request(self, request):
     message = request.message
-    message = json.loads(message)
 
     pwtxid = message['pwtxid']
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)

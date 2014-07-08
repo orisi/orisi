@@ -3,7 +3,7 @@ from oracle_communication import OracleCommunication
 from oracle_db import OracleDb, TaskQueue, KeyValue
 from handlers.handlers import op_handlers
 
-from settings_local import ORACLE_ADDRESS_FORCE, ORACLE_FEE
+from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 
@@ -78,7 +78,7 @@ class Oracle:
 
   def run(self):
 
-    if not ORACLE_ADDRESS_FORCE:
+    if not ORACLE_ADDRESS:
       self.oracle_address = self.kv.get_by_section_key('config','ORACLE_ADDRESS')
 
       if self.oracle_address is None:
@@ -87,7 +87,7 @@ class Oracle:
         logging.error("created a new address: '%s'" % new_addr)
         self.kv.store('config','ORACLE_ADDRESS',new_addr)
     else:
-      self.oracle_address = ORACLE_ADDRESS_FORCE
+      self.oracle_address = ORACLE_ADDRESS
 
     logging.info("my multisig address is %s" % self.oracle_address)
     logging.info( "my pubkey: %r" % self.btc.validate_address(self.oracle_address)['pubkey'] )

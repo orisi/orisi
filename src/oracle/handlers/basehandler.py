@@ -59,7 +59,7 @@ class BaseHandler:
 
     has_my_fee = False
     for oracle, fee in outputs.iteritems():
-      cash_back -= Decimal(SATOSHI * fee)
+      cash_back -= Decimal(SATOSHI) * Decimal(fee)
 
       if self.oracle.is_fee_sufficient(oracle, fee):
         has_my_fee = True

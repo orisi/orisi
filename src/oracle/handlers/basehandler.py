@@ -51,7 +51,7 @@ class BaseHandler:
       logging.debug("all inputs should come from the same multisig address")
       return False
 
-    cash_back = Decimal(SATOSHI) * (message['sum_satoshi'] - message['miners_fee_satoshi'])
+    cash_back = Decimal(Decimal(SATOSHI) * (message['sum_satoshi'] - message['miners_fee_satoshi']))
 
     logging.debug(cash_back)
 

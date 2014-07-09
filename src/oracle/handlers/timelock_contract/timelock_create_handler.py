@@ -42,7 +42,7 @@ class ConditionedTransactionHandler(BaseHandler):
         "operation": 'timelock_create',
         "json_data": message,
         "done": 0,
-        "next_check": locktime
+        "next_check": int(locktime)
     })
 
 

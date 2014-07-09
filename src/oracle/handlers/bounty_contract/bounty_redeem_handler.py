@@ -1,3 +1,6 @@
+
+#### This module doesn't work after the signing procedure refactor. To be done
+
 from basehandler import BaseHandler
 from password_db import (
     LockedPasswordTransaction,

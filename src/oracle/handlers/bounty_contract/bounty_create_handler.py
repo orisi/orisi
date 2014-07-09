@@ -1,3 +1,6 @@
+
+#### This module doesn't work after the signing procedure refactor. To be done
+
 from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction, RSAKeyPairs
 
@@ -50,9 +53,7 @@ class PasswordTransactionRequestHandler(BaseHandler):
       logging.debug('transaction looks invalid, ignoring')
       return
 
-    pwtxid = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_list'])['address']
-
-    self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+    pwtxid = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid):
       logging.info('pwtxid already in use. did you resend the same request?')

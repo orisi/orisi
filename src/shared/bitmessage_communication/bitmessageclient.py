@@ -10,10 +10,8 @@ from bitmessagemessage import BitmessageMessage
 from bitmessageserver import BitmessageServer
 from bitmessageexceptions import ChanAlreadySubscribedException
 
-import xmlrpclib
 import json
 import base64
-import re
 import logging
 
 class BitmessageClient:

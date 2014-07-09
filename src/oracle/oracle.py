@@ -31,8 +31,9 @@ class Oracle:
     self.signer = TransactionSigner(self)
 
   def handle_request(self, request):
+    print "%r" % request
     operation, message = request
-    
+
     if not operation in self.handlers:
       logging.debug("operation {} not supported".format(operation))
       return
@@ -40,9 +41,9 @@ class Oracle:
     handler = self.handlers[operation]
 
     try:
-      request.message = json.loads(message)
+      message = json.loads(message.message)
       logging.info('parsing message_id: %r' % message['message_id'])
-      handler(self).handle_request(message)
+      handler(self).handle_request(request)
     except:
       logging.debug(message)
       logging.exception('error handling the request')

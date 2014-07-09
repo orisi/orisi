@@ -47,7 +47,6 @@ class ConditionedTransactionHandler(BaseHandler):
 
 
   def handle_task(self, task):
-
     message = json.loads(task['json_data'])
     future_transaction = self.try_prepare_raw_transaction(message)
     assert(future_transaction is not None) # should've been verified gracefully in handle_request

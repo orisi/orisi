@@ -51,6 +51,8 @@ class BaseHandler:
 
     cash_back = Decimal(0.00000001) * (message['sum_satoshi'] - message['miners_fee_satoshi'])
 
+    logging.debug(cash_back)
+
     outputs = message['outputs']
 
     has_my_fee = False

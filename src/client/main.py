@@ -104,7 +104,12 @@ def main2(args):
   print "fetching transactions incoming to %s ..." % msig_addr
   # for production purposes you might want to fetch the data using bitcoind, but that's expensive
   address_json = liburl_wrapper.safe_read("https://blockchain.info/address/%s?format=json" % msig_addr, timeout_time=10)
-  address_history = json.loads(address_json)
+  try:
+    address_history = json.loads(address_json)
+  except:
+    print "blockchain.info problem"
+    print address_json
+    return
 
   prevtxs = []
   sum_satoshi = 0

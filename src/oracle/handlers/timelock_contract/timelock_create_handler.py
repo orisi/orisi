@@ -38,6 +38,8 @@ class ConditionedTransactionHandler(BaseHandler):
 
     logging.debug("awaiting %r" % datetime.datetime.fromtimestamp(locktime).strftime('%Y-%m-%d %H:%M:%S'))
 
+    message['pwtxid'] = pwtxid
+
     self.oracle.task_queue.save({
         "operation": 'timelock_create',
         "json_data": json.dumps(message),
@@ -53,4 +55,4 @@ class ConditionedTransactionHandler(BaseHandler):
 
     logging.debug('transaction ready to be signed')
 
-    self.oracle.signer.sign(future_transaction, message['prevtxs'], message['req_sigs'])
+    self.oracle.signer.sign(future_transaction, message['pwtxid'], message['prevtxs'], message['req_sigs'])

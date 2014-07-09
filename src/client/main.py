@@ -153,9 +153,7 @@ def main2(args):
   print bm.send_message(bm.chan_address, request['operation'], request_content)
 
   print ""
-  print "Gathering oracle responses. If it's your first time using this Bitmessage address, it may take even an hour \
- to few hours before the network forwards your message and you get the replies. All the future communication \
- should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]"
+  print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
   print ""
 
 
@@ -182,15 +180,52 @@ def main2(args):
     if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(5)
 
+def wait_sign(args):
+
+  bm = BitmessageClient()
+  while True:
+    messages = bm.get_unread_messages()
+    print "unread messages: %r" % len(messages)
+    for msg in messages:
+#      print msg.subject
+      if msg.subject == 'final-sign':
+        try:
+          content = json.loads(msg.message)
+        except:
+          print "problem with message parsing"
+
+
+        print "please forward this to Eligius pool ( http://eligius.st/~wizkid057/newstats/pushtxn.php )"
+        print content['transaction']
+
+#      if msg.from_address in oracle_bms:
+#        try:
+#          content = json.loads(msg.message)
+#        except:
+#          print msg.message
+#          print 'failed decoding message'
+#          continue#
+
+#        if 'in_reply_to' not in content:
+#          continue
+
+#        if content['in_reply_to'] == request['message_id']:
+#            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
+#            print ""
+#            oracle_bms.remove(msg.from_address)
+
+
 
 OPERATIONS = {
   'main': main,
   'main2': main2,
+  'wait': wait_sign,
 }
 
 SHORT_DESCRIPTIONS = {
   'main': "prepares the first multisig",
   'main2': "broadcasts a request for create (timelock/bounty)",
+  'wait_sign': "waits for a signature"
 }
 
 def help():

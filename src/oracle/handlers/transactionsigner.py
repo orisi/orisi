@@ -57,7 +57,7 @@ class TransactionSigner(BaseHandler):
     return True
 
 
-  def sign(self, tx, inputs, req_sigs):
+  def sign(self, tx, pwtxid, inputs, req_sigs):
     # sign is being called by external contracts to initiate signing procedure
     # it marks the transaction as being ready to be signed if received from bitmessage
     # and schedules signing -- in case oracles previous in line didn't want to sign it
@@ -75,7 +75,7 @@ class TransactionSigner(BaseHandler):
     rq_hash = self.get_tx_hash(tx)
 
     try:
-      self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs } )
+      self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs , 'pwtxid' : pwtxid } )
     except:
       logging.warning('duplicate sign task? this try..except should be removed ultimately!')
 
@@ -119,7 +119,7 @@ class TransactionSigner(BaseHandler):
     tx_sigs_count += 1
 
     signed_transaction = self.btc.sign_transaction(tx, inputs)
-    body = { 'transaction': signed_transaction }
+    body = { 'pwtxid': rq_data['pwtxid'], 'transaction': signed_transaction }
 
     logging.debug('broadcasting: %r' % body)
 

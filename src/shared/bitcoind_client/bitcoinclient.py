@@ -93,7 +93,7 @@ class BitcoinClient:
 
   @keep_alive
   def decode_script(self, script):
-    return self.server.decodescript(redeem_script)
+    return self.server.decodescript(script)
 
   @keep_alive
   def get_inputs_outputs(self, raw_transaction):

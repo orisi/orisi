@@ -43,7 +43,7 @@ class Oracle:
     try:
       message = json.loads(message.message)
       logging.info('parsing message_id: %r' % message['message_id'])
-      handler(self).handle_request(request)
+      handler(self).handle_request(message)
     except:
       logging.debug(message)
       logging.exception('error handling the request')

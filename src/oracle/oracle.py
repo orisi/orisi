@@ -31,7 +31,7 @@ class Oracle:
     self.signer = TransactionSigner(self)
 
   def handle_request(self, request):
-    print "%r" % request
+    logging.debug(request)
     operation, message = request
 
     if not operation in self.handlers:
@@ -113,7 +113,7 @@ class Oracle:
 
       for request in requests:
         self.handle_request(request)
-        self.communication.mark_request_done(request)
+#        self.communication.mark_request_done(request)
 
       task = self.task_queue.get_oldest_task()
       while task is not None:

@@ -66,13 +66,17 @@ def main2(args):
     print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
     return
 
-  request = {}
-
   btc = BitcoinClient()  
+
+
+  request = {}
+  client_pubkey = args[0]
+  request['locktime'] = time.time() + int(args[1])*60 
+  request['return_address'] = args[2]
+
+  print "fetching charter url" # hopefully it didn't check between running main1 and main2
   charter = fetch_charter(CHARTER_URL)
-  client_pubkey = args[1]
-  request['locktime'] = time.time() + int(args[2])*60 
-  request['return_address'] = int(args[3])
+
 
   oracle_pubkeys = []
   oracle_fees = {}
@@ -149,7 +153,6 @@ def main2(args):
  should be faster and come within single minutes. [this message may be inaccurate, todo for: @gricha]"
   print ""
 
-  keys = []
 
   while oracle_bms:
     messages = bm.get_unread_messages()
@@ -173,16 +176,8 @@ def main2(args):
             print ""
             oracle_bms.remove(msg.from_address)
 
-    if oracle_bms:
-      print "waiting..."
+    if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(5)
-
-    print "done"
-
-
-  print "oracle keys"
-  print ""
-  print json.dumps(keys)
 
 
 OPERATIONS = {

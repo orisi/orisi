@@ -23,16 +23,25 @@ START_COMMAND = "./runclient.sh"
 CHARTER_URL = 'http://oracles.li/test-charter.json'
 
 
+def fetch_charter(charter_url):
+  while True:
+    try:
+      charter_json = liburl_wrapper.safe_read(charter_url, timeout_time=10)
+      return json.loads(charter_json)
+    except:
+      print "retrying..."
+
 def main(args):
   btc = BitcoinClient()
   tmp_address = btc.validate_address(btc.get_new_address())
 
   print "fetching charter: %s" % CHARTER_URL
-  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
-  charter = json.loads(charter_json)
+  charter = fetch_charter(CHARTER_URL)
+
   client_pubkey = tmp_address['pubkey']
   oracle_pubkeys = []
   for o in charter['nodes']:
+    print json.dumps(o)
     oracle_pubkeys.append(o['pubkey'])
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
@@ -44,22 +53,27 @@ def main(args):
 
   response = btc.create_multisig_address(min_sigs, key_list)
 
+  print ""
   print "1. wire the funds to %s" % response['address']
   print "2. run:"
-  print "%s main2 %s" % ( START_COMMAND, client_pubkey )
+  print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
 
 
 def main2(args):
+  if len(args)<3:
+    print "USAGE: `%s main2 <pubkey_once> <locktime_minutes> <return_address>`" % START_COMMAND
+    print "- run `%s main` to obtain pubkey_once" % START_COMMAND
+    print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
+    return
 
   request = {}
 
-  config = args[1]
+  btc = BitcoinClient()  
+  charter = fetch_charter(CHARTER_URL)
+  client_pubkey = args[1]
+  request['locktime'] = time.time() + int(args[2])*60 
+  request['return_address'] = int(args[3])
 
-  btc = BitcoinClient()
-  charter_json = liburl_wrapper.safe_read(CHARTER_URL, timeout_time=10)
-  charter = json.loads(charter_json)
-
-  client_pubkey = config.client_pubkey
   oracle_pubkeys = []
   oracle_fees = {}
   oracle_bms = []
@@ -120,8 +134,6 @@ def main2(args):
   request["req_sigs"] = min_sigs
   request['operation'] = 'timelock_create'
   request['sum_satoshi'] = sum_satoshi
-  request['locktime'] = time.time() + 1*60 
-  request['return_address'] = '1MGqtD59cwDGpJww2nugDKUiT2q81fxT5A'
 
   bm = BitmessageClient()
   print "sending: %r" % json.dumps(request)

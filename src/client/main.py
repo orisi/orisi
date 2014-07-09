@@ -171,11 +171,9 @@ def main2(args):
           print 'failed decoding message'
           continue
 
-        print "a"
         if 'in_reply_to' not in content:
           continue
 
-        print "b %r %r" % (content['in_reply_to'], request['message_id'])
         if content['in_reply_to'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""

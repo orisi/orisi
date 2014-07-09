@@ -40,7 +40,7 @@ class ConditionedTransactionHandler(BaseHandler):
 
     self.oracle.task_queue.save({
         "operation": 'timelock_create',
-        "json_data": message,
+        "json_data": json.dumps(message),
         "done": 0,
         "next_check": int(locktime)
     })

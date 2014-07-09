@@ -6,6 +6,8 @@ import logging
 
 from decimal import Decimal, getcontext
 
+SATOSHI = 0.00000001
+
 class BaseHandler:
   def __init__(self, oracle):
     self.oracle = oracle
@@ -49,7 +51,7 @@ class BaseHandler:
       logging.debug("all inputs should come from the same multisig address")
       return False
 
-    cash_back = Decimal(0.00000001) * (message['sum_satoshi'] - message['miners_fee_satoshi'])
+    cash_back = Decimal(SATOSHI) * (message['sum_satoshi'] - message['miners_fee_satoshi'])
 
     logging.debug(cash_back)
 
@@ -57,7 +59,7 @@ class BaseHandler:
 
     has_my_fee = False
     for oracle, fee in outputs.iteritems():
-      cash_back -= Decimal(fee)
+      cash_back -= Decimal(SATOSHI * fee)
 
       if self.oracle.is_fee_sufficient(oracle, fee):
         has_my_fee = True

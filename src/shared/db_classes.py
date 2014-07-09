@@ -69,4 +69,5 @@ class TableDb:
   def save(self, obj):
     sql = self.insert_sql.format(self.table_name)
     args = self.args_for_obj(obj)
+    print "saving %r %r" % (sql, args)
     self.insert_with_sql(sql, args)

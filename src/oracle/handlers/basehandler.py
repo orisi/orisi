@@ -58,10 +58,11 @@ class BaseHandler:
 
     logging.debug(cash_back)
 
-    outputs = message['outputs']
+    outputs = {}#message['outputs']
 
     has_my_fee = False
-    for oracle, fee in outputs.iteritems():
+    for oracle, fee in message['outputs'].iteritems(): #outputs.iteritems():
+      outputs[oracle] = fee
       cash_back -= Decimal(fee)
 
       if self.oracle.is_fee_sufficient(oracle, fee):

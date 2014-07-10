@@ -143,9 +143,9 @@ class TransactionSigner(BaseHandler):
 
     subject = ('sign %s' % pwtxid)  if tx_sigs_count < req_sigs else ('final-sign %s' % pwtxid)
 
-    logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
     if tx_sigs_count == req_sigs:
-      safe_pushtx(signed_transaction)
+      logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
+      logging.debug(safe_pushtx(signed_transaction))
 
     self.oracle.communication.broadcast(subject, json.dumps(body))
 

@@ -135,7 +135,7 @@ class TransactionSigner(BaseHandler):
     self.kv.update('signable', rq_hash, rq_data)
 
   def handle_request(self, request):
-    body = request.body
+    body = request.message
     # if the oracle received a transaction from bitmessage, it attempts to sign it
     # all the validity checks are being handled by sign_now 
 

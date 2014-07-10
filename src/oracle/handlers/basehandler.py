@@ -44,6 +44,9 @@ class BaseHandler:
 
   def try_prepare_raw_transaction(self, message):
     inputs = []
+
+    logging.debug(message)
+
     for tx in message['prevtxs']:
       inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
 

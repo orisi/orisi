@@ -21,7 +21,7 @@ from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
 START_COMMAND = "./runclient.sh"
 
-CHARTER_URL = 'http://oracles.li/timelock-charter.json'
+CHARTER_URL = 'http://oracles.li/test-charter.json'
 
 def fetch_charter(charter_url):
   while True:
@@ -212,7 +212,7 @@ def wait_sign(args):
 def tx_info(args):
   tx = args[0]
   btc = BitcoinClient()
-  
+
   prevtxs = '[{"redeemScript": "52210281cf9fa9241f0a9799f27a4d5d60cff74f30eed1d536bf7a72d3dec936c151632102e8e22190b0adfefd0962c6332e74ab68831d56d0bfc2b01b32beccd56e3ef6f021035ff60e6745093b9bcbae93082e1c50ca5b3fcf8bcd186a46da46ded5132530522103a9bd3bfbd9f9b1719d3ecad8658796dc5e778177d77145b5c37247eb3060861854ae", "txid": "10a3ab54e1e19701fcb86c7725621b5b1b26415f94363de35a493ba9ca502b15", "vout": 0, "scriptPubKey": "a914a37ce66d7065157037e90ca4d4b4a20d8d865a2687"}]'
   prevtxs = json.loads(prevtxs)
 

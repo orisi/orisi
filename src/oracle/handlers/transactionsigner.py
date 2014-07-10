@@ -5,6 +5,9 @@ import json
 import logging
 import time
 
+from shared.liburl_wrapper import safe_pushtx
+
+
 TURN_LENGTH_TIME = 60 * 1
 
 class TransactionVerificationError(Exception):
@@ -110,6 +113,10 @@ class TransactionSigner(BaseHandler):
 
     logging.debug("sigs count so far: %r; req_sigs: %r" % (tx_sigs_count, req_sigs))
 
+    rq_data['sigs_so_far'] = tx_sigs_count
+    self.kv.update('signable', rq_hash, rq_data)
+    # ^ let's remember the tx with most sigs that we've seen. 
+
     if sigs_so_far > tx_sigs_count: # or > not >=? TODO
       logging.debug('already signed a transaction with more sigs')
       return
@@ -135,6 +142,10 @@ class TransactionSigner(BaseHandler):
     logging.debug('broadcasting: %r' % body)
 
     subject = ('sign %s' % pwtxid)  if tx_sigs_count < req_sigs else ('final-sign %s' % pwtxid)
+
+    logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
+    if tx_sigs_count == req_sigs:
+      safe_pushtx(signed_transaction)
 
     self.oracle.communication.broadcast(subject, json.dumps(body))
 

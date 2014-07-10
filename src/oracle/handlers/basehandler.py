@@ -78,10 +78,10 @@ class BaseHandler:
     outputs[ message['return_address'] ] = cash_back
 
 
-    for address, value in outputs.iteritems():
+    for address in outputs:
       # My heart bleeds when I write it
       # but btc expects float as input for the currency amount
-      outputs[address] = float(value)
+      outputs[address] = float(outputs['address'])
 
 
     logging.debug(outputs)

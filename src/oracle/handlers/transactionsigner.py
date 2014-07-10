@@ -108,6 +108,8 @@ class TransactionSigner(BaseHandler):
         tx,
         inputs)
 
+    logging.debug("sigs count so far: %r; req_sigs: %r" % (tx_sigs_count, req_sigs))
+
     if sigs_so_far > tx_sigs_count: # or > not >=? TODO
       logging.debug('already signed a transaction with more sigs')
       return
@@ -118,12 +120,14 @@ class TransactionSigner(BaseHandler):
 
     tx_sigs_count += 1
 
+    pwtxid = rq_data['pwtxid']
+
     signed_transaction = self.btc.sign_transaction(tx, inputs)
-    body = { 'pwtxid': rq_data['pwtxid'], 'transaction': signed_transaction }
+    body = { 'pwtxid': pwtxid, 'operation':'sign', 'transaction': signed_transaction, 'sigs': tx_sigs_count, 'req_sigs': req_sigs }
 
     logging.debug('broadcasting: %r' % body)
 
-    subject = 'sign' if tx_sigs_count < req_sigs else 'final-sign'
+    subject = ('sign %s' % pwtxid)  if tx_sigs_count < req_sigs else ('final-sign %s' % pwtxid)
 
     self.oracle.communication.broadcast(subject, json.dumps(body))
 

@@ -30,7 +30,7 @@ class ConditionedTransactionHandler(BaseHandler):
         'in_reply_to' : message['message_id'] }
 
     logging.debug('broadcasting reply')
-    self.oracle.communication.broadcast(reply_msg['operation'], json.dumps(reply_msg))
+    self.oracle.communication.broadcast("timelock created for %r" % pwtxid, json.dumps(reply_msg))
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
 

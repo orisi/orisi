@@ -16,12 +16,9 @@ from math import ceil
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
-
-
 START_COMMAND = "./runclient.sh"
 
-CHARTER_URL = 'http://oracles.li/test-charter.json'
-
+CHARTER_URL = 'http://oracles.li/timelock-charter.json'
 
 def fetch_charter(charter_url):
   while True:
@@ -68,7 +65,6 @@ def main2(args):
 
   btc = BitcoinClient()  
 
-
   request = {}
   client_pubkey = args[0]
   request['locktime'] = time.time() + int(args[1])*60 
@@ -76,7 +72,6 @@ def main2(args):
 
   print "fetching charter url" # hopefully it didn't check between running main1 and main2
   charter = fetch_charter(CHARTER_URL)
-
 
   oracle_pubkeys = []
   oracle_fees = {}
@@ -99,9 +94,16 @@ def main2(args):
 
   request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
   request['pubkey_list'] = key_list
-  request['miners_fee_satoshi'] = 10000 # a bit higher than required, but txs need to be sent via Eligius
+
+  # txs need to be sent via Eligius which charges 4096 satoshi per 512 bytes
+  # 50k Satoshi would pay for 20kB transaction, and while our txs aren't as big
+  # we better be on a safe side
+  # 0151 = ORI in leet code
+
+  request['miners_fee_satoshi'] = 30151
 
   print "fetching transactions incoming to %s ..." % msig_addr
+
   # for production purposes you might want to fetch the data using bitcoind, but that's expensive
   address_json = liburl_wrapper.safe_read("https://blockchain.info/address/%s?format=json" % msig_addr, timeout_time=10)
   try:
@@ -185,36 +187,23 @@ def wait_sign(args):
   bm = BitmessageClient()
   while True:
     messages = bm.get_unread_messages()
+
     print "unread messages: %r" % len(messages)
     for msg in messages:
-#      print msg.subject
       if msg.subject == 'final-sign':
         try:
           content = json.loads(msg.message)
+          print content['pwtxid']
         except:
           print "problem with message parsing"
+          time.sleep(5)
+        else:
+          print "complete signed tx for pwtxid: %s" % content['pwtxid']
+          print "please forward this to Eligius pool ( http://eligius.st/~wizkid057/newstats/pushtxn.php ):"
+          print content['transaction']          
+      bm.mark_message_as_read(msg)
 
-
-        print "please forward this to Eligius pool ( http://eligius.st/~wizkid057/newstats/pushtxn.php )"
-        print content['transaction']
-
-#      if msg.from_address in oracle_bms:
-#        try:
-#          content = json.loads(msg.message)
-#        except:
-#          print msg.message
-#          print 'failed decoding message'
-#          continue#
-
-#        if 'in_reply_to' not in content:
-#          continue
-
-#        if content['in_reply_to'] == request['message_id']:
-#            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
-#            print ""
-#            oracle_bms.remove(msg.from_address)
-
-
+    time.sleep(5)
 
 OPERATIONS = {
   'main': main,

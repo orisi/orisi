@@ -21,7 +21,7 @@ from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
 START_COMMAND = "./runclient.sh"
 
-CHARTER_URL = 'http://oracles.li/test-charter.json'
+CHARTER_URL = 'http://oracles.li/timelock-charter.json'
 
 def fetch_charter(charter_url):
   while True:

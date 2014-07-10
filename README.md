@@ -1,4 +1,4 @@
-#Orisi ALPHA - Distributed Oracle System
+#Orisi - Distributed Oracle System
 
 Orisi is a distributed system of anonymous oracle nodes which safely validates distributed contracts which use external state for their conditions. Although validation outside the blockchain is possible with Bitcoin, it is very insecure as it relies on one sole external source for validation. Orisi solves this dependency problem by creating a distributed network in which the majority of oracles have to agree to have a transaction validated. This distributed system makes it exponentially harder to bribe or otherwise influence the oracles, and is still able to validate a contract if one or more of the oracles fail.
 

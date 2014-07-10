@@ -42,7 +42,8 @@ class Oracle:
 
     try:
       message.message = json.loads(message.message)
-      logging.info('parsing message_id: %r' % message.message['message_id'])
+      if 'message_id' in message.message:
+        logging.info('parsing message_id: %r' % message.message['message_id'])
       handler(self).handle_request(message)
     except:
       logging.debug(message)

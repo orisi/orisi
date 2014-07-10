@@ -12,6 +12,7 @@ import time
 from random import randrange
 
 from shared import liburl_wrapper
+from shared.liburl_wrapper import safe_pushtx
 
 from math import ceil
 
@@ -158,6 +159,7 @@ def main2(args):
 
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
+  print "Although we've seen delays up to half an hour, especially if BitMessage client was just launched."
   print ""
 
 
@@ -227,11 +229,17 @@ def tx_info(args):
 #  print io
 
 
+def pushtx(args):
+  tx = args[0]
+  print safe_pushtx(tx)
+
+
 OPERATIONS = {
   'main': main,
   'main2': main2,
   'wait': wait_sign,
   'txinfo': tx_info,
+  'pushtx': pushtx,
 }
 
 SHORT_DESCRIPTIONS = {
@@ -239,6 +247,7 @@ SHORT_DESCRIPTIONS = {
   'main2': "broadcasts a request for create (timelock/bounty)",
   'wait_sign': "waits for a signature",
   'tx_info': 'information about a signed tx',
+  'pushtx': 'pushes tx to eligius',
 }
 
 def help():

@@ -31,6 +31,10 @@ class BitcoinClient:
     return ping_and_reconnect
 
   @keep_alive
+  def decode_raw_transaction(self, hex_transaction):
+    return self.server.decoderawtransaction(hex_transaction)
+
+  @keep_alive
   def get_json_transaction(self, hex_transaction):
     return self.server.decoderawtransaction(hex_transaction)
 
@@ -48,7 +52,7 @@ class BitcoinClient:
     return transaction_dict['txid']
 
   @keep_alive
-  def signatures_number(self, raw_transaction, prevtx):
+  def signatures_count(self, raw_transaction, prevtx):
     transaction_dict = self.server.decoderawtransaction(raw_transaction)
 
     prevtx_dict = {}
@@ -71,6 +75,42 @@ class BitcoinClient:
         logging.error('script is missing reqSigs field')
         continue
       # first elements is op_zero, last is script, rest is signatuers
+      asm_signatures = asm_elements[1:-1]
+
+      # if tried to sign a tx with the same signature again, the sig will equal '0', and we should ignore it
+      current_signatures = 0
+      for a in asm_signatures:
+        if a != '0':
+          current_signatures += 1
+      has_signatures = min(has_signatures, current_signatures)
+    return has_signatures
+
+
+  @keep_alive
+  def signatures(self, raw_transaction, prevtx):
+    transaction_dict = self.server.decoderawtransaction(raw_transaction)
+
+    prevtx_dict = {}
+    for tx in prevtx:
+      prevtx_dict[str((tx['txid'], tx['vout']))] = tx['redeemScript']
+
+    has_signatures = 999
+    for vin in transaction_dict['vin']:
+      redeem_script = prevtx_dict[str((vin['txid'], vin['vout']))]
+      try:
+        asm = vin['scriptSig']['asm']
+      except KeyError:
+        logging.error('transaction doesn\'t have scriptSig asm')
+        continue
+      asm_elements = asm.split()
+      try:
+        asm_script_dict = self.server.decodescript(redeem_script)
+        int(asm_script_dict['reqSigs'])
+      except KeyError:
+        logging.error('script is missing reqSigs field')
+        continue
+      # first elements is op_zero, last is script, rest is signatuers
+      return asm_elements
       current_signatures = len(asm_elements) - 2
       current_signatures = max(current_signatures, 0)
       has_signatures = min(has_signatures, current_signatures)

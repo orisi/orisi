@@ -104,7 +104,7 @@ class TransactionSigner(BaseHandler):
 
     assert( self.is_proper_transaction(tx, inputs) )
 
-    tx_sigs_count = self.btc.signatures_number(
+    tx_sigs_count = self.btc.signatures_count(
         tx,
         inputs)
 
@@ -118,11 +118,18 @@ class TransactionSigner(BaseHandler):
       logging.debug('already signed with enough keys')
       return
 
-    tx_sigs_count += 1
-
     pwtxid = rq_data['pwtxid']
 
     signed_transaction = self.btc.sign_transaction(tx, inputs)
+
+    tx_new_sigs_count = self.btc.signatures_count(signed_transaction, inputs)
+
+    if (tx_new_sigs_count == tx_sigs_count):
+      logging.debug('failed signing transaction. already signed by me? aborting')
+      return
+
+    tx_sigs_count += 1
+
     body = { 'pwtxid': pwtxid, 'operation':'sign', 'transaction': signed_transaction, 'sigs': tx_sigs_count, 'req_sigs': req_sigs }
 
     logging.debug('broadcasting: %r' % body)

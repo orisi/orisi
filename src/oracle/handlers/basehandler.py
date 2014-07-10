@@ -81,7 +81,7 @@ class BaseHandler:
     for address in outputs:
       # My heart bleeds when I write it
       # but btc expects float as input for the currency amount
-      outputs[address] = float(outputs['address'])
+      outputs[address] = float(outputs[address])
 
 
     logging.debug(outputs)

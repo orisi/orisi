@@ -113,13 +113,13 @@ class TransactionSigner(BaseHandler):
 
     logging.debug("sigs count so far: %r; req_sigs: %r" % (tx_sigs_count, req_sigs))
 
-    rq_data['sigs_so_far'] = tx_sigs_count
-    self.kv.update('signable', rq_hash, rq_data)
-    # ^ let's remember the tx with most sigs that we've seen. 
-
     if sigs_so_far > tx_sigs_count: # or > not >=? TODO
       logging.debug('already signed a transaction with more sigs')
       return
+
+    rq_data['sigs_so_far'] = tx_sigs_count
+    self.kv.update('signable', rq_hash, rq_data)
+    # ^ let's remember the tx with most sigs that we've seen. 
 
     if tx_sigs_count >= req_sigs:
       logging.debug('already signed with enough keys')

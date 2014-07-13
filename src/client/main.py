@@ -19,9 +19,16 @@ from math import ceil
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
 
+
+from decimal import Decimal
+
+
 START_COMMAND = "./runclient.sh"
 
-CHARTER_URL = 'http://oracles.li/timelock-charter.json'
+CHARTER_URL = 'http://oracles.li/test-charter.json'
+# Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
+# With three oracles, the tx fee is around 512 bytes.
+MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
 
 def fetch_charter(charter_url):
   while True:
@@ -41,20 +48,27 @@ def main(args):
   client_pubkey = tmp_address['pubkey']
   oracle_pubkeys = []
   for o in charter['nodes']:
-    print json.dumps(o)
+#    print json.dumps(o)
     oracle_pubkeys.append(o['pubkey'])
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
 
   print "number of nodes: %i" % len(charter['nodes'])
   print "required signatures: %i" % min_sigs
+  sum_fees_satoshi = 0
+  for o in charter['nodes']:
+    sum_fees_satoshi += Decimal(o['fee'])*100000000
+  sum_fees_satoshi += Decimal(charter['org_fee'])*100000000
 
+ 
   key_list = [client_pubkey] + oracle_pubkeys
 
   response = btc.create_multisig_address(min_sigs, key_list)
 
   print ""
   print "1. wire the funds to %s" % response['address']
+  print "   oracle & org fees: %i satoshi (as detailed in %s)" % (sum_fees_satoshi , CHARTER_URL)
+  print "   miners fee: %i satoshi (see MINERS_FEE in src/client/main.py if you want to lower it)" % MINERS_FEE
   print "2. run:"
   print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
 
@@ -98,12 +112,7 @@ def main2(args):
   request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
   request['pubkey_list'] = key_list
 
-  # txs need to be sent via Eligius which charges 4096 satoshi per 512 bytes
-  # 50k Satoshi would pay for 20kB transaction, and while our txs aren't as big
-  # we better be on a safe side
-  # 0151 = ORI in leet code
-
-  request['miners_fee_satoshi'] = 30151
+  request['miners_fee_satoshi'] = MINERS_FEE
 
   print "fetching transactions incoming to %s ..." % msig_addr
 

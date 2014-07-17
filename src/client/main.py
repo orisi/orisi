@@ -60,7 +60,7 @@ def main(args):
     sum_fees_satoshi += Decimal(o['fee'])*100000000
   sum_fees_satoshi += Decimal(charter['org_fee'])*100000000
 
- 
+
   key_list = [client_pubkey] + oracle_pubkeys
 
   response = btc.create_multisig_address(min_sigs, key_list)
@@ -69,7 +69,8 @@ def main(args):
   print "1. wire the funds to %s" % response['address']
   print "   oracle & org fees: %i satoshi (as detailed in %s)" % (sum_fees_satoshi , CHARTER_URL)
   print "   miners fee: %i satoshi (see MINERS_FEE in src/client/main.py if you want to lower it)" % MINERS_FEE
-  print "2. run:"
+  print "2. wait for transaction to get any confirmations"
+  print "3. run:"
   print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
 
 
@@ -80,11 +81,11 @@ def main2(args):
     print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
     return
 
-  btc = BitcoinClient()  
+  btc = BitcoinClient()
 
   request = {}
   client_pubkey = args[0]
-  request['locktime'] = time.time() + int(args[1])*60 
+  request['locktime'] = time.time() + int(args[1])*60
   request['return_address'] = args[2]
 
   print "fetching charter url" # hopefully it didn't check between running main1 and main2
@@ -213,7 +214,7 @@ def wait_sign(args):
         else:
           print "complete signed tx for pwtxid: %s" % content['pwtxid']
           print "please forward this to Eligius pool ( http://eligius.st/~wizkid057/newstats/pushtxn.php ):"
-          print content['transaction']          
+          print content['transaction']
       bm.mark_message_as_read(msg)
 
     time.sleep(5)

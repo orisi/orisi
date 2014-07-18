@@ -25,7 +25,8 @@ from decimal import Decimal
 
 START_COMMAND = "./runclient.sh"
 
-CHARTER_URL = 'http://oracles.li/test-charter.json'
+# Charter url should be url to json with oracles described. Check out http://oracles.li/timelock-charter.json for example
+CHARTER_URL = 'http://oracles.li/timelock-charter.json'
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
 MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius

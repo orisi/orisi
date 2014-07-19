@@ -17,7 +17,7 @@ HEURISTIC_ADD_TIME = 60 * 3
 # 15 minutes just to be sure no one claimed it
 SAFETY_TIME = 15 * 60
 
-class PasswordTransactionRequestHandler(BaseHandler):
+class BountyCreateHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     self.btc = oracle.btc

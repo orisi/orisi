@@ -66,7 +66,7 @@ class GuessPasswordHandler(BaseHandler):
 
     pwtxid = message['pwtxid']
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
-    
+
     logging.info('attemting to decode %r' % pwtxid)
 
     if self.unknown_tx(pwtxid):
@@ -75,18 +75,17 @@ class GuessPasswordHandler(BaseHandler):
 
     if not 'public' in rsa_key:
       logging.warning('"public" missing in rsa_key. malformed transaction in the db?')
+      return
 
     rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
 
     if not rsa_hash in message['passwords']:
-      logging.debug('guess doesn\'t apply to me')
+      logging.info('guess doesn\'t apply to me')
       return
 
     if LockedPasswordTransaction(self.oracle.db).get_by_pwtxid(pwtxid)['done']:
-      logging.debug('transaction locked -- guess already received?')
+      logging.info('transaction locked -- guess already received?')
       return
-
-    rsa_hash = hashlib.sha256(rsa_key['public']).hexdigest()
 
     guess = message['passwords'][rsa_hash]
 
@@ -119,7 +118,7 @@ class GuessPasswordHandler(BaseHandler):
       self.oracle.task_queue.done(task)
       return
 
-    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)  
+    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
     if transaction['done'] == 1:
       logging.info('someone was faster')
       self.oracle.task_queue.done(task)

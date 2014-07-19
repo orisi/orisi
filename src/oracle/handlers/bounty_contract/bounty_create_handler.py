@@ -14,9 +14,6 @@ from Crypto import Random
 KEY_SIZE = 4096
 HEURISTIC_ADD_TIME = 60 * 3
 
-# 15 minutes just to be sure no one claimed it
-SAFETY_TIME = 15 * 60
-
 class BountyCreateHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
@@ -80,7 +77,6 @@ class BountyCreateHandler(BaseHandler):
 
 
   def handle_task(self, task):
-
     message = json.loads(task['json_data'])
     future_transaction = self.try_prepare_raw_transaction(message)
     assert(future_transaction is not None) # should've been verified gracefully in handle_request

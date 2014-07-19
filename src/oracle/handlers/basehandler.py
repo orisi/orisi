@@ -54,14 +54,15 @@ class BaseHandler:
       logging.debug("all inputs should come from the same multisig address")
       return False
 
-    cash_back = Decimal(Decimal(SATOSHI) * (message['sum_satoshi'] - message['miners_fee_satoshi']))
+    cash_back = Decimal(SATOSHI) * \
+        (Decimal(message['sum_satoshi']) - Decimal(message['miners_fee_satoshi']))
 
     logging.debug(cash_back)
 
-    outputs = {}#message['outputs']
+    outputs = {}
 
     has_my_fee = False
-    for oracle, fee in message['outputs'].iteritems(): #outputs.iteritems():
+    for oracle, fee in message['outputs'].iteritems():
       outputs[oracle] = fee
       cash_back -= Decimal(fee)
 
@@ -78,12 +79,10 @@ class BaseHandler:
 
     outputs[ message['return_address'] ] = cash_back
 
-
     for address in outputs:
       # My heart bleeds when I write it
       # but btc expects float as input for the currency amount
       outputs[address] = float(outputs[address])
-
 
     logging.debug(outputs)
 

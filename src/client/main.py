@@ -174,9 +174,10 @@ def main2(args):
   print ""
 
 
+  oracles_confirmed = 0
   while oracle_bms:
     messages = bm.get_unread_messages()
-    print "unread messages: %r" % len(messages)
+    print "oracles confirmed: {}".format(oracles_confirmed)
     for msg in messages:
       if msg.from_address in oracle_bms:
         try:
@@ -195,7 +196,7 @@ def main2(args):
             oracle_bms.remove(msg.from_address)
 
     if oracle_bms: #if still awaiting replies from some oracles
-      time.sleep(5)
+      time.sleep(10)
 
 def wait_sign(args):
 

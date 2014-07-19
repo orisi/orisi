@@ -1,4 +1,4 @@
-from timelock_contract.timelock_create_handler import ConditionedTransactionHandler
+from timelock_contract.timelock_create_handler import TimelockCreateHandler
 from bounty_contract.bounty_create_handler import PasswordTransactionRequestHandler
 from bounty_contract.bounty_redeem_handler import GuessPasswordHandler
 from transactionsigner import TransactionSigner
@@ -6,7 +6,7 @@ from transactionsigner import TransactionSigner
 
 op_handlers = {
 	'sign': TransactionSigner,
-    'timelock_create': ConditionedTransactionHandler,
+    'timelock_create': TimelockCreateHandler,
     'bounty_create': PasswordTransactionRequestHandler,
     'bounty_redeem': GuessPasswordHandler,
 }

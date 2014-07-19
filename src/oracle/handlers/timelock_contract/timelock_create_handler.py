@@ -6,7 +6,7 @@ import logging
 import datetime
 
 
-class ConditionedTransactionHandler(BaseHandler):
+class TimelockCreateHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     self.btc = oracle.btc

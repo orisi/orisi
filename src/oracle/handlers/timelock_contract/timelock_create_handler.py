@@ -11,7 +11,6 @@ class TimelockCreateHandler(BaseHandler):
     self.oracle = oracle
     self.btc = oracle.btc
 
-
   def handle_request(self, request):
     message = request.message
 
@@ -25,7 +24,7 @@ class TimelockCreateHandler(BaseHandler):
       logging.debug('pwtxid/multisig address already in use. did you resend the same request?')
       return
 
-    reply_msg = { 'operation' : 'timelock_created',
+    reply_msg = { 'operation' : 'bounty_created',
         'pwtxid' : pwtxid,
         'in_reply_to' : message['message_id'] }
 

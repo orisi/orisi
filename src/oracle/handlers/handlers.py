@@ -13,9 +13,9 @@ op_handlers = {
 
 OPERATION_REQUIRED_FIELDS = {
     'timelock_create': ['message_id', 'sum_satoshi', 'prevtxs', 'outputs', 'miners_fee_satoshi', 'return_address', 'locktime', 'pubkey_list', 'req_sigs'],
-    'bounty_create': ['prevtx', 'locktime', 'message_id', 'sum_amount', 'miners_fee', 'oracle_fees', 'pubkey_list', 'req_sigs', 'password_hash', 'return_address'],
+    'bounty_create': ['message_id', 'sum_satoshi',  'prevtxs', 'outputs', 'miners_fee_satoshi', 'return_address', 'locktime', 'pubkey_list', 'req_sigs', 'password_hash'],
     'bounty_redeem': ['pwtxid', 'passwords']
 }
 
-PROTOCOL_VERSION = '0.12'
+PROTOCOL_VERSION = '0.13'
 

@@ -21,7 +21,7 @@ class BaseHandler:
     raise NotImplementedError()
 
   def valid_task(self, task):
-  	return True
+    return True
 
   def get_tx_hash(self, tx):
     inputs, outputs = self.btc.get_inputs_outputs(tx)

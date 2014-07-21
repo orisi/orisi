@@ -83,4 +83,4 @@ class BountyCreateHandler(BaseHandler):
 
     logging.debug('transaction ready to be signed')
 
-    self.oracle.signer.sign(future_transaction, message['prevtxs'], message['req_sigs'])
+    self.oracle.signer.sign(future_transaction, message['pwtxid'], message['prevtxs'], message['req_sigs'])

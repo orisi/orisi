@@ -1,9 +1,21 @@
 import base64
+import re
 import uuid
 
 MAXIMUM_IRC_MESSAGE_LENGTH = 400
 
 class IrcMessageParser:
+
+  @staticmethod
+  def corresponds_to_protocol(message_part):
+    """
+    Functions return boolean value. It answers wether message_part is a part of protocol.
+    In other words does it have the following format:
+    <msg_id>#<part_number>#<number_of_last_part>#<base64_encoded_message_part>
+    """
+    if not re.match(r'^[0-9a-f\-]*#\d*#\d*#', message_part):
+      return False
+    return True
 
   @staticmethod
   def prepare_message(message):

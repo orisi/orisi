@@ -125,17 +125,17 @@ class GuessPasswordHandler(BaseHandler):
       return
 
     message = json.loads(transaction['json_data'])
-    prevtx = message['prevtx']
+    prevtx = message['prevtxs']
     locktime = message['locktime']
-    outputs = message['oracle_fees']
-    sum_amount = Decimal(message['sum_amount'])
-    miners_fee = Decimal(message['miners_fee'])
-    available_amount = sum_amount - miners_fee
+    outputs = message['outputs']
+    sum_satoshi = Decimal(message['sum_satoshi'])
+    miners_satoshi = Decimal(message['miners_fee_satoshi'])
+    available_amount_satoshi = sum_satoshi - miners_fee_satoshi
     future_transaction = Util.create_future_transaction(
         self.oracle.btc,
         prevtx,
         outputs,
-        available_amount,
+        available_amount_satoshi,
         address,
         locktime)
 

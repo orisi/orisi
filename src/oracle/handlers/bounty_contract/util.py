@@ -3,6 +3,8 @@ import json
 from Crypto.PublicKey import RSA
 from decimal import Decimal
 
+SATOSHI = 0.00000001
+
 class Util:
   @staticmethod
   def construct_key_from_data(rsa_data):
@@ -24,11 +26,11 @@ class Util:
     return key
 
   @staticmethod
-  def create_future_transaction(btc, prevtx, outputs, amount_available, receiver_address, locktime):
+  def create_future_transaction(btc, prevtx, outputs, amount_available_satoshi, receiver_address, locktime):
     inputs = []
     for tx in prevtx:
       inputs.append({'txid': tx['txid'], 'vout': tx['vout']})
-    cash_back = amount_available
+    cash_back = Decimal(SATOSHI) * Decimal(amount_available)
     for oracle, fee in outputs.iteritems():
       cash_back -= Decimal(fee)
 

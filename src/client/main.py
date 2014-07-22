@@ -1,27 +1,24 @@
 #!/usr/bin/env python2.7
 
 import pprint
-
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import json
 import time
+import hashlib
+import base64
 
 from random import randrange
-
+from math import ceil
+from collections import defaultdict
 from shared import liburl_wrapper
 from shared.liburl_wrapper import safe_pushtx
-
-from math import ceil
-
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.bitmessage_communication.bitmessageclient import BitmessageClient
-
-
 from decimal import Decimal
-
+from Crypto.PublicKey import RSA
 
 START_COMMAND = "./runclient.sh"
 
@@ -30,6 +27,11 @@ CHARTER_URL = 'http://oracles.li/timelock-charter.json'
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
 MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
+
+CHARTER_URL = 'http://localhost:8000/test.json'
+
+# Difficulty of 1 trillion in bounty contract
+DIFFICULTY = 1000000000
 
 def fetch_charter(charter_url):
   while True:
@@ -49,7 +51,6 @@ def main(args):
   client_pubkey = tmp_address['pubkey']
   oracle_pubkeys = []
   for o in charter['nodes']:
-#    print json.dumps(o)
     oracle_pubkeys.append(o['pubkey'])
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
@@ -67,29 +68,39 @@ def main(args):
   response = btc.create_multisig_address(min_sigs, key_list)
 
   print ""
-  print "1. wire the funds to %s" % response['address']
-  print "   oracle & org fees: %i satoshi (as detailed in %s)" % (sum_fees_satoshi , CHARTER_URL)
-  print "   miners fee: %i satoshi (see MINERS_FEE in src/client/main.py if you want to lower it)" % MINERS_FEE
+  print "1. wire the funds to {}".format(response['address'])
+  print "   oracle & org fees: {} satoshi (as detailed in {})".format(sum_fees_satoshi, CHARTER_URL)
+  print "   miners fee: {} satoshi (see MINERS_FEE in src/client/main.py if you want to lower it)".format(MINERS_FEE)
   print "2. wait for transaction to get any confirmations"
-  print "3. run:"
-  print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
+  print "3a. to create timelock transaction run:"
+  print "{} create_timelock {} <locktime_minutes> <return_address>".format(START_COMMAND, client_pubkey)
+  print "3b. to create bounty run:"
+  print "{} create_bounty {} <locktime_minutes> <return_address> <password>".format(START_COMMAND, client_pubkey)
 
+def get_password_hash(password):
+  rn = randrange(DIFFICULTY)
+  salted_password = "{}#{}".format(password, rn)
+  hashed = hashlib.sha512(salted_password).hexdigest()
+  return hashed
 
-def main2(args):
-  if len(args)<3:
-    print "USAGE: `%s main2 <pubkey_once> <locktime_minutes> <return_address>`" % START_COMMAND
-    print "- run `%s main` to obtain pubkey_once" % START_COMMAND
+def create_bounty(args):
+  if len(args) < 4:
+    print "USAGE: `{} create_bounty <pubkey_once> <locktime_minutes> <return_address> <password>`".format(START_COMMAND)
+    print "- run `{} main` to obtain pubkey_once".format(START_COMMAND)
     print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
     return
 
   btc = BitcoinClient()
-
   request = {}
   client_pubkey = args[0]
-  request['locktime'] = time.time() + int(args[1])*60
+
+  request['locktime'] = time.time() + int(args[1]) * 60
   request['return_address'] = args[2]
 
-  print "fetching charter url" # hopefully it didn't check between running main1 and main2
+  password = args[3]
+  password_hash = get_password_hash(password)
+  request['password_hash'] = password_hash
+
   charter = fetch_charter(CHARTER_URL)
 
   oracle_pubkeys = []
@@ -100,7 +111,6 @@ def main2(args):
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
     oracle_bms.append(o['bm'])
-
   oracle_fees[charter['org_address']] = charter['org_fee']
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
@@ -116,6 +126,19 @@ def main2(args):
 
   request['miners_fee_satoshi'] = MINERS_FEE
 
+  prevtxs, sum_satoshi = get_transactions_from_address(msig_addr, redeemScript)
+  request['prevtxs'] = prevtxs
+  request['sum_satoshi'] = sum_satoshi
+  request['outputs'] = oracle_fees
+
+  request['req_sigs'] = min_sigs
+  request['operation'] = 'bounty_create'
+
+  request_content = json.dumps(request)
+  bm = BitmessageClient()
+  print bm.send_message(bm.chan_address, request['operation'], request_content)
+
+def get_transactions_from_address(msig_addr, redeemScript):
   print "fetching transactions incoming to %s ..." % msig_addr
 
   # for production purposes you might want to fetch the data using bitcoind, but that's expensive
@@ -148,6 +171,52 @@ def main2(args):
         }
         sum_satoshi += vout['value']
         prevtxs.append(prevtx)
+  return prevtxs, sum_satoshi
+
+def create_timelock(args):
+  if len(args) < 3:
+    print "USAGE: `%s create_timelock <pubkey_once> <locktime_minutes> <return_address>`" % START_COMMAND
+    print "- run `%s main` to obtain pubkey_once" % START_COMMAND
+    print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
+    return
+
+  btc = BitcoinClient()
+
+  request = {}
+  client_pubkey = args[0]
+  request['locktime'] = time.time() + int(args[1])*60
+  request['return_address'] = args[2]
+
+  print "fetching charter url" # hopefully it didn't check between running main1 and create_timelock
+  charter = fetch_charter(CHARTER_URL)
+
+  oracle_pubkeys = []
+  oracle_fees = {}
+  oracle_bms = []
+
+  for o in charter['nodes']:
+    oracle_pubkeys.append(o['pubkey'])
+    oracle_fees[o['address']] = o['fee']
+    oracle_bms.append(o['bm'])
+
+  oracle_fees[charter['org_address']] = charter['org_fee']
+
+  min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
+
+  key_list = [client_pubkey] + oracle_pubkeys
+
+  response = btc.create_multisig_address(min_sigs, key_list)
+  msig_addr = response['address'] # we're using this as an identificator
+  redeemScript = response['redeemScript']
+
+  request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
+  request['pubkey_list'] = key_list
+
+  request['miners_fee_satoshi'] = MINERS_FEE
+
+  print "fetching transactions incoming to %s ..." % msig_addr
+
+  prevtxs, sum_satoshi = get_transactions_from_address(msig_addr, redeemScript)
 
   if len(prevtxs) == 0:
     print "ERROR: couldn't find transactions sending money to %s" % msig_addr
@@ -235,25 +304,112 @@ def tx_info(args):
   pprint.pprint (btc.signatures(tx, prevtxs))
 
 
+def list_bounties(args):
+  bm = BitmessageClient()
+  msgs = bm.get_inbox()
+
+  bounties = defaultdict(list)
+  bounties_order = []
+  for msg in msgs:
+    try:
+      data = json.loads(msg.message)
+    except ValueError:
+      continue
+    if data['operation'] == 'new_bounty':
+      bounties[data['pwtxid']].append(data)
+      if data['pwtxid'] not in bounties_order:
+        bounties_order.append(data['pwtxid'])
+  bounties_order = bounties_order[::-1]
+
+  for idx, bounty in enumerate(bounties_order):
+    print "{}. {}  oracles waiting: {}".format(idx + 1, bounty, len(bounties[bounty]))
+
+  print "To unlock bounty use `{} redeem_bounty <id> <password> <bitcoin_address>`".format(START_COMMAND)
+
+def redeem_bounty(args):
+  pwtxid = args[0]
+  password = args[1]
+  bitcoin_address = args[2]
+
+  bm = BitmessageClient()
+  msgs = bm.get_inbox()
+  bounties = []
+  for msg in msgs:
+    try:
+      data = json.loads(msg.message)
+    except ValueError:
+      continue
+    if data['operation'] == 'new_bounty' and data['pwtxid'] == pwtxid:
+      bounties.append(data)
+
+  if len(bounties) == 0:
+    print "There are no bounties with that id"
+    return
+
+  pw_hash = bounties[-1]['password_hash']
+
+  print "Doing proof of work..."
+  i = 589057790
+  while i <= DIFFICULTY:
+    i += 1
+    if i % (DIFFICULTY / 1000) == 0:
+      print "Already done {:.1f}% of maximum POW".format(100 * float(i) / float(DIFFICULTY))
+
+    pw_try = "{}#{}".format(password, i)
+    hsh = hashlib.sha512(pw_try).hexdigest()
+    if hsh == pw_hash:
+      print "password correct!"
+      request = json.dumps({
+          "address": bitcoin_address,
+          "password": pw_try
+      })
+      passwords = {}
+      for b in bounties:
+        key_dict = b['rsa_pubkey']
+        key = RSA.construct((
+            long(key_dict['n']),
+            long(key_dict['e'])))
+        base64_msg = base64.encodestring(key.encrypt(request, 0)[0])
+        rsa_hash = hashlib.sha256(json.dumps(key_dict)).hexdigest()
+        passwords[rsa_hash] = base64_msg
+
+      request = {}
+      request['pwtxid'] = pwtxid
+      request['passwords'] = passwords
+      request['operation'] = 'bounty_redeem'
+
+      request_content = json.dumps(request)
+      print bm.send_message(bm.chan_address, request['operation'], request_content)
+
+      return
+
+  print "password incorrect"
+
+
 def pushtx(args):
   tx = args[0]
   print safe_pushtx(tx)
 
-
 OPERATIONS = {
-  'main': main,
-  'main2': main2,
-  'wait': wait_sign,
-  'txinfo': tx_info,
-  'pushtx': pushtx,
+    'main': main,
+    'create_timelock': create_timelock,
+    'create_bounty': create_bounty,
+    'wait': wait_sign,
+    'list_bounties': list_bounties,
+    'redeem_bounty': redeem_bounty,
+    'txinfo': tx_info,
+    'pushtx': pushtx,
 }
 
 SHORT_DESCRIPTIONS = {
-  'main': "prepares the first multisig",
-  'main2': "broadcasts a request for create (timelock/bounty)",
-  'wait_sign': "waits for a signature",
-  'tx_info': 'information about a signed tx',
-  'pushtx': 'pushes tx to eligius',
+    'main': "prepares the first multisig",
+    'create_timelock': "broadcasts a request for create timelock",
+    'create_bounty': "broadcasts a request for create bounty",
+    'wait_sign': "waits for a signature",
+    'tx_info': "information about a signed tx",
+    'pushtx': "pushes tx to eligius",
+    'list_bounties': "lists available bounties",
+    'redeem_bounty': "unlocks bounty if password is correct",
 }
 
 def help():

@@ -32,9 +32,11 @@ class BitmessageClient:
       try:
         response = self.api.helloWorld('x', 'y')
         assert(response == "x-y")
+        response = fun(self, *args, **kwargs)
+        return response
       except:
         self.connect()
-      return fun(self, *args, **kwargs)
+        return getattr(self, fun.__name__)(*args, **kwargs)
     return ping_and_reconnect
 
   @keep_alive

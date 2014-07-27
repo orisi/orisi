@@ -4,6 +4,7 @@ Orisi is a distributed system of anonymous oracle nodes which safely validates d
 
 * [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 * [Performing a timelock transaction](https://github.com/orisi/wiki/wiki/Performing-a-Timelock-transaction) - install a client and try out example transactions
+* [Understanding timelock](https://www.youtube.com/watch?v=boPW1FwNu4c) - a Khan-academy style, 8-minute video explaining what happens when you launch the Timelock client, and the way Orisi works in general.
 
 --------------------
 

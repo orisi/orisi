@@ -1,6 +1,6 @@
 #Orisi - Distributed Oracle System
 
-**Orisi is a distributed system of anonymous oracle nodes which safely validates smart contracts using external conditions.**
+**Orisi is a distributed system of oracle nodes which validates smart contracts safely. Such contracts, unlike blockchain-only ones, can rely on external conditions.**
 
 Basic Bitcoin and Ethereum contracts cannot - by themselves - use external inputs, like stock prices or checking website urls for data. Orisi solves this dependency problem by creating a distributed network in which the majority of oracles have to agree to have a transaction validated. This distributed system makes it exponentially harder to bribe or otherwise influence the oracles, and is still able to validate a contract if one or more of the oracles fail.
 

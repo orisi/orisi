@@ -179,6 +179,6 @@ class Oracle:
 
         # Every available handler should get a chance to handle new block
         for h in handlers:
-          h.handle_new_block(new_block)
+          h(self).handle_new_block(new_block)
 
       time.sleep(1)

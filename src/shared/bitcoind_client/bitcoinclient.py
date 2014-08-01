@@ -237,3 +237,17 @@ class BitcoinClient:
   def validate_address(self, address):
     return self.server.validateaddress(address)
 
+  @keep_alive
+  def get_block_hash(self, block_number):
+    try:
+      return self.server.getblockhash(block_number)
+    except ProtocolError:
+      return None
+
+  @keep_alive
+  def get_block(self, block_hash):
+    return self.server.getblock(block_hash)
+
+  @keep_alive
+  def get_block_count(self):
+    return self.server.getblockcount()

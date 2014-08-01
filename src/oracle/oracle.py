@@ -18,6 +18,9 @@ from decimal import Decimal
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
 
+# Number of confirmations needed for block to get noticed by Oracle
+CONFIRMATIONS = 3
+
 class Oracle:
   def __init__(self):
     self.communication = OracleCommunication()
@@ -54,6 +57,40 @@ class Oracle:
     db_class = self.db.operations[operation]
     if db_class:
       db_class(self.db).save(message)
+
+  def get_last_block_number(self):
+    val = KeyValue(self.db).get_by_section_key('blocks','last_block_number')
+    if not val:
+      return 0
+
+    last_block = val['last_block']
+
+  def set_last_block(self):
+    last_block_number = self.btc.get_block_count()
+
+    # We need to satisfy a condition on looking only for blocks with at
+    # least CONFIRMATIONS of confirmations
+    satisfied = False
+
+  def get_new_block(self):
+    last_block_number = self.get_last_block_number(self)
+
+    if last_block_number == 0:
+      last_block_number = self.set_last_block() # TODO
+
+    newer_block = last_block_number + 1
+
+    block_hash = self.btc.get_block_hash(newer_block)
+    if not block_hash:
+      return None
+
+    block = self.btc.get_block(block_hash)
+
+    # We are waiting for enough confirmations
+    if block['confirmations'] < CONFIRMATIONS:
+      return None
+
+    return block
 
   def handle_task(self, task):
     operation = task['operation']
@@ -122,5 +159,13 @@ class Oracle:
         self.task_queue.done(task)
         task = self.task_queue.get_oldest_task()
 
+      new_block = self.get_new_block()
+
+      if new_block:
+        handlers = op_handlers.itervalues()
+
+        # Every available handler should get a chance to handle new block
+        for h in handlers:
+          h.handle_new_block(new_block)
 
       time.sleep(1)

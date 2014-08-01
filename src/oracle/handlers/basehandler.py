@@ -14,11 +14,15 @@ class BaseHandler:
     self.btc = oracle.btc
     getcontext().prec=8
 
-  def handle_request(self, task):
+  def handle_request(self, request):
     raise NotImplementedError()
 
   def handle_task(self, task):
     raise NotImplementedError()
+
+  def handle_new_block(self, block):
+    # By default we don't need to do anything with new blocks
+    return
 
   def valid_task(self, task):
   	return True

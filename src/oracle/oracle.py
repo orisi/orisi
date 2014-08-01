@@ -59,11 +59,12 @@ class Oracle:
       db_class(self.db).save(message)
 
   def get_last_block_number(self):
-    val = KeyValue(self.db).get_by_section_key('blocks','last_block_number')
+    val = KeyValue(self.db).get_by_section_key('blocks', 'last_block_number')
     if not val:
       return 0
 
     last_block = val['last_block']
+    return last_block
 
   def set_last_block(self):
     last_block_number = self.btc.get_block_count()
@@ -72,11 +73,21 @@ class Oracle:
     # least CONFIRMATIONS of confirmations
     satisfied = False
 
+    while not satisfied:
+      block_hash = self.btc.get_block_hash(last_block_number)
+      block = self.btc.get_block(block_hash)
+      if block['confirmations'] >= CONFIRMATIONS:
+        satisfied = True
+      else:
+        last_block_number -= 1
+
+    KeyValue(self.db).save('blocks', 'last_block_number', {'last_block':last_block_number})
+
   def get_new_block(self):
-    last_block_number = self.get_last_block_number(self)
+    last_block_number = self.get_last_block_number()
 
     if last_block_number == 0:
-      last_block_number = self.set_last_block() # TODO
+      last_block_number = self.set_last_block()
 
     newer_block = last_block_number + 1
 
@@ -94,6 +105,7 @@ class Oracle:
 
   def handle_task(self, task):
     operation = task['operation']
+
     assert(operation in self.handlers)
     handler = self.handlers[operation]
     handler(self).handle_task(task)

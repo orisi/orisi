@@ -83,7 +83,7 @@ class SafeTimelockCreateHandler(BaseHandler):
 
     self.oracle.task_queue.save({
         "operation": 'timelock_mark_release',
-        "json_data": json.dumps({'mark': mark}),
+        "json_data": json.dumps({'mark': mark, 'address': address_to_pay_on}),
         "done": 0,
         "next_check": release_time
     })

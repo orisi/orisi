@@ -251,3 +251,7 @@ class BitcoinClient:
   @keep_alive
   def get_block_count(self):
     return self.server.getblockcount()
+
+  @keep_alive
+  def get_raw_transaction(self, txid):
+    return self.server.getrawtransaction(txid)

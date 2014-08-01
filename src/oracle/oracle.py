@@ -102,6 +102,7 @@ class Oracle:
     if block['confirmations'] < CONFIRMATIONS:
       return None
 
+    KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':newer_block})
     return block
 
   def handle_task(self, task):

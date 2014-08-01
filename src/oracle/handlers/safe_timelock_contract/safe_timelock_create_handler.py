@@ -6,6 +6,7 @@ import time
 import datetime
 
 from contract_util import get_mark_for_address
+from oracle_db import KeyValue
 
 TIME_FOR_TRANSACTION = 30
 TIME_FOR_CONFIRMATION = 13
@@ -15,25 +16,40 @@ class SafeTimelockCreateHandler(BaseHandler):
   def __init__(self, oracle):
     self.oracle = oracle
     self.btc = oracle.btc
+    self.kv = KeyValue(self.oracle.db)
 
   def handle_new_block(self, block):
     pass
 
-  def mark_unavailable(self, mark):
-    raise NotImplementedError
+  def mark_unavailable(self, mark, addr):
+    mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
+    if not mark_data:
+      return False
 
-  def claim_mark(self, mark, return_address, locktime):
-    raise NotImplementedError()
+    available = mark_data['available']
+    return available
+
+  def claim_mark(self, mark, addr, return_address):
+    mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
+    if not mark_data:
+      self.kv.store('mark_available', '{}#{}'.format(mark, addr), {'available':True})
+
+    self.kv.store('mark_available', '{}#{}'.format(mark, addr), {
+      'available': False,
+      'return_address': return_address,
+      'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()).total_seconds())
+    })
 
   def handle_request(self, request):
     message = request.message
 
     return_address = message['return_address']
     mark = get_mark_for_address(return_address)
+    address_to_pay_on = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     locktime = int(message['locktime'])
 
-    if self.mark_unavailable(mark):
+    if self.mark_unavailable(mark, address_to_pay_on, return_address):
       reply_msg = {
         'operation': 'safe_timelock_error',
         'in_reply_to': message['message_id'],
@@ -43,9 +59,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       return
 
     # For now oracles are running single-thread so there is no race condition
-    self.claim_mark(mark, return_address, locktime)
-
-    address_to_pay_on = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+    self.claim_mark(mark, address_to_pay_on, return_address)
 
     reply_msg = { 'operation' : 'safe_timelock_created',
         'contract_id' : address_to_pay_on,

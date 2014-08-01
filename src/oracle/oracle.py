@@ -81,7 +81,7 @@ class Oracle:
       else:
         last_block_number -= 1
 
-    KeyValue(self.db).save('blocks', 'last_block_number', {'last_block':last_block_number})
+    KeyValue(self.db).store('blocks', 'last_block_number', {'last_block':last_block_number})
 
   def get_new_block(self):
     last_block_number = self.get_last_block_number()

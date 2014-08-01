@@ -13,6 +13,7 @@ from random import randrange
 
 from shared import liburl_wrapper
 from shared.liburl_wrapper import safe_pushtx
+from shared.fastproto import *
 
 from math import ceil
 
@@ -285,3 +286,4 @@ def main(args):
 if __name__=="__main__":
   args = sys.argv[1:]
   main(args)
+

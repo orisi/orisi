@@ -3,7 +3,7 @@ from basehandler import BaseHandler
 import json
 import cjson
 
-from oracle_db import KeyValue
+from oracle.oracle_db import KeyValue
 from contract_util import value_to_mark
 
 class TimelockMarkReleaseHandler(BaseHandler):

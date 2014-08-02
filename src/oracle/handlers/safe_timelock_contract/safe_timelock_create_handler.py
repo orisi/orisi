@@ -101,7 +101,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     message['contract_id'] = address_to_pay_on
 
     now = datetime.datetime.utcnow()
-    seconds_now = time.mktime(now.timetuple()).total_seconds()
+    seconds_now = int(time.mktime(now.timetuple()))
     release_time = seconds_now + TIME_FOR_TRANSACTION + NUMBER_OF_CONFIRMATIONS * TIME_FOR_CONFIRMATION
 
     self.oracle.task_queue.save({

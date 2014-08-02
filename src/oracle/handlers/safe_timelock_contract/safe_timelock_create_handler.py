@@ -79,7 +79,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     miners_fee_satoshi = message['miners_fee_satoshi']
     req_sigs = message['req_sigs']
 
-    if self.mark_unavailable(mark, address_to_pay_on, return_address):
+    if self.mark_unavailable(mark, address_to_pay_on):
       reply_msg = {
         'operation': 'safe_timelock_error',
         'in_reply_to': message['message_id'],

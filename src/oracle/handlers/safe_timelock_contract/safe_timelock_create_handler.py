@@ -27,7 +27,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     available = mark_data['available']
     return available
 
-  def claim_mark(self, mark, addr, return_address, locktime):
+  def claim_mark(self, mark, addr, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs):
     mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
     if not mark_data:
       self.kv.store('mark_available', '{}#{}'.format(mark, addr), {'available':True})
@@ -37,6 +37,9 @@ class SafeTimelockCreateHandler(BaseHandler):
       'return_address': return_address,
       'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()).total_seconds()),
       'locktime': locktime,
+      'oracle_fees': oracle_fees,
+      'miners_fee_satoshi': miners_fee_satoshi,
+      'req_sigs': req_sigs
     })
 
   def extend_observed_addresses(self, address):
@@ -62,6 +65,9 @@ class SafeTimelockCreateHandler(BaseHandler):
     self.extend_observed_addresses(address_to_pay_on)
 
     locktime = int(message['locktime'])
+    oracle_fees = message['oracle_fees']
+    miners_fee_satoshi = message['miners_fee_satoshi']
+    req_sigs = message['req_sigs']
 
     if self.mark_unavailable(mark, address_to_pay_on, return_address):
       reply_msg = {
@@ -73,11 +79,11 @@ class SafeTimelockCreateHandler(BaseHandler):
       return
 
     # For now oracles are running single-thread so there is no race condition
-    self.claim_mark(mark, address_to_pay_on, return_address, locktime)
+    self.claim_mark(mark, address_to_pay_on, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs)
 
     reply_msg = { 'operation' : 'safe_timelock_created',
         'contract_id' : address_to_pay_on,
-        'comment': 'mark claimed, you have {} minutes to send cash to address {}'.format(TIME_FOR_TRANSACTION, address_to_pay_on),
+                 'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, TIME_FOR_TRANSACTION, address_to_pay_on),
         'in_reply_to' : message['message_id'] }
 
     self.oracle.communication.broadcast("timelock created for %s" % address_to_pay_on, json.dumps(reply_msg))

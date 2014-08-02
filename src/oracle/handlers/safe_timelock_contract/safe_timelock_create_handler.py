@@ -32,7 +32,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     if not mark_data:
       self.kv.store('mark_available', '{}#{}'.format(mark, addr), {'available':True})
 
-    self.kv.store('mark_available', '{}#{}'.format(mark, addr), {
+    self.kv.update('mark_available', '{}#{}'.format(mark, addr), {
       'available': False,
       'return_address': return_address,
       'ts': int(time.mktime(datetime.datetime.utcnow().timetuple())),

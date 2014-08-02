@@ -68,7 +68,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     return_address = message['return_address']
     mark = get_mark_for_address(return_address)
     address_to_pay_on = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
-    _, redeemScript = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+    _, redeemScript = self.oracle.btc.create_multisig_address(message['req_sigs'], message['pubkey_list'])
 
     self.save_redeem(address_to_pay_on, redeemScript)
 

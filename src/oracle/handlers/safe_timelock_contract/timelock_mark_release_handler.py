@@ -82,6 +82,8 @@ class TimelockMarkReleaseHandler(BaseHandler):
         continue
       transaction = self.btc.decode_raw_transaction(raw_transaction)
       for vout in transaction['vout']:
+        if not 'addresses' in vout['scriptPubKey']:
+          continue
         if len(vout['scriptPubKey']['addresses']) != 1:
           continue
         if vout['scriptPubKey']['addresses'][0] in our_addresses:

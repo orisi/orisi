@@ -5,6 +5,7 @@ import cjson
 
 from oracle.oracle_db import KeyValue
 from contract_util import value_to_mark
+from xmlrpclib import ProtocolError
 
 class TimelockMarkReleaseHandler(BaseHandler):
   def __init__(self, oracle):
@@ -56,7 +57,7 @@ class TimelockMarkReleaseHandler(BaseHandler):
             'return_address': return_address,
             'oracle_fees': oracle_fees,
             'miners_fee_satoshi': miners_fee_satoshi,
-            'address': address_to_pay_on,
+            'address': address,
             'value': value,
             'txid': txid,
             'n': n}),
@@ -75,7 +76,10 @@ class TimelockMarkReleaseHandler(BaseHandler):
 
     outputs = []
     for tx in transaction_ids:
-      raw_transaction = self.btc.get_raw_transaction(tx)
+      try:
+        raw_transaction = self.btc.get_raw_transaction(tx)
+      except ProtocolError:
+        continue
       transaction = self.btc.decode_raw_transaction(raw_transaction)
       for vout in transaction['vout']:
         if len(vout['scriptPubKey']['addresses']) != 1:

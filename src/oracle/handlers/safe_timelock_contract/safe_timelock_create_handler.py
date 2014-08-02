@@ -9,8 +9,8 @@ import datetime
 from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
 
-TIME_FOR_TRANSACTION = 30
-TIME_FOR_CONFIRMATION = 13
+TIME_FOR_TRANSACTION = 30 * 60
+TIME_FOR_CONFIRMATION = 13 * 60
 NUMBER_OF_CONFIRMATIONS = 3
 
 class SafeTimelockCreateHandler(BaseHandler):

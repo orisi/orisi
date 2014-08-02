@@ -7,7 +7,7 @@ import time
 import datetime
 
 from contract_util import get_mark_for_address
-from oracle_db import KeyValue
+from oracle.oracle_db import KeyValue
 
 TIME_FOR_TRANSACTION = 30
 TIME_FOR_CONFIRMATION = 13

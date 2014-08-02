@@ -55,12 +55,22 @@ class SafeTimelockCreateHandler(BaseHandler):
     observed_addresses.append(address)
     self.kv.update('safe_timelock', 'addresses', {'addresses':observed_addresses})
 
+  def save_redeem(self, addr, redeem):
+    try:
+      self.kv.store('safe_timelock_redeem', addr, {'redeem':redeem})
+    except AssertionError:
+      # Already saved
+      pass
+
   def handle_request(self, request):
     message = request.message
 
     return_address = message['return_address']
     mark = get_mark_for_address(return_address)
     address_to_pay_on = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+    _, redeemScript = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+
+    self.save_redeem(address_to_pay_on, redeemScript)
 
     self.extend_observed_addresses(address_to_pay_on)
 
@@ -105,8 +115,34 @@ class SafeTimelockCreateHandler(BaseHandler):
     message = cjson.decode(task['json_data'])
 
     future_transaction = self.try_prepare_raw_transaction(message)
+
+    txid = message['txid']
+    n = message['n']
+    redeemScript = self.kv.get_by_section_key('safe_timelock_redeem', message['address'])['redeem']
+    tx = self.btc.get_raw_transaction(txid)
+    transaction = self.btc.decode_raw_transaction(tx)
+    vout = None
+    for v in transaction['vout']:
+      if v['n'] == n:
+        vout = v
+        break
+
+    if not vout:
+      return
+
+    scriptPubKey = vout['scriptPubKey']['hex']
+
+    prevtx = {
+        'txid': txid,
+        'vout': n,
+        'redeemScript': redeemScript,
+        'scriptPubKey': scriptPubKey
+    }
+    prevtxs = [prevtx,]
+    pwtxid = self.get_tx_hash(future_transaction)
+
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
 
     logging.debug('transaction ready to be signed')
 
-    self.oracle.signer.sign(future_transaction, message['pwtxid'], message['prevtxs'], message['req_sigs'])
+    self.oracle.signer.sign(future_transaction, pwtxid, prevtxs, message['req_sigs'])

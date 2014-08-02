@@ -119,7 +119,7 @@ class TransactionSigner(BaseHandler):
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
-    # ^ let's remember the tx with most sigs that we've seen. 
+    # ^ let's remember the tx with most sigs that we've seen.
 
     if tx_sigs_count >= req_sigs:
       logging.debug('already signed with enough keys')
@@ -155,7 +155,7 @@ class TransactionSigner(BaseHandler):
   def handle_request(self, request):
     body = request.message
     # if the oracle received a transaction from bitmessage, it attempts to sign it
-    # all the validity checks are being handled by sign_now 
+    # all the validity checks are being handled by sign_now
 
     tx = body['transaction']
 
@@ -174,7 +174,7 @@ class TransactionSigner(BaseHandler):
 
     rq_data = self.kv.get_by_section_key('signable', rq_hash)
     assert(rq_data is not None)
- 
+
     logging.info("rq_data: %r" % rq_data)
 
     if rq_data['sigs_so_far'] > 0:

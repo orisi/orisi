@@ -7,3 +7,6 @@ def get_mark_for_address(address):
   as_number = int(address_hash, 16)
   as_mark = as_number % 10000
   return as_mark
+
+def value_to_mark(value):
+  return int(value * 100000000) % 10000

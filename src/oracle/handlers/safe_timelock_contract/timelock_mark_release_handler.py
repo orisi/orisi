@@ -1,8 +1,10 @@
 from basehandler import BaseHandler
 
 import json
+import cjson
 
 from oracle_db import KeyValue
+from contract_util import value_to_mark
 
 class TimelockMarkReleaseHandler(BaseHandler):
   def __init__(self, oracle):
@@ -32,6 +34,36 @@ class TimelockMarkReleaseHandler(BaseHandler):
 
     self.kv.update('mark_available', '{}#{}'.format(mark, addr), {'available':False})
 
+  def verify_and_create_timelock(self, output):
+    mark, address, value, txid, n = output
+
+    mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, address))
+    if not mark_data:
+      return
+
+    if mark_data['available']:
+      return
+
+    return_address = mark_data['return_address']
+    locktime = mark_data['locktime']
+    oracle_fees = mark_data['oracle_fees']
+    miners_fee_satoshi = mark_data['miners_fee_satoshi']
+
+    self.oracle.task_queue.save({
+        "operation": 'safe_timelock_create',
+        "json_data": cjson.encode({
+            'mark': mark,
+            'return_address': return_address,
+            'oracle_fees': oracle_fees,
+            'miners_fee_satoshi': miners_fee_satoshi,
+            'address': address_to_pay_on,
+            'value': value,
+            'txid': txid,
+            'n': n}),
+        "done": 0,
+        "next_check": locktime
+    })
+
   def handle_new_block(self, block):
     transaction_ids = block['tx']
 
@@ -49,5 +81,9 @@ class TimelockMarkReleaseHandler(BaseHandler):
         if len(vout['scriptPubKey']['addresses']) != 1:
           continue
         if vout['scriptPubKey']['addresses'][0] in our_addresses:
-          outputs.append((vout['value'], vout['scriptPubKey']['addresses'][0]))
+          outputs.append((value_to_mark(vout['value']), vout['scriptPubKey']['addresses'][0], vout['value'], tx, vout['n']))
+
+    for output in outputs:
+      self.verify_and_create_timelock(output)
+
 

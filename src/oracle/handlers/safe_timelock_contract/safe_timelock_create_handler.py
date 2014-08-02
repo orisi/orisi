@@ -1,6 +1,7 @@
 from basehandler import BaseHandler
 
 import json
+import cjson
 import logging
 import time
 import datetime
@@ -18,9 +19,6 @@ class SafeTimelockCreateHandler(BaseHandler):
     self.btc = oracle.btc
     self.kv = KeyValue(self.oracle.db)
 
-  def handle_new_block(self, block):
-    pass
-
   def mark_unavailable(self, mark, addr):
     mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
     if not mark_data:
@@ -29,7 +27,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     available = mark_data['available']
     return available
 
-  def claim_mark(self, mark, addr, return_address):
+  def claim_mark(self, mark, addr, return_address, locktime):
     mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
     if not mark_data:
       self.kv.store('mark_available', '{}#{}'.format(mark, addr), {'available':True})
@@ -37,8 +35,22 @@ class SafeTimelockCreateHandler(BaseHandler):
     self.kv.store('mark_available', '{}#{}'.format(mark, addr), {
       'available': False,
       'return_address': return_address,
-      'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()).total_seconds())
+      'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()).total_seconds()),
+      'locktime': locktime,
     })
+
+  def extend_observed_addresses(self, address):
+    observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
+    if not observed_addresses:
+      self.kv.store('safe_timelock', 'addresses', {'addresses':[]})
+
+    observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
+    observed_addresses = observed_addresses['addresses']
+    if address in observed_addresses:
+      return
+
+    observed_addresses.append(address)
+    self.kv.update('safe_timelock', 'addresses', {'addresses':observed_addresses})
 
   def handle_request(self, request):
     message = request.message
@@ -46,6 +58,8 @@ class SafeTimelockCreateHandler(BaseHandler):
     return_address = message['return_address']
     mark = get_mark_for_address(return_address)
     address_to_pay_on = self.oracle.btc.add_multisig_address(message['req_sigs'], message['pubkey_list'])
+
+    self.extend_observed_addresses(address_to_pay_on)
 
     locktime = int(message['locktime'])
 
@@ -59,7 +73,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       return
 
     # For now oracles are running single-thread so there is no race condition
-    self.claim_mark(mark, address_to_pay_on, return_address)
+    self.claim_mark(mark, address_to_pay_on, return_address, locktime)
 
     reply_msg = { 'operation' : 'safe_timelock_created',
         'contract_id' : address_to_pay_on,
@@ -69,13 +83,6 @@ class SafeTimelockCreateHandler(BaseHandler):
     self.oracle.communication.broadcast("timelock created for %s" % address_to_pay_on, json.dumps(reply_msg))
 
     message['contract_id'] = address_to_pay_on
-
-    self.oracle.task_queue.save({
-        "operation": 'safe_timelock_create',
-        "json_data": json.dumps(message),
-        "done": 0,
-        "next_check": int(locktime)
-    })
 
     now = datetime.datetime.utcnow()
     seconds_now = time.mktime(now.timetuple()).total_seconds()
@@ -89,7 +96,8 @@ class SafeTimelockCreateHandler(BaseHandler):
     })
 
   def handle_task(self, task):
-    message = json.loads(task['json_data'])
+    message = cjson.decode(task['json_data'])
+
     future_transaction = self.try_prepare_raw_transaction(message)
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
 

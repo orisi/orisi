@@ -46,6 +46,39 @@ class BaseHandler:
       addresses.add(address)
     return list(addresses)
 
+  def try_prepare_raw_transaction_full_node(self, message):
+    value = message['value']
+    return_address = message['return_address']
+    txid = message['txid']
+    n = message['n']
+    oracle_fees = message['oracle_fees']
+
+    outputs = {}
+
+    left_cash = value - (SATOSHI * message['miners_fee_satoshi'])
+
+    has_my_fee = False
+    for oracle, fee in oracle_fees.iteritems():
+      outputs[oracle] = fee
+      left_cash -= fee
+
+      if self.oracle.is_fee_sufficient(oracle, fee):
+        has_my_fee = True
+
+    if not has_my_fee:
+      logging.debug("no fee for this oracle, skipping")
+      return None
+
+    if left_cash < 0:
+      logging.debug("BTC amount not high enough to cover expenses")
+      return None
+
+    outputs[return_address] = left_cash
+    inputs = [(txid, n)]
+
+    transaction = self.btc.create_raw_transaction(inputs, outputs)
+    return transaction
+
   def try_prepare_raw_transaction(self, message):
     inputs = []
 

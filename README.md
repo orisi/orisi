@@ -6,7 +6,7 @@ Basic Bitcoin and Ethereum contracts cannot - by themselves - use external input
 
 ## Orisi Tutorial
 
-Completing those steps should take you 2-3 working days, and will end up with your own contract, and a thorough understanding of the Orisi distributed oracles system.
+Completing those steps should leave you with your own contract, and a thorough understanding of the Orisi distributed oracles system.
 
 1. [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 2. [Create a timelock transaction](https://github.com/orisi/wiki/wiki/Performing-a-Timelock-transaction) - A thorough explanation of how to install the client and create a timelock transaction
@@ -14,6 +14,7 @@ Completing those steps should take you 2-3 working days, and will end up with yo
 4. [Create your own contract in 29 easy steps](https://github.com/orisi/wiki/wiki/How-to-create-a-contract)
 5. [Ask questions!](https://github.com/orisi/orisi/issues/new) - Questions, ideas? Create a new issue on Github
 
+All the above steps should take you 10-20 hours.
 
 ## Contribute to Orisi
 

@@ -7,8 +7,10 @@ Basic Bitcoin and Ethereum contracts cannot - by themselves - use external input
 ## Learn about Orisi
 
 1. [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
-2. [Create a timelock transaction](https://github.com/orisi/wiki/wiki/Performing-a-Timelock-transaction) and [understand how it works](https://www.youtube.com/watch?v=boPW1FwNu4c) - A thorough explanation of how to install the client and create a timelock transaction, and a Khan-academy style video explaning how the process works
-3. [Ask questions!](https://github.com/orisi/orisi/issues/new) - Questions, ideas? Create a new issue on Github
+2. [Create a timelock transaction](https://github.com/orisi/wiki/wiki/Performing-a-Timelock-transaction) - A thorough explanation of how to install the client and create a timelock transaction
+3. [Understand how the timelock works](https://www.youtube.com/watch?v=boPW1FwNu4c) - a Khan-academy style video explaning how the process works
+4. [Create your own contract in 29 easy steps](https://github.com/orisi/wiki/wiki/How-to-create-a-contract)
+5. [Ask questions!](https://github.com/orisi/orisi/issues/new) - Questions, ideas? Create a new issue on Github
 
 
 ## Contribute to Orisi

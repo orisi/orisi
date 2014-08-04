@@ -4,7 +4,9 @@
 
 Basic Bitcoin and Ethereum contracts cannot - by themselves - use external inputs, like stock prices or checking website urls for data. Orisi solves this dependency problem by creating a distributed network in which the majority of oracles have to agree to have a transaction validated. This distributed system makes it exponentially harder to bribe or otherwise influence the oracles, and is still able to validate a contract if one or more of the oracles fail.
 
-## Learn about Orisi
+## Orisi Tutorial
+
+Completing those steps should take you 2-3 working days, and will end up with your own contract, and a thorough understanding of the Orisi distributed oracles system.
 
 1. [Read the White Paper](https://github.com/orisi/wiki/wiki/Orisi-White-Paper) - Introduction to Orisi
 2. [Create a timelock transaction](https://github.com/orisi/wiki/wiki/Performing-a-Timelock-transaction) - A thorough explanation of how to install the client and create a timelock transaction

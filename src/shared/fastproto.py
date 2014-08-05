@@ -6,7 +6,7 @@ FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 headers = {'content-type': 'application/json'}
 
 
-def constructMessage(req):
+def constructMessage(req={}):
     """
     Constructing a message, with base64 encoding of body, and signing
     """

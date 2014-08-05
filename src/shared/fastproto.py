@@ -6,13 +6,14 @@ FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 headers = {'content-type': 'application/json'}
 
 
-def constructMessage(req={}):
+def constructMessage(**kwargs):
     """
     Constructing a message, with base64 encoding of body, and signing
     """
     #request = dict(req)
-    print req
+    #print req
     # request  = {"source": "1", "channel": "1", "body": "1"}
+    req = kwargs
 
     req['body'] = base64.encodestring(req['body'])
 

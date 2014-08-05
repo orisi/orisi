@@ -1,6 +1,7 @@
 import json
 import requests
 import base64
+FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
 headers = {'content-type': 'application/json'}
 
@@ -39,3 +40,11 @@ def getMessages():
 
 #getMessages()
 #sendMessage(constructMessage())
+
+
+def decode_data(data):
+        return base64.decodestring(data)
+
+def code_data(data):
+        base64.encodestring(data)
+

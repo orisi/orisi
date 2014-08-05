@@ -188,7 +188,7 @@ def main2(args):
   while oracle_bms:
     messages = getMessages()
     print "oracles confirmed: {}".format(oracles_confirmed)
-    for msg in messages:
+    for msg in messages['results']:
       if msg.source in oracle_bms:
         try:
           content = json.loads(decode_data(msg.body))

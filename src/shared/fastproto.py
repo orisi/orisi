@@ -14,13 +14,13 @@ def constructMessage(req={}):
     print req
     # request  = {"source": "1", "channel": "1", "body": "1"}
 
-    req['body'] = base64.encodestring(request['body'])
+    req['body'] = base64.encodestring(req['body'])
 
     # signature should be body confirmed
     # "signature":
     # request['signature'] = sign(request['body'])
-    request['signature'] = "temporary_string"
-    payload = json.dumps(request)
+    req['signature'] = "temporary_string"
+    payload = json.dumps(req)
     return payload
 
 def sendMessage(payload):

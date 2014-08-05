@@ -174,9 +174,9 @@ def main2(args):
   meta_request['body'] = json.dumps(request)
 
 
-  request_content = json.dumps(meta_request)
 
-  print sendMessage(constructMessage(**request_content))
+
+  print sendMessage(constructMessage(**meta_request))
 
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."

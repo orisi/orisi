@@ -189,7 +189,7 @@ def main2(args):
     messages = getMessages()
     print "oracles confirmed: {}".format(oracles_confirmed)
     for msg in messages['results']:
-      if msg.source in oracle_bms:
+      if msg['source'] in oracle_bms:
         try:
           content = json.loads(decode_data(msg.body))
         except:
@@ -201,7 +201,7 @@ def main2(args):
           continue
 
         if content['in_reply_to'] == request['message_id']:
-            print "[%r][%r] %r" % (msg.source, msg.body)
+            print "[%r][%r] %r" % (msg['source'], msg['body'])
             print ""
             oracle_bms.remove(msg.source)
 

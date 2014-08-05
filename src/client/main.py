@@ -176,7 +176,7 @@ def main2(args):
 
   request_content = json.dumps(meta_request)
 
-  print sendMessage(request_content)
+  print sendMessage(constructMessage((request_content))
 
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
@@ -189,9 +189,9 @@ def main2(args):
     messages = getMessages()
     print "oracles confirmed: {}".format(oracles_confirmed)
     for msg in messages:
-      if msg.from_address in oracle_bms:
+      if msg.source in oracle_bms:
         try:
-          content = json.loads(msg.message)
+          content = json.loads(decode_data(msg.body))
         except:
           print msg.message
           print 'failed decoding message'
@@ -201,9 +201,9 @@ def main2(args):
           continue
 
         if content['in_reply_to'] == request['message_id']:
-            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
+            print "[%r][%r] %r" % (msg.source, msg.body)
             print ""
-            oracle_bms.remove(msg.from_address)
+            oracle_bms.remove(msg.source)
 
     if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(10)

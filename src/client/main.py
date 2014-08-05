@@ -155,7 +155,7 @@ def main2(args):
   if len(prevtxs) == 0:
     print "ERROR: couldn't find transactions sending money to %s" % msig_addr
     #  return
-    
+
 
   request['prevtxs'] = prevtxs
   request['outputs'] = oracle_fees
@@ -167,8 +167,14 @@ def main2(args):
   #bm = BitmessageClient()
   #print "sending: %r" % json.dumps(request)
   #print bm.chan_address
+  meta_request = {}
+  meta_request['source'] = 0
+  meta_request['channel'] = 0
+  meta_request['signature'] = 0
+  meta_request['body'] = json.dumps(request)
 
-  request_content = json.dumps(request)
+
+  request_content = json.dumps(meta_request)
 
   print sendMessage(request_content)
 

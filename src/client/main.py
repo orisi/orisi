@@ -6,6 +6,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+
+
 import json
 import time
 
@@ -161,13 +163,13 @@ def main2(args):
   request['operation'] = 'timelock_create'
   request['sum_satoshi'] = sum_satoshi
 
-  bm = BitmessageClient()
-  print "sending: %r" % json.dumps(request)
-  print bm.chan_address
+  #bm = BitmessageClient()
+  #print "sending: %r" % json.dumps(request)
+  #print bm.chan_address
 
   request_content = json.dumps(request)
 
-  print bm.send_message(bm.chan_address, request['operation'], request_content)
+  print sendMessage(request_content)
 
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
@@ -177,7 +179,7 @@ def main2(args):
 
   oracles_confirmed = 0
   while oracle_bms:
-    messages = bm.get_unread_messages()
+    messages = getMessages()
     print "oracles confirmed: {}".format(oracles_confirmed)
     for msg in messages:
       if msg.from_address in oracle_bms:

@@ -10,7 +10,8 @@ def constructMessage(req={}):
     """
     Constructing a message, with base64 encoding of body, and signing
     """
-    request = req
+    request = dict(req)
+    print req
     # request  = {"source": "1", "channel": "1", "body": "1"}
 
     request['body'] = base64.encodestring(request['body'])

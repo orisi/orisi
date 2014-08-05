@@ -154,7 +154,8 @@ def main2(args):
 
   if len(prevtxs) == 0:
     print "ERROR: couldn't find transactions sending money to %s" % msig_addr
-    return
+    #  return
+    
 
   request['prevtxs'] = prevtxs
   request['outputs'] = oracle_fees

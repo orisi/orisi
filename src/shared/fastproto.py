@@ -4,7 +4,11 @@ import base64
 FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
 headers = {'content-type': 'application/json'}
+def decode_data(data):
+        return base64.decodestring(data)
 
+def code_data(data):
+        base64.encodestring(data)
 
 def constructMessage(**kwargs):
     """
@@ -24,6 +28,37 @@ def constructMessage(**kwargs):
     payload = json.dumps(req)
     return payload
 
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto import Random
+
+
+"""
+key64 = b'MIGJAoGBAJNrHWRFgWLqgzSmLBq2G89exgi/Jk1NWhbFB9gHc9MLORmP3BOCJS9k\
+onzT/+Dk1hdZf00JGgZeuJGoXK9PX3CIKQKRQRHpi5e1vmOCrmHN5VMOxGO4d+znJDEbNHOD\
+ZR4HzsSdpQ9SGMSx7raJJedEIbr0IP6DgnWgiA7R1mUdAgMBAAE='
+
+keyDER = decode_data(key64)
+externKey = RSA.importKey(keyDER)
+
+
+orisi_key = RSA.importKey(externKey)
+key = orisi_key
+
+def sign(text):
+
+
+    hash = SHA256.new(text).digest()
+    return key.sign(hash, '')
+
+def verify(text, signature):
+
+    hash = SHA256.new(text).digest()
+    public_key = key.publickey()
+    public_key.verify(hash, signature)
+
+"""
+
 def sendMessage(payload):
     """
     Sending a message via api gateway
@@ -37,16 +72,28 @@ def getMessages():
     url = 'http://54.77.58.8?format=json'
     r = requests.get(url)
     data = json.loads(r.text)
-    print data['results']
+
+
+
+
+    decoded_results = []
+    for req in data['results']:
+          decoded_body = decode_data(req['body'])
+          req['body'] = decoded_body
+          decoded_results.append(req)
+
+    data['results'] = decoded_results
+
+
     return data
 
-#getMessages()
+getMessages()
+
+
+signature = sign("dupa")
+print verify("dupa",signature)
 #sendMessage(constructMessage())
 
 
-def decode_data(data):
-        return base64.decodestring(data)
 
-def code_data(data):
-        base64.encodestring(data)
 

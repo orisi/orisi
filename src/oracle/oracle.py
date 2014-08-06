@@ -106,6 +106,9 @@ class Oracle:
     while True:
       # Proceed all requests
       requests = getMessages()
+
+
+
       if len(requests) == 0:
         count = count + 1
         if count > 30:

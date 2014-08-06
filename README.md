@@ -16,11 +16,7 @@ Completing those steps should leave you with your own contract, and a thorough u
 
 All the above steps should take you 10-20 hours.
 
-## Contribute to Orisi
-
-* [Install and run the oracle node](https://github.com/orisi/wiki/wiki/Installing-the-oracle-node) - Instructions for setting up an oracle node
-
----------------------
+## What's where
 
 Contribute to the code base! The main programs are split into the oracle and client folders, with a shared folder including other resources:
 

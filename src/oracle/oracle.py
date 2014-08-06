@@ -5,6 +5,8 @@ from handlers.handlers import op_handlers
 
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
+from shared.fastproto import *
+
 
 import json
 
@@ -20,7 +22,7 @@ HEURISTIC_ADD_TIME = 60 * 3
 
 class Oracle:
   def __init__(self):
-    self.communication = OracleCommunication()
+
     self.db = OracleDb()
     self.btc = BitcoinClient()
     self.kv = KeyValue(self.db)
@@ -103,7 +105,7 @@ class Oracle:
 
     while True:
       # Proceed all requests
-      requests = self.communication.get_new_requests()
+      requests = getMessages()
       if len(requests) == 0:
         count = count + 1
         if count > 30:
@@ -114,7 +116,7 @@ class Oracle:
 
       for request in requests:
         self.handle_request(request)
-        self.communication.mark_request_done(request)
+
 
       task = self.task_queue.get_oldest_task()
       while task is not None:

@@ -2,6 +2,8 @@ from basehandler import BaseHandler
 
 import json
 import cjson
+import datetime
+import time
 
 from oracle.oracle_db import KeyValue
 from contract_util import value_to_mark
@@ -30,7 +32,7 @@ class TimelockMarkReleaseHandler(BaseHandler):
       self.kv.store('mark_history', '{}#{}'.format(mark, addr), {'entries':[]})
 
     mark_history_entries = self.kv.get_by_section_key('mark_history', '{}#{}'.format(mark, addr))['entries']
-    mark_history_entries.append({'mark':mark,'addr':addr,'ts':data['ts']})
+    mark_history_entries.append({'mark':mark,'addr':addr,'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()))})
     self.kv.update('mark_history', '{}#{}'.format(mark, addr), mark_history_entries)
 
     self.kv.update('mark_available', '{}#{}'.format(mark, addr), {'available':False})

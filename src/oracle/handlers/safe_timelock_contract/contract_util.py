@@ -9,4 +9,4 @@ def get_mark_for_address(address):
   return as_mark
 
 def value_to_mark(value):
-  return int(value * 100000000) % 10000
+  return int(round(value * 100000000)) % 10000

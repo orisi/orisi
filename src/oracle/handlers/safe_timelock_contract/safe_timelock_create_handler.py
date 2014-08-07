@@ -130,6 +130,9 @@ class SafeTimelockCreateHandler(BaseHandler):
     if not vout:
       return
 
+    sum_satoshi = int(round(vout['value'] * 100000000))
+    message['sum_satoshi'] = sum_satoshi
+
     scriptPubKey = vout['scriptPubKey']['hex']
 
     prevtx = {

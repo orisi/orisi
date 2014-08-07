@@ -57,11 +57,11 @@ class BitcoinClient:
 
     prevtx_dict = {}
     for tx in prevtx:
-      prevtx_dict[str((tx['txid'], tx['vout']))] = tx['redeemScript']
+      prevtx_dict["{}#{}".format(tx['txid'], tx['vout'])] = tx['redeemScript']
 
     has_signatures = 999
     for vin in transaction_dict['vin']:
-      redeem_script = prevtx_dict[str((vin['txid'], vin['vout']))]
+      redeem_script = prevtx_dict["{}#{}".format(tx['txid'], tx['vout'])]
       try:
         asm = vin['scriptSig']['asm']
       except KeyError:

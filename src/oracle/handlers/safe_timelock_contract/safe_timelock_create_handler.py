@@ -115,7 +115,6 @@ class SafeTimelockCreateHandler(BaseHandler):
   def handle_task(self, task):
     message = cjson.decode(task['json_data'])
 
-    future_transaction = self.try_prepare_raw_transaction(message)
 
     txid = message['txid']
     n = message['n']
@@ -140,6 +139,9 @@ class SafeTimelockCreateHandler(BaseHandler):
         'scriptPubKey': scriptPubKey
     }
     prevtxs = [prevtx,]
+    message['prevtxs'] = prevtxs
+
+    future_transaction = self.try_prepare_raw_transaction(message)
     pwtxid = self.get_tx_hash(future_transaction)
 
     assert(future_transaction is not None) # should've been verified gracefully in handle_request

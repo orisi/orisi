@@ -144,6 +144,8 @@ class SafeTimelockCreateHandler(BaseHandler):
     prevtxs = [prevtx,]
     message['prevtxs'] = prevtxs
 
+    message['outputs'] = message['oracle_fees']
+
     future_transaction = self.try_prepare_raw_transaction(message)
     pwtxid = self.get_tx_hash(future_transaction)
 

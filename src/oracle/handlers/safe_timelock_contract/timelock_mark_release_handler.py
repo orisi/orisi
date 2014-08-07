@@ -51,6 +51,7 @@ class TimelockMarkReleaseHandler(BaseHandler):
     locktime = mark_data['locktime']
     oracle_fees = mark_data['oracle_fees']
     miners_fee_satoshi = mark_data['miners_fee_satoshi']
+    req_sigs = mark_data['req_sigs']
 
     self.oracle.task_queue.save({
         "operation": 'safe_timelock_create',
@@ -58,6 +59,7 @@ class TimelockMarkReleaseHandler(BaseHandler):
             'mark': mark,
             'return_address': return_address,
             'oracle_fees': oracle_fees,
+            'req_sigs': req_sigs,
             'miners_fee_satoshi': miners_fee_satoshi,
             'address': address,
             'value': value,

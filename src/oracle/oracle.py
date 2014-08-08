@@ -102,7 +102,6 @@ class Oracle:
     if block['confirmations'] < CONFIRMATIONS:
       return None
 
-    KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':newer_block})
     return block
 
   def handle_task(self, task):
@@ -181,5 +180,6 @@ class Oracle:
         # Every available handler should get a chance to handle new block
         for h in handlers:
           h(self).handle_new_block(new_block)
+        KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':new_block['height']})
 
       time.sleep(1)

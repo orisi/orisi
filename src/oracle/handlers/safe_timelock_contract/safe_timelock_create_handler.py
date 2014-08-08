@@ -25,7 +25,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       return False
 
     available = mark_data['available']
-    return available
+    return not available
 
   def claim_mark(self, mark, addr, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs):
     mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))

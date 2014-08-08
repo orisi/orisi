@@ -7,6 +7,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import json
+import datetime
 import time
 
 from random import randrange
@@ -155,10 +156,11 @@ def timelock(args):
       time.sleep(10)
 
   print "Send money you want to timelock on address {}".format(msg_content['addr'])
-  print "Add `mark` of {}. Mark is a satoshi amount that will help oracle determining,"
+  print "Add `mark` of {}. Mark is a satoshi amount that will help oracle determining,".format(msg_content['mark'])
   print "that the money is from you. For example - if you want to send 0.01 BTC to timelock,"
   print "please send 0.0100{}".format(msg_content['mark'])
   print "You have {} minutes to perform transaction. After that it will not be accepted".format(int(msg_content['time'] / 60))
+  print "The funds you'll send will be released on {} + time needed by Eligius to accept the transaction".format(datetime.datetime.fromtimestamp(request['locktime']).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def main2(args):

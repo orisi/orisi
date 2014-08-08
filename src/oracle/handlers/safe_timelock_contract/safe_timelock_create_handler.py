@@ -10,7 +10,7 @@ from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
 
 TIME_FOR_TRANSACTION = 30 * 60
-TIME_FOR_CONFIRMATION = 13 * 60
+TIME_FOR_CONFIRMATION = 20 * 60
 NUMBER_OF_CONFIRMATIONS = 3
 
 class SafeTimelockCreateHandler(BaseHandler):
@@ -94,7 +94,7 @@ class SafeTimelockCreateHandler(BaseHandler):
 
     reply_msg = { 'operation' : 'safe_timelock_created',
         'contract_id' : address_to_pay_on,
-                 'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, TIME_FOR_TRANSACTION, address_to_pay_on),
+                 'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, int(TIME_FOR_TRANSACTION / 60), address_to_pay_on),
         'in_reply_to' : message['message_id'] }
 
     self.oracle.communication.broadcast("timelock created for %s" % address_to_pay_on, json.dumps(reply_msg))

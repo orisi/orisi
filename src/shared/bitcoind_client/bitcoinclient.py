@@ -45,7 +45,7 @@ class BitcoinClient:
         return response
       except:
         self.connect()
-        return getattr(self, fun.__name__)(*args, **kwargs)
+    return fun(self, *args, **kwargs)
     return ping_and_reconnect
 
   @keep_alive

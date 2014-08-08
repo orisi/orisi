@@ -94,8 +94,11 @@ class SafeTimelockCreateHandler(BaseHandler):
 
     reply_msg = { 'operation' : 'safe_timelock_created',
         'contract_id' : address_to_pay_on,
-                 'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, int(TIME_FOR_TRANSACTION / 60), address_to_pay_on),
-        'in_reply_to' : message['message_id'] }
+        'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, int(TIME_FOR_TRANSACTION / 60), address_to_pay_on),
+        'in_reply_to' : message['message_id'],
+        'mark': mark,
+        'addr': address_to_pay_on,
+        'time': TIME_FOR_TRANSACTION}
 
     self.oracle.communication.broadcast("timelock created for %s" % address_to_pay_on, json.dumps(reply_msg))
 

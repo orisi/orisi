@@ -131,6 +131,7 @@ def timelock(args):
 
   oracles_confirmed = 0
   msg_content = None
+  error_occured = False
   while oracle_bms:
     messages = bm.get_unread_messages()
     print "oracles confirmed: {}".format(oracles_confirmed)
@@ -149,18 +150,25 @@ def timelock(args):
         if content['in_reply_to'] == request['message_id']:
             print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
             print ""
+            if content['operation'] == 'safe_timelock_error':
+              error_occured = True
             oracle_bms.remove(msg.from_address)
             msg_content = content
 
     if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(10)
 
-  print "Send money you want to timelock on address {}".format(msg_content['addr'])
-  print "Add `mark` of {}. Mark is a satoshi amount that will help oracle determining,".format(msg_content['mark'])
-  print "that the money is from you. For example - if you want to send 0.01 BTC to timelock,"
-  print "please send 0.0100{}".format(msg_content['mark'])
-  print "You have {} minutes to perform transaction. After that it will not be accepted".format(int(msg_content['time'] / 60))
-  print "The funds you'll send will be released on {} + time needed by Eligius to accept the transaction".format(datetime.datetime.fromtimestamp(request['locktime']).strftime('%Y-%m-%d %H:%M:%S'))
+  if error_occured:
+    print "The mark calculated for your return address is currently unavailable."
+    print "Please wait for around 1h or use another return address for your transaction"
+    print "Sorry..."
+  else:
+    print "Send money you want to timelock on address {}".format(msg_content['addr'])
+    print "Add `mark` of {}. Mark is a satoshi amount that will help oracle determining,".format(msg_content['mark'])
+    print "that the money is from you. For example - if you want to send 0.01 BTC to timelock,"
+    print "please send 0.0100{}".format(msg_content['mark'])
+    print "You have {} minutes to perform transaction. After that it will not be accepted".format(int(msg_content['time'] / 60))
+    print "The funds you'll send will be released on {} + time needed by Eligius to accept the transaction".format(datetime.datetime.fromtimestamp(request['locktime']).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def main2(args):

@@ -14,20 +14,37 @@ class BitcoinClient:
     self.connect()
 
   def connect(self):
-    self.server = jsonrpclib.Server('http://{0}:{1}@{2}:{3}'.format(
-        BITCOIND_RPC_USERNAME,
-        BITCOIND_RPC_PASSWORD,
-        BITCOIND_RPC_HOST,
-        BITCOIND_RPC_PORT))
+    try_factor = 1
+
+    while 1:
+      try:
+        self.server = jsonrpclib.Server('http://{0}:{1}@{2}:{3}'.format(
+            BITCOIND_RPC_USERNAME,
+            BITCOIND_RPC_PASSWORD,
+            BITCOIND_RPC_HOST,
+            BITCOIND_RPC_PORT))
+        self.server.help()
+        return
+      except:
+        try_factor *= 2
+
+        if try_factor > 512:
+          logging.critical('can\'t connect to bitcoind server')
+          return
+
+        logging.info('can\'t connect to bitcoind server, waiting {}'.format(try_factor))
+        time.sleep(try_factor)
 
   def keep_alive(fun):
     def ping_and_reconnect(self, *args, **kwargs):
       try:
         # Cheap API call that checks wether we're connected
         self.server.help()
+        response = fun(self, *args, **kwargs)
+        return response
       except:
         self.connect()
-      return fun(self, *args, **kwargs)
+        return getattr(self, fun.__name__)(*args, **kwargs)
     return ping_and_reconnect
 
   @keep_alive

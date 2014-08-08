@@ -33,7 +33,8 @@ class TimelockMarkReleaseHandler(BaseHandler):
 
     mark_history_entries = self.kv.get_by_section_key('mark_history', '{}#{}'.format(mark, addr))['entries']
     mark_history_entries.append({'mark':mark,'addr':addr,'ts': int(time.mktime(datetime.datetime.utcnow().timetuple()))})
-    self.kv.update('mark_history', '{}#{}'.format(mark, addr), mark_history_entries)
+    mark_history_dict = {"entries":mark_history_entries}
+    self.kv.update('mark_history', '{}#{}'.format(mark, addr), mark_history_dict)
 
     self.kv.update('mark_available', '{}#{}'.format(mark, addr), {'available':True})
 

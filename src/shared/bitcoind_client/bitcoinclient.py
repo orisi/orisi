@@ -5,6 +5,7 @@ import jsonrpclib
 import time
 from xmlrpclib import ProtocolError
 from decimal import Decimal
+import socket
 
 import logging
 
@@ -24,6 +25,7 @@ class BitcoinClient:
             BITCOIND_RPC_PASSWORD,
             BITCOIND_RPC_HOST,
             BITCOIND_RPC_PORT))
+        socket.setdefaulttimeout(None)
         self.server.help()
         return
       except:

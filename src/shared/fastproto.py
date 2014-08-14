@@ -87,11 +87,11 @@ def getMessages():
 
     return data
 
-getMessages()
+#getMessages()
 
 
-signature = sign("dupa")
-print verify("dupa",signature)
+#signature = sign("dupa")
+#print verify("dupa",signature)
 #sendMessage(constructMessage())
 
 

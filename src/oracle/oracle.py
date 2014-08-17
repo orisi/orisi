@@ -20,6 +20,7 @@ import iso8601
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
 
+<<<<<<< HEAD
 class FastcastMessage:
   def __init__(self, req):
     body = json.loads(req['body'])
@@ -35,6 +36,10 @@ class FastcastMessage:
 class MissingOperationError(Exception):
   pass
 
+=======
+# Number of confirmations needed for block to get noticed by Oracle
+CONFIRMATIONS = 3
+>>>>>>> 7791f8e5a22d6e0d38f0a0088c580eb307603454
 
 class Oracle:
   def __init__(self):
@@ -73,8 +78,55 @@ class Oracle:
     if db_class:
       db_class(self.db).save(message)
 
+  def get_last_block_number(self):
+    val = KeyValue(self.db).get_by_section_key('blocks', 'last_block_number')
+    if not val:
+      return 0
+
+    last_block = val['last_block']
+    return last_block
+
+  def set_last_block(self):
+    last_block_number = self.btc.get_block_count()
+
+    # We need to satisfy a condition on looking only for blocks with at
+    # least CONFIRMATIONS of confirmations
+    satisfied = False
+
+    while not satisfied:
+      block_hash = self.btc.get_block_hash(last_block_number)
+      block = self.btc.get_block(block_hash)
+      if block['confirmations'] >= CONFIRMATIONS:
+        satisfied = True
+      else:
+        last_block_number -= 1
+
+    KeyValue(self.db).store('blocks', 'last_block_number', {'last_block':last_block_number})
+    return last_block_number
+
+  def get_new_block(self):
+    last_block_number = self.get_last_block_number()
+
+    if last_block_number == 0:
+      last_block_number = self.set_last_block()
+
+    newer_block = last_block_number + 1
+
+    block_hash = self.btc.get_block_hash(newer_block)
+    if not block_hash:
+      return None
+
+    block = self.btc.get_block(block_hash)
+
+    # We are waiting for enough confirmations
+    if block['confirmations'] < CONFIRMATIONS:
+      return None
+
+    return block
+
   def handle_task(self, task):
     operation = task['operation']
+
     assert(operation in self.handlers)
     handler = self.handlers[operation]
     handler(self).handle_task(task)
@@ -160,5 +212,14 @@ class Oracle:
         self.task_queue.done(task)
         task = self.task_queue.get_oldest_task()
 
+      new_block = self.get_new_block()
+
+      if new_block:
+        handlers = op_handlers.itervalues()
+
+        # Every available handler should get a chance to handle new block
+        for h in handlers:
+          h(self).handle_new_block(new_block)
+        KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':new_block['height']})
 
       time.sleep(1)

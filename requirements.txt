@@ -1,3 +1,4 @@
 jsonrpclib
 pycrypto
 iso8601
+python-cjson

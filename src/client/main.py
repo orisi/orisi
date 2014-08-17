@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
 import json
+import datetime
 import time
 
 from random import randrange
@@ -29,7 +30,7 @@ from decimal import Decimal
 START_COMMAND = "./runclient.sh"
 
 # Charter url should be url to json with oracles described. Check out http://oracles.li/timelock-charter.json for example
-CHARTER_URL = 'http://oracles.li/timelock-charter.json'
+CHARTER_URL = 'http://localhost:8000/test.json'
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
 MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
@@ -76,6 +77,101 @@ def main(args):
   print "2. wait for transaction to get any confirmations"
   print "3. run:"
   print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
+
+def timelock(args):
+  if len(args) < 2:
+    print "USAGE: `%s timelock <locktime_minutes> <return_address>`" % START_COMMAND
+    return
+
+  return_address = args[1]
+
+  print "fetching charter: %s" % CHARTER_URL
+  charter = fetch_charter(CHARTER_URL)
+
+  oracle_pubkeys = []
+  oracle_fees = {}
+  oracle_bms = []
+  for o in charter['nodes']:
+    oracle_pubkeys.append(o['pubkey'])
+    oracle_fees[o['address']] = o['fee']
+    oracle_bms.append(o['bm'])
+
+  min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
+
+  print "number of nodes: %i" % len(charter['nodes'])
+  print "required signatures: %i" % min_sigs
+
+  oracle_fees[charter['org_address']] = charter['org_fee']
+
+  key_list = oracle_pubkeys
+
+  request = {}
+  msig_addr = return_address
+
+  request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
+  request['pubkey_list'] = key_list
+
+  request['miners_fee_satoshi'] = MINERS_FEE
+  request['locktime'] = time.time() + int(args[0])*60
+  request['return_address'] = return_address
+  request['oracle_fees'] = oracle_fees
+  request['req_sigs'] = min_sigs
+  request['operation'] = 'safe_timelock_create'
+
+  bm = BitmessageClient()
+  print "sending: %r" % json.dumps(request)
+  print bm.chan_address
+
+  request_content = json.dumps(request)
+
+  print bm.send_message(bm.chan_address, request['operation'], request_content)
+
+  print ""
+  print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
+  print "Although we've seen delays up to half an hour, especially if BitMessage client was just launched."
+  print ""
+
+
+  oracles_confirmed = 0
+  msg_content = None
+  error_occured = False
+  while oracle_bms:
+    messages = bm.get_unread_messages()
+    print "oracles confirmed: {}".format(oracles_confirmed)
+    for msg in messages:
+      if msg.from_address in oracle_bms:
+        try:
+          content = json.loads(msg.message)
+        except:
+          print msg.message
+          print 'failed decoding message'
+          continue
+
+        if 'in_reply_to' not in content:
+          continue
+
+        if content['in_reply_to'] == request['message_id']:
+            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
+            print ""
+            if content['operation'] == 'safe_timelock_error':
+              error_occured = True
+            oracle_bms.remove(msg.from_address)
+            msg_content = content
+
+    if oracle_bms: #if still awaiting replies from some oracles
+      time.sleep(10)
+
+  if error_occured:
+    print "The mark calculated for your return address is currently unavailable."
+    print "Please wait for around 1h or use another return address for your transaction"
+    print "Sorry..."
+  else:
+    print "Send money you want to timelock on address {}".format(msg_content['addr'])
+    print "Add `mark` of {}. Mark is a satoshi amount that will help oracle determining,".format(msg_content['mark'])
+    print "that the money is from you. For example - if you want to send 0.01 BTC to timelock,"
+    print "please send 0.0100{}".format(msg_content['mark'])
+    print "You have {} minutes to perform transaction. After that it will not be accepted".format(int(msg_content['time'] / 60))
+    print "The funds you'll send will be released on {} + time needed by Eligius to accept the transaction".format(datetime.datetime.fromtimestamp(request['locktime']).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def main2(args):
@@ -252,6 +348,7 @@ def pushtx(args):
 
 OPERATIONS = {
   'main': main,
+  'timelock': timelock,
   'main2': main2,
   'wait': wait_sign,
   'txinfo': tx_info,

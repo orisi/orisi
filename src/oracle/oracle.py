@@ -20,7 +20,6 @@ import iso8601
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
 
-<<<<<<< HEAD
 class FastcastMessage:
   def __init__(self, req):
     body = json.loads(req['body'])
@@ -36,10 +35,11 @@ class FastcastMessage:
 class MissingOperationError(Exception):
   pass
 
-=======
 # Number of confirmations needed for block to get noticed by Oracle
 CONFIRMATIONS = 3
->>>>>>> 7791f8e5a22d6e0d38f0a0088c580eb307603454
+
+class FastcastProtocolError(Exception):
+  pass
 
 class Oracle:
   def __init__(self):
@@ -153,7 +153,10 @@ class Oracle:
     return True
 
   def prepare_request(self, request):
-    fmsg = FastcastMessage(request)
+    try:
+      fmsg = FastcastMessage(request)
+    except:
+      raise FastcastProtocolError()
 
     msg_body = json.loads(fmsg.message)
 
@@ -202,6 +205,10 @@ class Oracle:
           request = self.prepare_request(prev_request)
         except MissingOperationError:
           logging.info('message doesn\'t have operation field, invalid')
+          continue
+        except FastcastProtocolError:
+          logging.info('message does not have all required fields')
+          logging.info(prev_request)
           continue
         self.handle_request(request)
 

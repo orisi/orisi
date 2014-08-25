@@ -75,9 +75,12 @@ def getMessages():
 
     decoded_results = []
     for req in data['results']:
+        try:
           decoded_body = decode_data(req['body'])
           req['body'] = decoded_body
           decoded_results.append(req)
+        except:
+          continue
 
     data['results'] = decoded_results
 

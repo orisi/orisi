@@ -140,6 +140,7 @@ class Oracle:
 
       for prev_request in requests:
         try:
+          logging.info(prev_request)
           request = self.prepare_request(prev_request)
         except MissingOperationError:
           logging.info('message doesn\'t have operation field, invalid')

@@ -35,6 +35,8 @@ class FastcastMessage:
 class MissingOperationError(Exception):
   pass
 
+class FastcastProtocolError(Exception):
+  pass
 
 class Oracle:
   def __init__(self):
@@ -101,7 +103,10 @@ class Oracle:
     return True
 
   def prepare_request(self, request):
-    fmsg = FastcastMessage(request)
+    try:
+      fmsg = FastcastMessage(request)
+    except:
+      raise FastcastProtocolError()
 
     msg_body = json.loads(fmsg.message)
 
@@ -150,6 +155,10 @@ class Oracle:
           request = self.prepare_request(prev_request)
         except MissingOperationError:
           logging.info('message doesn\'t have operation field, invalid')
+          continue
+        except FastcastProtocolError:
+          logging.info('message does not have all required fields')
+          logging.info(prev_request)
           continue
         self.handle_request(request)
 

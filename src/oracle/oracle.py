@@ -103,10 +103,12 @@ class Oracle:
   def prepare_request(self, request):
     fmsg = FastcastMessage(request)
 
-    if not 'operation' in fmsg.message:
+    msg_body = json.loads(fmsg.message)
+
+    if not 'operation' in msg_body:
       raise MissingOperationError()
 
-    operation = fmsg.message['operation']
+    operation = msg_body['operation']
     return (operation, fmsg)
 
   def run(self):

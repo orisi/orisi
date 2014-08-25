@@ -84,6 +84,15 @@ def getMessages():
 
     return data
 
+def broadcastMessage(body):
+  meta_request = {}
+  meta_request['source'] = 0
+  meta_request['channel'] = 0
+  meta_request['signature'] = 0
+  meta_request['body'] = body
+
+  print sendMessage(constructMessage(**meta_request))
+
 #getMessages()
 
 

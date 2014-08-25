@@ -3,6 +3,7 @@
 
 from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction, RSAKeyPairs
+from shared.fastproto import broadcastMessage
 
 import hashlib
 import json
@@ -70,7 +71,7 @@ class BountyCreateHandler(BaseHandler):
 
     logging.debug('broadcasting reply')
 
-    self.oracle.communication.broadcast(message['operation'], json.dumps(message))
+    broadcastMessage(json.dumps(message))
     self.oracle.task_queue.save({
         "operation": 'bounty_create',
         "json_data": json.dumps(request.message),

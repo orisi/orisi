@@ -8,6 +8,7 @@ from password_db import (
     RightGuess,
     SentPasswordTransaction)
 from util import Util
+from shared.fastproto import broadcastMessage
 
 import base64
 import hashlib
@@ -66,7 +67,7 @@ class GuessPasswordHandler(BaseHandler):
 
     pwtxid = message['pwtxid']
     rsa_key = RSAKeyPairs(self.oracle.db).get_by_pwtxid(pwtxid)
-    
+
     logging.info('attemting to decode %r' % pwtxid)
 
     if self.unknown_tx(pwtxid):
@@ -119,7 +120,7 @@ class GuessPasswordHandler(BaseHandler):
       self.oracle.task_queue.done(task)
       return
 
-    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)  
+    LockedPasswordTransaction(self.oracle.db).mark_as_done(pwtxid)
     if transaction['done'] == 1:
       logging.info('someone was faster')
       self.oracle.task_queue.done(task)
@@ -160,7 +161,7 @@ class GuessPasswordHandler(BaseHandler):
         "operation": 'conditioned_transaction'
     }
     request = json.dumps(request)
-    self.oracle.communication.broadcast('conditioned_transaction', request)
+    broadcastMessage(request)
     self.oracle.task_queue.done(task)
     SentPasswordTransaction(self.oracle.db).save({
         "pwtxid": pwtxid,

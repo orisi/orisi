@@ -53,6 +53,10 @@ class Oracle:
     self.handlers = op_handlers
     self.signer = TransactionSigner(self)
 
+    last_received = self.kv.get_by_section_key('fastcast', 'last_epoch')
+    if not last_received:
+      self.kv.store('fastcast', 'last_epoch', {'last':0})
+
   def handle_request(self, request):
     logging.debug(request)
     operation, message = request
@@ -166,6 +170,25 @@ class Oracle:
     operation = msg_body['operation']
     return (operation, fmsg)
 
+  def filter_requests(self, old_req):
+    new_req = []
+
+    last_received = self.kv.get_by_section_key('fastcast','last_epoch')['last']
+
+    max_received = last_received
+
+    for r in old_req:
+      received = iso8601.parse_date(r['timestamp'])
+      received_epoch = time.mktime(received.timetuple())
+      if received_epoch >= last_received:
+        new_req.append(r)
+        max_received = max(max_received, received_epoch)
+
+    if len(new_req) > 0:
+      self.kv.update('fastcast', 'last_epoch', {'last':received_epoch})
+
+    return new_req
+
   def run(self):
 
     if not ORACLE_ADDRESS:
@@ -198,6 +221,8 @@ class Oracle:
         logging.debug("{0} new requests".format(len(requests)))
 
       requests = requests['results']
+
+      requests = self.filter_requests(requests)
 
       for prev_request in requests:
         try:

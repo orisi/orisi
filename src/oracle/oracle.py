@@ -99,7 +99,7 @@ class Oracle:
     return True
 
   def prepare_request(self, request):
-    fmsg = FastcastMessage(json.loads(request))
+    fmsg = FastcastMessage(request)
 
     if not 'operation' in fmsg.message:
       raise MissingOperationError()

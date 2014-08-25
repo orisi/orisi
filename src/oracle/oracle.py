@@ -24,7 +24,7 @@ class FastcastMessage:
     body = json.loads(req['body'])
 
     self.from_address = req['source']
-    self.received_time = int(req['timestamp'])
+    self.received_time = int(req['epoch'])
     self.msgid = body['message_id']
 
     # Deprecated
@@ -177,7 +177,7 @@ class Oracle:
     max_received = last_received
 
     for r in old_req:
-      received = int(r['timestamp'])
+      received = int(r['epoch'])
       received_epoch = time.mktime(received.timetuple())
       if received_epoch > last_received:
         new_req.append(r)

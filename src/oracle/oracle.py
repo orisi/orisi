@@ -22,11 +22,11 @@ HEURISTIC_ADD_TIME = 60 * 3
 
 class FastcastMessage:
   def __init__(self, req):
-    logging.error(req['body'])
+    body = json.loads(req['body'])
 
     self.from_address = req['source']
     self.received_time = iso8601.parse_date(req['timestamp'])
-    self.msgid = req['body']['message_id']
+    self.msgid = body['message_id']
 
     # Deprecated
     self.subject = "DEPRECATED: DONT USE SUBJECT"

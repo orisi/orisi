@@ -77,7 +77,6 @@ def getMessages():
     for req in data['results']:
           decoded_body = decode_data(req['body'])
           req['body'] = decoded_body
-          req['body'] = json.loads(req['body'])
           decoded_results.append(req)
 
     data['results'] = decoded_results

@@ -138,6 +138,8 @@ class Oracle:
       else:
         logging.debug("{0} new requests".format(len(requests)))
 
+      logging.error(requests)
+
       for prev_request in requests:
         try:
           logging.info(prev_request)

@@ -1,6 +1,9 @@
 import json
 import requests
 import base64
+import time
+import datetime
+
 FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
 headers = {'content-type': 'application/json'}
@@ -92,6 +95,7 @@ def broadcastMessage(body):
   meta_request['source'] = 0
   meta_request['channel'] = 0
   meta_request['signature'] = 0
+  meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
   meta_request['body'] = body
 
   print sendMessage(constructMessage(**meta_request))

@@ -122,6 +122,7 @@ def timelock(args):
   meta_request['source'] = 0
   meta_request['channel'] = 0
   meta_request['signature'] = 0
+  meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
   meta_request['body'] = json.dumps(request)
 
   print sendMessage(constructMessage(**meta_request))

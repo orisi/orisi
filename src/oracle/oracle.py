@@ -177,8 +177,7 @@ class Oracle:
     max_received = last_received
 
     for r in old_req:
-      received = int(r['epoch'])
-      received_epoch = time.mktime(received.timetuple())
+      received_epoch = int(r['epoch'])
       if received_epoch > last_received:
         new_req.append(r)
         max_received = max(max_received, received_epoch)

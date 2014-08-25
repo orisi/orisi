@@ -180,7 +180,7 @@ class Oracle:
     for r in old_req:
       received = iso8601.parse_date(r['timestamp'])
       received_epoch = time.mktime(received.timetuple())
-      if received_epoch >= last_received:
+      if received_epoch > last_received:
         new_req.append(r)
         max_received = max(max_received, received_epoch)
 

@@ -73,9 +73,6 @@ def getMessages():
     r = requests.get(url)
     data = json.loads(r.text)
 
-
-
-
     decoded_results = []
     for req in data['results']:
           decoded_body = decode_data(req['body'])

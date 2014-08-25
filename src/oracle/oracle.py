@@ -7,7 +7,6 @@ from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.fastproto import *
 
-
 import json
 
 from handlers.transactionsigner import TransactionSigner
@@ -16,9 +15,24 @@ import time
 import logging
 
 from decimal import Decimal
+import iso8601
 
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
+
+class FastcastMessage:
+  def __init__(self, req):
+    self.from_address = req['source']
+    self.received_time = iso8601.parse_date(req['timestamp'])
+    self.msgid = req['body']['msgid']
+
+    # Deprecated
+    self.subject = "DEPRECATED: DONT USE SUBJECT"
+    self.message = req['body']
+
+class MissingOperationError(Exception):
+  pass
+
 
 class Oracle:
   def __init__(self):
@@ -84,6 +98,15 @@ class Oracle:
       return False
     return True
 
+  def prepare_request(self, request):
+    fmsg = FastcastMessage(request)
+
+    if not 'operation' in fmsg.message:
+      raise MissingOperationError()
+
+    operation = fmsg.message['operation']
+    return (operation, fmsg)
+
   def run(self):
 
     if not ORACLE_ADDRESS:
@@ -107,8 +130,6 @@ class Oracle:
       # Proceed all requests
       requests = getMessages()
 
-
-
       if len(requests) == 0:
         count = count + 1
         if count > 30:
@@ -117,7 +138,12 @@ class Oracle:
       else:
         logging.debug("{0} new requests".format(len(requests)))
 
-      for request in requests:
+      for prev_request in requests:
+        try:
+          request = self.prepare_request(prev_request)
+        except MissingOperationError:
+          logging.info('message doesn\'t have operation field, invalid')
+          continue
         self.handle_request(request)
 
 

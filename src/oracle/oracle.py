@@ -15,7 +15,6 @@ import time
 import logging
 
 from decimal import Decimal
-import iso8601
 
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
@@ -25,7 +24,7 @@ class FastcastMessage:
     body = json.loads(req['body'])
 
     self.from_address = req['source']
-    self.received_time = iso8601.parse_date(req['timestamp'])
+    self.received_time = int(req['timestamp'])
     self.msgid = body['message_id']
 
     # Deprecated
@@ -178,7 +177,7 @@ class Oracle:
     max_received = last_received
 
     for r in old_req:
-      received = iso8601.parse_date(r['timestamp'])
+      received = int(r['timestamp'])
       received_epoch = time.mktime(received.timetuple())
       if received_epoch > last_received:
         new_req.append(r)

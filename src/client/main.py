@@ -17,13 +17,9 @@ from random import randrange
 from shared import liburl_wrapper
 from shared.liburl_wrapper import safe_pushtx
 from shared.fastproto import *
+from shared.bitcoind_client.bitcoinclient import BitcoinClient
 
 from math import ceil
-
-from shared.bitcoind_client.bitcoinclient import BitcoinClient
-from shared.bitmessage_communication.bitmessageclient import BitmessageClient
-
-
 from decimal import Decimal
 
 
@@ -126,7 +122,7 @@ def timelock(args):
   meta_request['body'] = json.dumps(request)
 
   print sendMessage(constructMessage(**meta_request))
-
+  """
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
   print "Although we've seen delays up to half an hour, especially if BitMessage client was just launched."
@@ -173,6 +169,7 @@ def timelock(args):
     print "please send 0.0100{}".format(msg_content['mark'])
     print "You have {} minutes to perform transaction. After that it will not be accepted".format(int(msg_content['time'] / 60))
     print "The funds you'll send will be released on {} + time needed by Eligius to accept the transaction".format(datetime.datetime.fromtimestamp(request['locktime']).strftime('%Y-%m-%d %H:%M:%S'))
+  """
 
 
 def main2(args):

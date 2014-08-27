@@ -63,7 +63,7 @@ class TransactionSigner(BaseHandler):
 
   def sign(self, tx, pwtxid, inputs, req_sigs):
     # sign is being called by external contracts to initiate signing procedure
-    # it marks the transaction as being ready to be signed if received from bitmessage
+    # it marks the transaction as being ready to be signed if received from fastcast
     # and schedules signing -- in case oracles previous in line didn't want to sign it
 
     logging.debug("tx: %r" % tx)
@@ -153,7 +153,7 @@ class TransactionSigner(BaseHandler):
 
   def handle_request(self, request):
     body = request.message
-    # if the oracle received a transaction from bitmessage, it attempts to sign it
+    # if the oracle received a transaction from fastcast, it attempts to sign it
     # all the validity checks are being handled by sign_now
 
     tx = body['transaction']

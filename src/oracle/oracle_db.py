@@ -15,6 +15,7 @@ class KeyValue(TableDb):
       value text not null )'
   insert_sql = 'insert into {0} (section, keyid, value) values (?, ?, ?)'
   update_sql = 'update {0} set value=? where section=? and keyid=?'
+  delete_sql = 'delete from {0} where section=? and keyid=?'
   all_sql = 'select * from {0} order by id'
   get_sql = 'select * from {0} where section=? and keyid=? order by id desc'
 
@@ -24,12 +25,26 @@ class KeyValue(TableDb):
   def args_for_obj_update(self, obj):
     return [json.dumps(obj['value']), obj['section'], obj['keyid']]
 
+  def args_for_obj_delete(self, obj):
+    return [obj['section'], obj['keyid']]
+
   def store ( self, section, keyid, value ):
     assert( self.get_by_section_key(section, keyid) is None )
     return self.save({ 'section': section, 'keyid': keyid, 'value': value })
 
   def update ( self, section, keyid, value ):
     return super(KeyValue, self).update({'section': section, 'keyid': keyid, 'value':value})
+
+  def delete(self, section, keyid):
+    return super(KeyValue, self).delete({'section': section, 'keyid': keyid})
+
+  def exists(self, section, keyid):
+    try:
+      self.store(section, keyid, {})
+    except AssertionError:
+      return True
+    self.delete(section, keyid)
+    return False
 
   def get_by_section_key(self, section, keyid):
     cursor = self.db.get_cursor()

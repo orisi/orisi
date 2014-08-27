@@ -61,6 +61,9 @@ class TableDb(object):
   def args_for_obj_update(self, obj):
     raise NotImplementedError()
 
+  def args_for_obj_delete(self, obj):
+    raise NotImplementedError()
+
   def insert_with_sql(self, sql, args):
     cursor = self.db.get_cursor()
     cursor.execute(sql, args)
@@ -73,10 +76,15 @@ class TableDb(object):
 
   def save(self, obj):
     sql = self.insert_sql.format(self.table_name)
-    args = self.args_for_obj_save(obj)
+    args = self.args_for_obj(obj)
     self.execute_sql_properly(sql, args)
 
   def update(self, obj):
     sql = self.update_sql.format(self.table_name)
     args = self.args_for_obj_update(obj)
+    self.execute_sql_properly(sql, args)
+
+  def delete(self, obj):
+    sql = self.delete_sql.format(self.table_name)
+    args = self.args_for_obj_delete(obj)
     self.execute_sql_properly(sql, args)

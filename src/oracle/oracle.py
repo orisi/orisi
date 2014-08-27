@@ -56,6 +56,15 @@ class Oracle:
     if not last_received:
       self.kv.store('fastcast', 'last_epoch', {'last':0})
 
+    self.set_fastcast_address()
+
+  def set_fastcast_address(self):
+    if self.kv.exists('fastcast', 'address'):
+      return
+
+    pub, priv = generateKey()
+    self.kv.store('fastcast', 'address', {"pub": pub, "priv": priv})
+
   def handle_request(self, request):
     logging.debug(request)
     operation, message = request

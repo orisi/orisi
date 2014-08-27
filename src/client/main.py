@@ -261,20 +261,16 @@ def main2(args):
   request['operation'] = 'timelock_create'
   request['sum_satoshi'] = sum_satoshi
 
-  #bm = BitmessageClient()
-  #print "sending: %r" % json.dumps(request)
-  #print bm.chan_address
   meta_request = {}
   meta_request['source'] = 0
   meta_request['channel'] = 0
   meta_request['signature'] = 0
   meta_request['body'] = json.dumps(request)
 
-
-
-
   print sendMessage(constructMessage(**meta_request))
 
+
+  """
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
   print "Although we've seen delays up to half an hour, especially if BitMessage client was just launched."
@@ -304,6 +300,7 @@ def main2(args):
 
     if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(10)
+  """
 
 def wait_sign(args):
 

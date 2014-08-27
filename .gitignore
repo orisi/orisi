@@ -10,3 +10,5 @@ keys.dat
 debug.log
 .bitcoin/
 *.swp
+*~
+.idea/

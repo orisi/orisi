@@ -6,6 +6,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+
+
 import json
 import datetime
 import time
@@ -14,6 +16,7 @@ from random import randrange
 
 from shared import liburl_wrapper
 from shared.liburl_wrapper import safe_pushtx
+from shared.fastproto import *
 
 from math import ceil
 
@@ -115,13 +118,14 @@ def timelock(args):
   request['req_sigs'] = min_sigs
   request['operation'] = 'safe_timelock_create'
 
-  bm = BitmessageClient()
-  print "sending: %r" % json.dumps(request)
-  print bm.chan_address
+  meta_request = {}
+  meta_request['source'] = 0
+  meta_request['channel'] = 0
+  meta_request['signature'] = 0
+  meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
+  meta_request['body'] = json.dumps(request)
 
-  request_content = json.dumps(request)
-
-  print bm.send_message(bm.chan_address, request['operation'], request_content)
+  print sendMessage(constructMessage(**meta_request))
 
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
@@ -247,7 +251,8 @@ def main2(args):
 
   if len(prevtxs) == 0:
     print "ERROR: couldn't find transactions sending money to %s" % msig_addr
-    return
+    #  return
+
 
   request['prevtxs'] = prevtxs
   request['outputs'] = oracle_fees
@@ -256,14 +261,16 @@ def main2(args):
   request['operation'] = 'timelock_create'
   request['sum_satoshi'] = sum_satoshi
 
-  bm = BitmessageClient()
-  print "sending: %r" % json.dumps(request)
-  print bm.chan_address
+  meta_request = {}
+  meta_request['source'] = 0
+  meta_request['channel'] = 0
+  meta_request['signature'] = 0
+  meta_request['body'] = json.dumps(request)
 
-  request_content = json.dumps(request)
+  print sendMessage(constructMessage(**meta_request))
 
-  print bm.send_message(bm.chan_address, request['operation'], request_content)
 
+  """
   print ""
   print "Gathering oracle responses. It may take BitMessage 30-60 seconds to deliver a message one way."
   print "Although we've seen delays up to half an hour, especially if BitMessage client was just launched."
@@ -272,12 +279,12 @@ def main2(args):
 
   oracles_confirmed = 0
   while oracle_bms:
-    messages = bm.get_unread_messages()
+    messages = getMessages()
     print "oracles confirmed: {}".format(oracles_confirmed)
-    for msg in messages:
-      if msg.from_address in oracle_bms:
+    for msg in messages['results']:
+      if msg['source'] in oracle_bms:
         try:
-          content = json.loads(msg.message)
+          content = json.loads(decode_data(msg.body))
         except:
           print msg.message
           print 'failed decoding message'
@@ -287,12 +294,13 @@ def main2(args):
           continue
 
         if content['in_reply_to'] == request['message_id']:
-            print "[%r][%r] %r" % (msg.subject, msg.from_address, msg.message)
+            print "[%r][%r] %r" % (msg['source'], msg['body'])
             print ""
-            oracle_bms.remove(msg.from_address)
+            oracle_bms.remove(msg.source)
 
     if oracle_bms: #if still awaiting replies from some oracles
       time.sleep(10)
+  """
 
 def wait_sign(args):
 
@@ -382,3 +390,4 @@ def main(args):
 if __name__=="__main__":
   args = sys.argv[1:]
   main(args)
+

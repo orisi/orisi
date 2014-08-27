@@ -1,4 +1,7 @@
 
+
+
+
 """
 ORACLE_FEE -- fee taken by this oracle
 ORACLE_ADDRESS -- the bitcoin address of this oracle, generated upon first launch
@@ -71,3 +74,4 @@ BITCOIND_RPC_PORT = '2521'
 BITCOIND_RPC_HOST = '127.0.0.1'
 BITCOIND_RPC_USERNAME = 'bitrpc'
 
+BITCOIND_RPC_PASSWORD = "5e4dc365ff5d0f2ff9edd14107e2be742912669f0a091762cd79138a7b5e6ddc"

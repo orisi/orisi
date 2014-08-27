@@ -1,10 +1,11 @@
 # Main Oracle file
-from oracle_communication import OracleCommunication
+
 from oracle_db import OracleDb, TaskQueue, KeyValue
 from handlers.handlers import op_handlers
 
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
+from shared.fastproto import *
 
 import json
 
@@ -18,12 +19,30 @@ from decimal import Decimal
 # 3 minutes between oracles should be sufficient
 HEURISTIC_ADD_TIME = 60 * 3
 
+class FastcastMessage:
+  def __init__(self, req):
+    body = json.loads(req['body'])
+
+    self.from_address = req['source']
+    self.received_time = int(req['epoch'])
+    self.msgid = body['message_id']
+
+    # Deprecated
+    self.subject = "DEPRECATED: DONT USE SUBJECT"
+    self.message = req['body']
+
+class MissingOperationError(Exception):
+  pass
+
 # Number of confirmations needed for block to get noticed by Oracle
 CONFIRMATIONS = 3
 
+class FastcastProtocolError(Exception):
+  pass
+
 class Oracle:
   def __init__(self):
-    self.communication = OracleCommunication()
+
     self.db = OracleDb()
     self.btc = BitcoinClient()
     self.kv = KeyValue(self.db)
@@ -32,6 +51,10 @@ class Oracle:
 
     self.handlers = op_handlers
     self.signer = TransactionSigner(self)
+
+    last_received = self.kv.get_by_section_key('fastcast', 'last_epoch')
+    if not last_received:
+      self.kv.store('fastcast', 'last_epoch', {'last':0})
 
   def handle_request(self, request):
     logging.debug(request)
@@ -132,6 +155,38 @@ class Oracle:
       return False
     return True
 
+  def prepare_request(self, request):
+    try:
+      fmsg = FastcastMessage(request)
+    except:
+      raise FastcastProtocolError()
+
+    msg_body = json.loads(fmsg.message)
+
+    if not 'operation' in msg_body:
+      raise MissingOperationError()
+
+    operation = msg_body['operation']
+    return (operation, fmsg)
+
+  def filter_requests(self, old_req):
+    new_req = []
+
+    last_received = self.kv.get_by_section_key('fastcast','last_epoch')['last']
+
+    max_received = last_received
+
+    for r in old_req:
+      received_epoch = int(r['epoch'])
+      if received_epoch > last_received:
+        new_req.append(r)
+        max_received = max(max_received, received_epoch)
+
+    if len(new_req) > 0:
+      self.kv.update('fastcast', 'last_epoch', {'last':received_epoch})
+
+    return new_req
+
   def run(self):
 
     if not ORACLE_ADDRESS:
@@ -153,7 +208,8 @@ class Oracle:
 
     while True:
       # Proceed all requests
-      requests = self.communication.get_new_requests()
+      requests = getMessages()
+
       if len(requests) == 0:
         count = count + 1
         if count > 30:
@@ -162,9 +218,23 @@ class Oracle:
       else:
         logging.debug("{0} new requests".format(len(requests)))
 
-      for request in requests:
+      requests = requests['results']
+
+      requests = self.filter_requests(requests)
+
+      for prev_request in requests:
+        try:
+          logging.info(prev_request)
+          request = self.prepare_request(prev_request)
+        except MissingOperationError:
+          logging.info('message doesn\'t have operation field, invalid')
+          continue
+        except FastcastProtocolError:
+          logging.info('message does not have all required fields')
+          logging.info(prev_request)
+          continue
         self.handle_request(request)
-        self.communication.mark_request_done(request)
+
 
       task = self.task_queue.get_oldest_task()
       while task is not None:

@@ -5,6 +5,8 @@ import time
 import datetime
 
 from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA256
 
 FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
@@ -15,21 +17,40 @@ def decode_data(data):
 def code_data(data):
         base64.encodestring(data)
 
-def constructMessage(**kwargs):
+def sign(message, priv_b64):
+  priv = base64.decodestring(priv_b64)
+  key = RSA.importKey(priv)
+  signer = PKCS1_v1_5.new(key)
+
+  digest = SHA256.new()
+  digest.update(message)
+
+  sign = signer.sign(digest)
+
+  return base64.encodestring(sign)
+
+def verify(message, signature_b64, pub_b64):
+  pub = base64.decodestring(pub_b64)
+  signature = base64.decodestring(signature_b64)
+  key = RSA.importKey(pub)
+  signer = PKCS1_v1_5.new(key)
+  digest = SHA256.new()
+  digest.update(message)
+  if signer.verify(digest, signature):
+    return True
+  return False
+
+def constructMessage(priv, **kwargs):
     """
     Constructing a message, with base64 encoding of body, and signing
     """
-    #request = dict(req)
-    #print req
-    # request  = {"source": "1", "channel": "1", "body": "1"}
     req = kwargs
 
+    # We do not want to sign base64 encoded string, but actual string
+
+    req['signature'] = sign(req['body'], priv)
     req['body'] = base64.encodestring(req['body'])
 
-    # signature should be body confirmed
-    # "signature":
-    # request['signature'] = sign(request['body'])
-    req['signature'] = "temporary_string"
     payload = json.dumps(req)
     return payload
 
@@ -43,32 +64,6 @@ def generateKey():
   private_key_base64 = base64.encodestring(private_key)
 
   return (public_key_base64, private_key_base64)
-
-"""
-key64 = b'MIGJAoGBAJNrHWRFgWLqgzSmLBq2G89exgi/Jk1NWhbFB9gHc9MLORmP3BOCJS9k\
-onzT/+Dk1hdZf00JGgZeuJGoXK9PX3CIKQKRQRHpi5e1vmOCrmHN5VMOxGO4d+znJDEbNHOD\
-ZR4HzsSdpQ9SGMSx7raJJedEIbr0IP6DgnWgiA7R1mUdAgMBAAE='
-
-keyDER = decode_data(key64)
-externKey = RSA.importKey(keyDER)
-
-
-orisi_key = RSA.importKey(externKey)
-key = orisi_key
-
-def sign(text):
-
-
-    hash = SHA256.new(text).digest()
-    return key.sign(hash, '')
-
-def verify(text, signature):
-
-    hash = SHA256.new(text).digest()
-    public_key = key.publickey()
-    public_key.verify(hash, signature)
-
-"""
 
 def sendMessage(payload):
     """
@@ -96,7 +91,7 @@ def getMessages():
     data['results'] = decoded_results
     return data
 
-def broadcastMessage(body):
+def broadcastMessage(body, priv):
   meta_request = {}
   meta_request['source'] = 0
   meta_request['channel'] = 0
@@ -104,16 +99,4 @@ def broadcastMessage(body):
   meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
   meta_request['body'] = body
 
-  print sendMessage(constructMessage(**meta_request))
-
-
-#getMessages()
-
-
-#signature = sign("dupa")
-#print verify("dupa",signature)
-#sendMessage(constructMessage())
-
-
-
-
+  print sendMessage(constructMessage(priv, **meta_request))

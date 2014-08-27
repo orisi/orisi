@@ -1,6 +1,5 @@
 from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction
-from shared.fastproto import broadcastMessage
 
 import json
 import logging
@@ -31,7 +30,7 @@ class TimelockCreateHandler(BaseHandler):
         'in_reply_to' : message['message_id'] }
 
     logging.debug('broadcasting reply')
-    broadcastMessage(json.dumps(reply_msg))
+    self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
 

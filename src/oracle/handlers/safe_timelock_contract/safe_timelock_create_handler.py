@@ -8,7 +8,6 @@ import datetime
 
 from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
-from shared.fastproto import broadcastMessage
 
 TIME_FOR_TRANSACTION = 30 * 60
 TIME_FOR_CONFIRMATION = 20 * 60
@@ -88,7 +87,7 @@ class SafeTimelockCreateHandler(BaseHandler):
         'comment': 'mark for this address is currently unavailable - please try again in several minutes'
       }
 
-      broadcastMessage(json.dumps(reply_msg))
+      self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
       return
 
     # For now oracles are running single-thread so there is no race condition
@@ -102,7 +101,7 @@ class SafeTimelockCreateHandler(BaseHandler):
         'addr': address_to_pay_on,
         'time': TIME_FOR_TRANSACTION}
 
-    broadcastMessage(json.dumps(reply_msg))
+    self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
 
     message['contract_id'] = address_to_pay_on
 

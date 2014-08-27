@@ -1,6 +1,5 @@
 from basehandler import BaseHandler
 from oracle.oracle_db import KeyValue
-from shared.fastproto import broadcastMessage
 
 import json
 import logging
@@ -146,7 +145,7 @@ class TransactionSigner(BaseHandler):
       logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
       logging.debug(safe_pushtx(signed_transaction))
 
-    broadcastMessage(json.dumps(body))
+    self.oracle.broadcast_with_fastcast(json.dumps(body))
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)

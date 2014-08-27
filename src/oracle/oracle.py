@@ -65,6 +65,13 @@ class Oracle:
     pub, priv = generateKey()
     self.kv.store('fastcast', 'address', {"pub": pub, "priv": priv})
 
+  def broadcast_with_fastcast(self, message):
+    data = self.kv.get_by_section_key('fastcast', 'address')
+    pub = data['pub']
+    priv = data['priv']
+
+    broadcastMessage(message, pub, priv)
+
   def handle_request(self, request):
     logging.debug(request)
     operation, message = request

@@ -8,7 +8,6 @@ from password_db import (
     RightGuess,
     SentPasswordTransaction)
 from util import Util
-from shared.fastproto import broadcastMessage
 
 import base64
 import hashlib
@@ -161,8 +160,9 @@ class GuessPasswordHandler(BaseHandler):
         "operation": 'conditioned_transaction'
     }
     request = json.dumps(request)
-    broadcastMessage(request)
+    self.oracle.broadcast_with_fastcast(request)
     self.oracle.task_queue.done(task)
+
     SentPasswordTransaction(self.oracle.db).save({
         "pwtxid": pwtxid,
         "rqhs": future_hash,

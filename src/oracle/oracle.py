@@ -5,7 +5,10 @@ from handlers.handlers import op_handlers
 
 from settings_local import ORACLE_ADDRESS, ORACLE_FEE
 from shared.bitcoind_client.bitcoinclient import BitcoinClient
-from shared.fastproto import *
+from shared.fastproto import(
+    generateKey,
+    broadcastMessage,
+    getMessages)
 
 import json
 

@@ -55,7 +55,7 @@ class TableDb(object):
     cursor.execute(sql)
     self.db.commit()
 
-  def args_for_obj_save(self, obj):
+  def args_for_obj(self, obj):
     raise NotImplementedError()
 
   def args_for_obj_update(self, obj):

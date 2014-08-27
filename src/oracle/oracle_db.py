@@ -18,11 +18,11 @@ class KeyValue(TableDb):
   all_sql = 'select * from {0} order by id'
   get_sql = 'select * from {0} where section=? and keyid=? order by id desc'
 
-  def args_for_obj_save(self, obj):
+  def args_for_obj(self, obj):
     return [obj['section'], obj['keyid'], json.dumps(obj['value'])]
 
   def args_for_obj_update(self, obj):
-    return [obj['value'], obj['section'], obj['keyid']]
+    return [json.dumps(obj['value']), obj['section'], obj['keyid']]
 
   def store ( self, section, keyid, value ):
     assert( self.get_by_section_key(section, keyid) is None )

@@ -4,6 +4,8 @@ import base64
 import time
 import datetime
 
+from Crypto.PublicKey import RSA
+
 FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
 headers = {'content-type': 'application/json'}
@@ -31,10 +33,16 @@ def constructMessage(**kwargs):
     payload = json.dumps(req)
     return payload
 
-from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
-from Crypto import Random
 
+def generateKey():
+  new_key = RSA.generate(1024)
+  public_key = new_key.publickey().exportKey("DER")
+  private_key = new_key.exportKey("DER")
+
+  public_key_base64 = base64.encodestring(public_key)
+  private_key_base64 = base64.encodestring(private_key)
+
+  return (public_key_base64, private_key_base64)
 
 """
 key64 = b'MIGJAoGBAJNrHWRFgWLqgzSmLBq2G89exgi/Jk1NWhbFB9gHc9MLORmP3BOCJS9k\
@@ -86,8 +94,6 @@ def getMessages():
           continue
 
     data['results'] = decoded_results
-
-
     return data
 
 def broadcastMessage(body):
@@ -99,6 +105,7 @@ def broadcastMessage(body):
   meta_request['body'] = body
 
   print sendMessage(constructMessage(**meta_request))
+
 
 #getMessages()
 

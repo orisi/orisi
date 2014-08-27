@@ -1,7 +1,4 @@
-from collections import defaultdict
-
 import sqlite3
-import time
 
 class GeneralDb:
 
@@ -44,7 +41,7 @@ class TableDb:
     self.db = db
     if not self.table_exists():
       self.create_table()
-  
+
   def table_exists(self):
     cursor = self.db.get_cursor()
     sql = self.exist_sql.format(self.table_name)
@@ -66,7 +63,17 @@ class TableDb:
     cursor.execute(sql, args)
     self.db.commit()
 
+  def execute_sql_properly(self, sql, args):
+    cursor = self.db.get_cursor()
+    cursor.execute(sql, args)
+    self.db.commit()
+
   def save(self, obj):
     sql = self.insert_sql.format(self.table_name)
     args = self.args_for_obj(obj)
-    self.insert_with_sql(sql, args)
+    self.execute_sql_properly(sql, args)
+
+  def update(self, obj):
+    sql = self.update_sql.format(self.table_name)
+    args = self.args_for_obj(obj)
+    self.execute_sql_properly(sql, args)

@@ -1,3 +1,5 @@
+# THIS TESTS DOESNT WORK
+
 from condition_evaluator.evaluator import Evaluator
 from handlers.handlers import handlers
 from handlers.password_transaction.password_db import RSAKeyPairs, LockedPasswordTransaction, RightGuess, SentPasswordTransaction

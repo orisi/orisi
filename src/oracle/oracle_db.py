@@ -14,20 +14,22 @@ class KeyValue(TableDb):
       keyid varchar(255) not null, \
       value text not null )'
   insert_sql = 'insert into {0} (section, keyid, value) values (?, ?, ?)'
+  update_sql = 'update {0} set value=? where section=? and keyid=?'
   all_sql = 'select * from {0} order by id'
   get_sql = 'select * from {0} where section=? and keyid=? order by id desc'
 
   def args_for_obj(self, obj):
     return [obj['section'], obj['keyid'], json.dumps(obj['value'])]
 
+  def args_for_obj_update(self, obj):
+    return [json.dumps(obj['value']), obj['section'], obj['keyid']]
+
   def store ( self, section, keyid, value ):
     assert( self.get_by_section_key(section, keyid) is None )
     return self.save({ 'section': section, 'keyid': keyid, 'value': value })
 
   def update ( self, section, keyid, value ):
-    #tbd: replace this with an actual "update" sql
-    return self.save({ 'section': section, 'keyid': keyid, 'value': value })
-
+    return super(KeyValue, self).update({'section': section, 'keyid': keyid, 'value':value})
 
   def get_by_section_key(self, section, keyid):
     cursor = self.db.get_cursor()
@@ -39,7 +41,7 @@ class KeyValue(TableDb):
       d['value'] = json.loads(d['value'])
       return d['value']
     return None
-  
+
 
 class OracleDb(GeneralDb):
 

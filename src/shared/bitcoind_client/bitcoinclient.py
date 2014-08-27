@@ -2,8 +2,10 @@ from settings_local import *
 
 import json
 import jsonrpclib
+import time
 from xmlrpclib import ProtocolError
 from decimal import Decimal
+import socket
 
 import logging
 
@@ -14,17 +16,35 @@ class BitcoinClient:
     self.connect()
 
   def connect(self):
-    self.server = jsonrpclib.Server('http://{0}:{1}@{2}:{3}'.format(
-        BITCOIND_RPC_USERNAME,
-        BITCOIND_RPC_PASSWORD,
-        BITCOIND_RPC_HOST,
-        BITCOIND_RPC_PORT))
+    try_factor = 1
+
+    while 1:
+      try:
+        self.server = jsonrpclib.Server('http://{0}:{1}@{2}:{3}'.format(
+            BITCOIND_RPC_USERNAME,
+            BITCOIND_RPC_PASSWORD,
+            BITCOIND_RPC_HOST,
+            BITCOIND_RPC_PORT))
+        socket.setdefaulttimeout(None)
+        self.server.help()
+        return
+      except:
+        try_factor *= 2
+
+        if try_factor > 512:
+          logging.critical('can\'t connect to bitcoind server')
+          return
+
+        logging.info('can\'t connect to bitcoind server, waiting {}'.format(try_factor))
+        time.sleep(try_factor)
 
   def keep_alive(fun):
     def ping_and_reconnect(self, *args, **kwargs):
       try:
         # Cheap API call that checks wether we're connected
         self.server.help()
+        response = fun(self, *args, **kwargs)
+        return response
       except:
         self.connect()
       return fun(self, *args, **kwargs)
@@ -57,11 +77,11 @@ class BitcoinClient:
 
     prevtx_dict = {}
     for tx in prevtx:
-      prevtx_dict[str((tx['txid'], tx['vout']))] = tx['redeemScript']
+      prevtx_dict["{}#{}".format(tx['txid'], tx['vout'])] = tx['redeemScript']
 
     has_signatures = 999
     for vin in transaction_dict['vin']:
-      redeem_script = prevtx_dict[str((vin['txid'], vin['vout']))]
+      redeem_script = prevtx_dict["{}#{}".format(tx['txid'], tx['vout'])]
       try:
         asm = vin['scriptSig']['asm']
       except KeyError:
@@ -237,3 +257,21 @@ class BitcoinClient:
   def validate_address(self, address):
     return self.server.validateaddress(address)
 
+  @keep_alive
+  def get_block_hash(self, block_number):
+    try:
+      return self.server.getblockhash(block_number)
+    except ProtocolError:
+      return None
+
+  @keep_alive
+  def get_block(self, block_hash):
+    return self.server.getblock(block_hash)
+
+  @keep_alive
+  def get_block_count(self):
+    return self.server.getblockcount()
+
+  @keep_alive
+  def get_raw_transaction(self, txid):
+    return self.server.getrawtransaction(txid)

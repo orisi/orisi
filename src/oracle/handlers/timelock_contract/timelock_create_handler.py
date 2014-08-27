@@ -1,5 +1,6 @@
 from basehandler import BaseHandler
 from password_db import LockedPasswordTransaction
+from shared.fastproto import broadcastMessage
 
 import json
 import logging
@@ -30,7 +31,7 @@ class TimelockCreateHandler(BaseHandler):
         'in_reply_to' : message['message_id'] }
 
     logging.debug('broadcasting reply')
-    self.oracle.communication.broadcast("timelock created for %s" % pwtxid, json.dumps(reply_msg))
+    broadcastMessage(json.dumps(reply_msg))
 
     LockedPasswordTransaction(self.oracle.db).save({'pwtxid':pwtxid, 'json_data':json.dumps(message)})
 
@@ -50,7 +51,7 @@ class TimelockCreateHandler(BaseHandler):
 
   def handle_task(self, task):
     message = json.loads(task['json_data'])
-    future_transaction = self.try_prepare_raw_transaction(message)
+    future_transaction = self.try_prepare_raw_transaction_full_node(message)
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
 
     logging.debug('transaction ready to be signed')

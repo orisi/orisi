@@ -1,4 +1,3 @@
-
 """
 ORACLE_FEE -- fee taken by this oracle
 ORACLE_ADDRESS -- the bitcoin address of this oracle, generated upon first launch
@@ -8,45 +7,12 @@ ORACLE_FEE = 0.00003
 ORACLE_ADDRESS = "" # fill this in after the first oracle launch
 
 """
-ORGANIZATION_ADDRESS and FEE - details of organization that manages the contract 
+ORGANIZATION_ADDRESS and FEE - details of organization that manages the contract
 """
 
 ORGANIZATION_ADDRESS = '1BcEDbcYXfZXaVJh2WeCbc3TnEU37eRPSt'
 ORGANIZATION_FEE = "0.00006"
 ORGANIZATION_CONTACT = "kolinko@gmail.com" # not used in the code, for information only
-
-# Bitmessage Settings
-
-"""
-DEFAULT_ADDRESS_LABEL -
-    Your main address' label for communication with Bitmessage Network
-
-CHAN_NAME -
-    Bitmessage Chan name for all oracles communication. Take that from orisi
-    page and put into your settings
-
-CHAN_ADDRESS -
-    Bitmessage Chan address. Same as above.
-
-(Configure your bitmessage to be active as API RPC server:
-https://bitmessage.org/wiki/Daemon)
-BITMESSAGE_PORT -
-    Port of your Bitmessage API
-BITMESSAGE_HOST -
-    Host of your Bitmessage API
-BITMESSAGE_USERNAME -
-    Your Bitmessage Username for API server
-BITMESSAGE_PASSWORD -
-    Your Bitmessage passsword for API server
-"""
-DEFAULT_ADDRESS_LABEL = "this oracle"
-CHAN_NAME = 'olist'
-CHAN_ADDRESS = 'BM-2cXemdJibdXtifKfTHR4somZbbCGAHRG4H'
-
-BITMESSAGE_PORT = 2523
-BITMESSAGE_HOST = '127.0.0.1'
-BITMESSAGE_USERNAME = 'bitrpc'
-BITMESSAGE_PASSWORD = ''
 
 # Bitcoind settings
 """
@@ -71,3 +37,4 @@ BITCOIND_RPC_PORT = '2521'
 BITCOIND_RPC_HOST = '127.0.0.1'
 BITCOIND_RPC_USERNAME = 'bitrpc'
 
+BITCOIND_RPC_PASSWORD = "5e4dc365ff5d0f2ff9edd14107e2be742912669f0a091762cd79138a7b5e6ddc"

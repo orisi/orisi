@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ -z $(pgrep $PYTHON_EXEC) ]
 then
-	echo "bitmessage not running?"
+	echo "some problems occuring"
 fi
 
 if [ -z $(pgrep bitcoind) ]

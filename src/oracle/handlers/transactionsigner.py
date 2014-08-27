@@ -1,5 +1,6 @@
 from basehandler import BaseHandler
 from oracle.oracle_db import KeyValue
+from shared.fastproto import broadcastMessage
 
 import json
 import logging
@@ -62,7 +63,7 @@ class TransactionSigner(BaseHandler):
 
   def sign(self, tx, pwtxid, inputs, req_sigs):
     # sign is being called by external contracts to initiate signing procedure
-    # it marks the transaction as being ready to be signed if received from bitmessage
+    # it marks the transaction as being ready to be signed if received from fastcast
     # and schedules signing -- in case oracles previous in line didn't want to sign it
 
     logging.debug("tx: %r" % tx)
@@ -119,7 +120,7 @@ class TransactionSigner(BaseHandler):
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
-    # ^ let's remember the tx with most sigs that we've seen. 
+    # ^ let's remember the tx with most sigs that we've seen.
 
     if tx_sigs_count >= req_sigs:
       logging.debug('already signed with enough keys')
@@ -141,21 +142,19 @@ class TransactionSigner(BaseHandler):
 
     logging.debug('broadcasting: %r' % body)
 
-    subject = ('sign %s' % pwtxid)  if tx_sigs_count < req_sigs else ('final-sign %s' % pwtxid)
-
     if tx_sigs_count == req_sigs:
       logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
       logging.debug(safe_pushtx(signed_transaction))
 
-    self.oracle.communication.broadcast(subject, json.dumps(body))
+    broadcastMessage(json.dumps(body))
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
 
   def handle_request(self, request):
     body = request.message
-    # if the oracle received a transaction from bitmessage, it attempts to sign it
-    # all the validity checks are being handled by sign_now 
+    # if the oracle received a transaction from fastcast, it attempts to sign it
+    # all the validity checks are being handled by sign_now
 
     tx = body['transaction']
 
@@ -174,7 +173,7 @@ class TransactionSigner(BaseHandler):
 
     rq_data = self.kv.get_by_section_key('signable', rq_hash)
     assert(rq_data is not None)
- 
+
     logging.info("rq_data: %r" % rq_data)
 
     if rq_data['sigs_so_far'] > 0:

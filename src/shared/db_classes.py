@@ -29,7 +29,7 @@ class GeneralDb:
       return self.conn.cursor()
 
 
-class TableDb:
+class TableDb(object):
   """
   TableDb is class designed as wrapper for new tables and database requests.
   It creates table when needed, so no need to worry about it

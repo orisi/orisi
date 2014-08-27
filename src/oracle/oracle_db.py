@@ -29,9 +29,7 @@ class KeyValue(TableDb):
     return self.save({ 'section': section, 'keyid': keyid, 'value': value })
 
   def update ( self, section, keyid, value ):
-    #tbd: replace this with an actual "update" sql
-    return self.save({ 'section': section, 'keyid': keyid, 'value': value })
-
+    return super(KeyValue, self).update({'section': section, 'keyid': keyid, 'value':value})
 
   def get_by_section_key(self, section, keyid):
     cursor = self.db.get_cursor()

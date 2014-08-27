@@ -54,7 +54,6 @@ def constructMessage(priv, **kwargs):
     payload = json.dumps(req)
     return payload
 
-
 def generateKey():
   new_key = RSA.generate(1024)
   public_key = new_key.publickey().exportKey("DER")
@@ -75,27 +74,30 @@ def sendMessage(payload):
     return r.text
 
 def getMessages():
-    url = 'http://54.77.58.8?format=json'
-    r = requests.get(url)
-    data = json.loads(r.text)
+  url = 'http://54.77.58.8?format=json'
+  r = requests.get(url)
+  data = json.loads(r.text)
 
-    decoded_results = []
-    for req in data['results']:
-        try:
-          decoded_body = decode_data(req['body'])
-          req['body'] = decoded_body
-          decoded_results.append(req)
-        except:
-          continue
+  decoded_results = []
+  for req in data['results']:
+    try:
+      decoded_body = decode_data(req['body'])
+      req['body'] = decoded_body
 
-    data['results'] = decoded_results
-    return data
+      if not verify(req['body'], req['signature'], req['source']):
+        continue
 
-def broadcastMessage(body, priv):
+      decoded_results.append(req)
+    except:
+      continue
+
+  data['results'] = decoded_results
+  return data
+
+def broadcastMessage(body, pub, priv):
   meta_request = {}
-  meta_request['source'] = 0
+  meta_request['source'] = pub
   meta_request['channel'] = 0
-  meta_request['signature'] = 0
   meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
   meta_request['body'] = body
 

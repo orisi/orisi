@@ -55,7 +55,10 @@ class TableDb:
     cursor.execute(sql)
     self.db.commit()
 
-  def args_for_obj(self, obj):
+  def args_for_obj_save(self, obj):
+    raise NotImplementedError()
+
+  def args_for_obj_update(self, obj):
     raise NotImplementedError()
 
   def insert_with_sql(self, sql, args):
@@ -70,10 +73,10 @@ class TableDb:
 
   def save(self, obj):
     sql = self.insert_sql.format(self.table_name)
-    args = self.args_for_obj(obj)
+    args = self.args_for_obj_save(obj)
     self.execute_sql_properly(sql, args)
 
   def update(self, obj):
     sql = self.update_sql.format(self.table_name)
-    args = self.args_for_obj(obj)
+    args = self.args_for_obj_update(obj)
     self.execute_sql_properly(sql, args)

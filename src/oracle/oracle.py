@@ -202,7 +202,7 @@ class Oracle:
         max_received = max(max_received, received_epoch)
 
     if len(new_req) > 0:
-      self.kv.update('fastcast', 'last_epoch', {'last':received_epoch})
+      self.kv.update('fastcast', 'last_epoch', {'last':max_received})
 
     return new_req
 

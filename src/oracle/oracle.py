@@ -28,7 +28,10 @@ class FastcastMessage:
 
     self.from_address = req['source']
     self.received_time = int(req['epoch'])
-    self.msgid = body['message_id']
+    if 'message_id' in body:
+      self.msgid = body['message_id']
+    else:
+      self.msgid = ''
 
     # Deprecated
     self.subject = "DEPRECATED: DONT USE SUBJECT"

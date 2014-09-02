@@ -8,6 +8,10 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
+import logging
+requests_log = logging.getLogger("requests")
+requests_log.setLevel(logging.WARNING)
+
 FASTCAST_API_URL = 'http://54.77.58.8?format=json'
 
 headers = {'content-type': 'application/json'}

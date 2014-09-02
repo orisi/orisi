@@ -41,7 +41,7 @@ class MissingOperationError(Exception):
   pass
 
 # Number of confirmations needed for block to get noticed by Oracle
-CONFIRMATIONS = 3
+CONFIRMATIONS = 1
 
 class FastcastProtocolError(Exception):
   pass

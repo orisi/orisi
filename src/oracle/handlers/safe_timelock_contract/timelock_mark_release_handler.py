@@ -3,6 +3,7 @@ from basehandler import BaseHandler
 import json
 import cjson
 import datetime
+import logging
 import time
 
 from oracle.oracle_db import KeyValue

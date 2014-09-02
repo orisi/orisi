@@ -41,6 +41,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       'miners_fee_satoshi': miners_fee_satoshi,
       'req_sigs': req_sigs
     })
+    logging.info("claimed mark {} for addr {}".format(mark, return_address))
 
   def extend_observed_addresses(self, address):
     observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
@@ -87,6 +88,7 @@ class SafeTimelockCreateHandler(BaseHandler):
         'in_reply_to': message['message_id'],
         'comment': 'mark for this address is currently unavailable - please try again in several minutes'
       }
+      logging.info("mark {} unavailable".format(mark))
 
       self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
       return
@@ -120,7 +122,6 @@ class SafeTimelockCreateHandler(BaseHandler):
   def handle_task(self, task):
     message = cjson.decode(task['json_data'])
 
-
     txid = message['txid']
     n = message['n']
     redeemScript = self.kv.get_by_section_key('safe_timelock_redeem', message['address'])['redeem']
@@ -133,6 +134,7 @@ class SafeTimelockCreateHandler(BaseHandler):
         break
 
     if not vout:
+      logging.info("missing vout for txid {} n {}".format(txid, n))
       return
 
     sum_satoshi = int(round(vout['value'] * 100000000))
@@ -152,6 +154,7 @@ class SafeTimelockCreateHandler(BaseHandler):
     message['outputs'] = message['oracle_fees']
 
     future_transaction = self.try_prepare_raw_transaction(message)
+    logging.info(future_transaction)
     pwtxid = self.get_tx_hash(future_transaction)
 
     assert(future_transaction is not None) # should've been verified gracefully in handle_request

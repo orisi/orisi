@@ -37,6 +37,7 @@ class TimelockMarkReleaseHandler(BaseHandler):
     self.kv.update('mark_history', '{}#{}'.format(mark, addr), mark_history_dict)
 
     self.kv.update('mark_available', '{}#{}'.format(mark, addr), {'available':True})
+    logging.info("released mark {} from addr {}".format(mark, addr))
 
   def verify_and_create_timelock(self, output):
     mark, address, value, txid, n = output
@@ -69,6 +70,8 @@ class TimelockMarkReleaseHandler(BaseHandler):
         "done": 0,
         "next_check": locktime
     })
+
+    logging.info("found transaction for mark:{} on address:{}".format(mark, address))
 
   def handle_new_block(self, block):
     transaction_ids = block['tx']

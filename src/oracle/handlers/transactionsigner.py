@@ -76,6 +76,7 @@ class TransactionSigner(BaseHandler):
     add_time = (my_turn - 1) * TURN_LENGTH_TIME
 
     rq_hash = self.get_tx_hash(tx)
+    logging.ifno("sign -> rq_hash: {}".format(rq_hash))
 
     try:
       self.kv.store( 'signable', rq_hash, { 'inputs':inputs, 'sigs_so_far':0, 'req_sigs': req_sigs , 'pwtxid' : pwtxid } )

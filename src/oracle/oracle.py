@@ -144,6 +144,7 @@ class Oracle:
     if block['confirmations'] < CONFIRMATIONS:
       return None
 
+    logging.info("New block {}".format(newer_block))
     return block
 
   def handle_task(self, task):
@@ -222,31 +223,19 @@ class Oracle:
     logging.info("my multisig address is %s" % self.oracle_address)
     logging.info( "my pubkey: %r" % self.btc.validate_address(self.oracle_address)['pubkey'] )
 
-    logging.debug("awaiting requests...")
-    count = 0
-
     while True:
       # Proceed all requests
       requests = getMessages()
-
-      if len(requests) == 0:
-        count = count + 1
-        if count > 30:
-            logging.debug("{0} new requests".format(len(requests)))
-            count = 0
-      else:
-        logging.debug("{0} new requests".format(len(requests)))
-
       requests = requests['results']
 
       requests = self.filter_requests(requests)
 
       for prev_request in requests:
         try:
-          logging.info(prev_request)
           request = self.prepare_request(prev_request)
         except MissingOperationError:
           logging.info('message doesn\'t have operation field, invalid')
+          logging.info(prev_request)
           continue
         except FastcastProtocolError:
           logging.info('message does not have all required fields')

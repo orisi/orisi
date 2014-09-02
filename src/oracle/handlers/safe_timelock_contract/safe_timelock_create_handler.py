@@ -53,6 +53,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       return
 
     observed_addresses.append(address)
+    logging.info("extending observed address {}".format(address))
     self.kv.update('safe_timelock', 'addresses', {'addresses':observed_addresses})
 
   def save_redeem(self, addr, redeem):
@@ -154,7 +155,5 @@ class SafeTimelockCreateHandler(BaseHandler):
     pwtxid = self.get_tx_hash(future_transaction)
 
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
-
-    logging.debug('transaction ready to be signed')
 
     self.oracle.signer.sign(future_transaction, pwtxid, prevtxs, message['req_sigs'])

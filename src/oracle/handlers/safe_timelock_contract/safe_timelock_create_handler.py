@@ -152,8 +152,15 @@ class SafeTimelockCreateHandler(BaseHandler):
     message['outputs'] = message['oracle_fees']
 
     future_transaction = self.try_prepare_raw_transaction(message)
+    if not future_transaction:
+      return
     logging.info(future_transaction)
-    pwtxid = self.get_tx_hash(future_transaction)
+
+    try:
+      pwtxid = self.get_tx_hash(future_transaction)
+    except:
+      logging.error("Failed to create tx hash")
+      return
 
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
 

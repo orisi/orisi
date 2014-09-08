@@ -273,5 +273,13 @@ class BitcoinClient:
     return self.server.getblockcount()
 
   @keep_alive
+  def send_transaction(self, tx):
+    try:
+      self.server.sendrawtransaction(tx)
+      return True
+    except ProtocolError:
+      return False
+
+  @keep_alive
   def get_raw_transaction(self, txid):
     return self.server.getrawtransaction(txid)

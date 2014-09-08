@@ -143,13 +143,17 @@ class TransactionSigner(BaseHandler):
     logging.debug('broadcasting: %r' % body)
 
     if tx_sigs_count == req_sigs:
-      logging.debug('pushing tx to Eligius. you might want to disable this in test systems')
-      logging.debug(safe_pushtx(signed_transaction))
+      self.broadcast_transaction(signed_transaction)
 
     self.oracle.broadcast_with_fastcast(json.dumps(body))
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
+
+  def broadcast_transaction(self, transaction):
+    logging.info("Broadcasting transaction")
+    safe_pushtx(transaction)
+    self.oracle.btc.send_transaction(transaction)
 
   def handle_request(self, request):
     body = request.message

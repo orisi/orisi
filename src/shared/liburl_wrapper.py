@@ -2,6 +2,7 @@ import signal
 import socket
 import urllib2
 import urllib
+import logging
 
 TIMEOUT = 10
 
@@ -23,6 +24,7 @@ def safe_read(url, timeout_time):
     return None
 
 def safe_pushtx(tx, timeout_time = 10):
+  logging.info('pushing to eligius')
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
     #thanks http://www.pythonforbeginners.com/python-on-the-web/how-to-use-urllib2-in-python/
@@ -35,3 +37,5 @@ def safe_pushtx(tx, timeout_time = 10):
   except:
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
+
+

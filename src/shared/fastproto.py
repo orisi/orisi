@@ -68,18 +68,32 @@ def generateKey():
 
   return (public_key_base64, private_key_base64)
 
+def tryForever(requestsFunction, *args, **kwargs):
+  retry_time = 1
+
+  while 1:
+    try:
+      r = requestsFunction(*args, **kwargs)
+      return r
+    except requests.ConnectionError:
+      logging.warning("FastCast connection error")
+
+    retry_time *= 2
+    retry_time = min(retry_time, 60)
+    time.sleep(retry_time)
+
 def sendMessage(payload):
     """
     Sending a message via api gateway
     """
     url = 'http://54.77.58.8?format=json'
-    r = requests.post(url, data=payload, headers=headers)
+    r = tryForever(requests.post, url, data=payload, headers=headers)
     print r.text
     return r.text
 
 def getMessages():
   url = 'http://54.77.58.8?format=json'
-  r = requests.get(url)
+  r = tryForever(requests.get, url)
   data = json.loads(r.text)
 
   decoded_results = []

@@ -9,7 +9,7 @@ import socket
 
 import logging
 
-TEST_MODE = True
+TEST_MODE = BITCOIND_TEST_MODE
 
 class UnknownServerError(Exception):
   pass

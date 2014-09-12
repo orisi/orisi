@@ -9,7 +9,7 @@ import socket
 
 import logging
 
-TEST_MODE = False
+TEST_MODE = True
 
 class UnknownServerError(Exception):
   pass

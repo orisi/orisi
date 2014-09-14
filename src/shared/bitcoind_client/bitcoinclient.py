@@ -342,8 +342,8 @@ class BitcoinClient:
   def get_raw_transaction(self, txid):
     return self.blockchain_server.getrawtransaction(txid)
 
-  @keep_alive('blockchain_server')
   def get_transactions_from_block(self, block, addresses):
+    logging.info(addresses)
     transaction_ids = block['tx']
 
     transactions_per_address = {}
@@ -364,4 +364,5 @@ class BitcoinClient:
           if addr in addresses_in_vout:
             transactions_per_address[addr].append(transaction)
 
+    logging.info(transactions_per_address)
     return transactions_per_address

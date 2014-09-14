@@ -251,6 +251,7 @@ class Oracle:
       while task is not None:
         self.handle_task(task)
         self.task_queue.done(task)
+        task = self.task_queue.get_oldest_task()
 
       new_block = self.get_new_block()
 

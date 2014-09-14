@@ -83,6 +83,8 @@ class TimelockMarkReleaseHandler(BaseHandler):
     return observed_addresses
 
   def handle_new_transactions(self, transactions):
+    logging.info(transactions)
+
     our_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
     if not our_addresses:
       return

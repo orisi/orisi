@@ -269,7 +269,9 @@ class Oracle:
 
         transactions = self.btc.get_transactions_from_block(new_block, list(all_addresses))
 
+        handlers = op_handlers.iteritems()
         for name, handler in handlers:
+          logging.info(name)
           addresses = addresses_per_handler[name]
           handler_transactions = []
           for address in addresses:

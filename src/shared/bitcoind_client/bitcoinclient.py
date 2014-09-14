@@ -352,10 +352,10 @@ class BitcoinClient:
 
     for tx in transaction_ids:
       try:
-        raw_transaction = self.btc.get_raw_transaction(tx)
+        raw_transaction = self.get_raw_transaction(tx)
       except ProtocolError:
         continue
-      transaction = self.btc.decode_raw_transaction(raw_transaction)
+      transaction = self.decode_raw_transaction(raw_transaction)
       for vout in transaction['vout']:
         if not 'addresses' in vout['scriptPubKey']:
           continue

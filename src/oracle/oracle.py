@@ -251,16 +251,32 @@ class Oracle:
       while task is not None:
         self.handle_task(task)
         self.task_queue.done(task)
-        task = self.task_queue.get_oldest_task()
 
       new_block = self.get_new_block()
 
       if new_block:
-        handlers = op_handlers.itervalues()
+        handlers = op_handlers.iteritems()
 
-        # Every available handler should get a chance to handle new block
-        for h in handlers:
-          h(self).handle_new_block(new_block)
+        addresses_per_handler = {}
+        all_addresses = set()
+
+        # Every handler can wait for transactions occuring on some addresses
+        for name, handler in handlers:
+          addresses = handler(self).get_observed_addresses()
+          addresses_per_handler[name] = addresses
+          for address in addresses:
+            all_addresses.add(address)
+
+        transactions = self.btc.get_transactions_from_block(new_block, list(all_addresses))
+
+        for name, handler in handlers:
+          addresses = addresses_per_handler[name]
+          handler_transactions = []
+          for address in addresses:
+            if address in transactions:
+              handler_transactions.extend(transactions[address])
+          handler(self).handle_new_transactions(handler_transactions)
+
         KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':new_block['height']})
 
       time.sleep(1)

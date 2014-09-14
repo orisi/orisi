@@ -20,9 +20,14 @@ class BaseHandler:
   def handle_task(self, task):
     raise NotImplementedError()
 
-  def handle_new_block(self, block):
-    # By default we don't need to do anything with new blocks
-    return
+  def get_observed_addresses(self):
+    """
+    Returns list of addresses we're observing and waiting for transactions on that addresses
+    """
+    return []
+
+  def handle_new_transactions(self, transactions):
+    pass
 
   def valid_task(self, task):
   	return True

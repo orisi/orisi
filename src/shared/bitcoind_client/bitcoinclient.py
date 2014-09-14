@@ -1,4 +1,18 @@
-from settings_local import *
+from settings_local import (
+    BITCOIND_TEST_MODE,
+    BITCOIND_RPC_USERNAME,
+    BITCOIND_RPC_PASSWORD,
+    BITCOIND_RPC_PORT,
+    BITCOIND_RPC_HOST,
+    BITCOIND_TEST_RPC_USERNAME,
+    BITCOIND_TEST_RPC_PASSWORD,
+    BITCOIND_TEST_RPC_HOST,
+    BITCOIND_TEST_RPC_PORT,
+    ORACLE_ADDRESS,
+    ORGANIZATION_ADDRESS,
+    ORACLE_FEE,
+    ORGANIZATION_FEE
+)
 
 import json
 import jsonrpclib
@@ -327,3 +341,27 @@ class BitcoinClient:
   @keep_alive('blockchain_server')
   def get_raw_transaction(self, txid):
     return self.blockchain_server.getrawtransaction(txid)
+
+  @keep_alive('blockchain_server')
+  def get_transactions_from_block(self, block, addresses):
+    transaction_ids = block['tx']
+
+    transactions_per_address = {}
+    for addr in addresses:
+      transactions_per_address[addr] = []
+
+    for tx in transaction_ids:
+      try:
+        raw_transaction = self.btc.get_raw_transaction(tx)
+      except ProtocolError:
+        continue
+      transaction = self.btc.decode_raw_transaction(raw_transaction)
+      for vout in transaction['vout']:
+        if not 'addresses' in vout['scriptPubKey']:
+          continue
+        addresses_in_vout = set(vout['scriptPubKey']['addresses'])
+        for addr in addresses:
+          if addr in addresses_in_vout:
+            transactions_per_address[addr].append(transaction)
+
+    return transactions_per_address

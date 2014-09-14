@@ -8,7 +8,6 @@ import time
 
 from oracle.oracle_db import KeyValue
 from contract_util import value_to_mark
-from xmlrpclib import ProtocolError
 
 class TimelockMarkReleaseHandler(BaseHandler):
   def __init__(self, oracle):
@@ -74,9 +73,16 @@ class TimelockMarkReleaseHandler(BaseHandler):
 
     logging.info("found transaction for mark:{} on address:{}".format(mark, address))
 
-  def handle_new_block(self, block):
-    transaction_ids = block['tx']
+  def get_observed_addresses(self):
+    observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
+    if not observed_addresses:
+      self.kv.store('safe_timelock', 'addresses', {'addresses':[]})
 
+    observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
+    observed_addresses = observed_addresses['addresses']
+    return observed_addresses
+
+  def handle_new_transactions(self, transactions):
     our_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')
     if not our_addresses:
       return
@@ -84,21 +90,14 @@ class TimelockMarkReleaseHandler(BaseHandler):
     our_addresses = our_addresses['addresses']
 
     outputs = []
-    for tx in transaction_ids:
-      try:
-        raw_transaction = self.btc.get_raw_transaction(tx)
-      except ProtocolError:
-        continue
-      transaction = self.btc.decode_raw_transaction(raw_transaction)
+    for transaction in transactions:
       for vout in transaction['vout']:
         if not 'addresses' in vout['scriptPubKey']:
           continue
         if len(vout['scriptPubKey']['addresses']) != 1:
           continue
         if vout['scriptPubKey']['addresses'][0] in our_addresses:
-          outputs.append((value_to_mark(vout['value']), vout['scriptPubKey']['addresses'][0], vout['value'], tx, vout['n']))
-
+          outputs.append((value_to_mark(vout['value']), vout['scriptPubKey']['addresses'][0], vout['value'], transaction['txid'], vout['n']))
     for output in outputs:
       self.verify_and_create_timelock(output)
-
 

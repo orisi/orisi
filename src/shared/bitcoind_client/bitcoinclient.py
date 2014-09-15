@@ -13,9 +13,11 @@ from settings_local import (
     ORACLE_FEE,
     ORGANIZATION_FEE
 )
+from shared.liburl_wrapper import safe_blockchain_multiaddress, safe_nonbitcoind_blockchain_getblock, safe_get_raw_transaction
 
 import json
 import jsonrpclib
+from bitcoinrpc.authproxy import AuthServiceProxy
 import time
 from xmlrpclib import ProtocolError
 from decimal import Decimal
@@ -27,6 +29,9 @@ TEST_MODE = BITCOIND_TEST_MODE
 
 class UnknownServerError(Exception):
   pass
+
+def slice_list(list, chunk):
+  return [list[i*chunk:(i+1)*chunk] for i in range(0, int((len(list)+chunk)/chunk))]
 
 class BitcoinClient:
 
@@ -323,8 +328,31 @@ class BitcoinClient:
       return None
 
   @keep_alive('blockchain_server')
-  def get_block(self, block_hash):
+  def bitcoind_get_block(self, block_hash):
     return self.blockchain_server.getblock(block_hash)
+
+  def get_block(self, block_hash):
+    if not TEST_MODE:
+      return self.bitcoind_get_block(block_hash)
+    else:
+      # Temporary solution before blockchain.info will fix their API
+      not_proper_data = safe_nonbitcoind_blockchain_getblock(block_hash)
+
+      max_height = self.blockchain_server.getblockcount()
+
+      proper_data = {}
+      proper_data['hash'] = not_proper_data['hash']
+      proper_data['height'] = not_proper_data['height']
+      proper_data['size'] = not_proper_data['size']
+      proper_data['merkleroot'] = not_proper_data['mrkl_root']
+      proper_data['confirmations'] = max_height - proper_data['height'] + 1
+      proper_data['version'] = not_proper_data['ver']
+      proper_data['time'] = not_proper_data['time']
+      proper_data['nonce'] = not_proper_data['nonce']
+      proper_data['bits'] = not_proper_data['bits']
+      proper_data['previousblockhash'] = not_proper_data['prev_block']
+      proper_data['tx'] = [tx['hash'] for tx in not_proper_data['tx']]
+      return proper_data
 
   @keep_alive('blockchain_server')
   def get_block_count(self):
@@ -333,16 +361,62 @@ class BitcoinClient:
   @keep_alive('blockchain_server')
   def send_transaction(self, tx):
     try:
-      self.blockchain_server.sendrawtransaction(tx)
+      if not TEST_MODE:
+        self.blockchain_server.sendrawtransaction(tx)
       return True
     except ProtocolError:
       return False
 
-  @keep_alive('blockchain_server')
   def get_raw_transaction(self, txid):
-    return self.blockchain_server.getrawtransaction(txid)
+    if not TEST_MODE:
+      return self.server.getrawtransaction(txid)
+    else:
+      return safe_get_raw_transaction(txid)
 
   def get_transactions_from_block(self, block, addresses):
+    if not TEST_MODE:
+      return self.bitcoind_get_transactions_from_block(block, addresses)
+    else:
+      return self.blockchain_get_transactions_from_block(block, addresses)
+
+  def blockchain_get_transactions_from_block(self, block, addresses):
+    transactions_per_address = {}
+    for addr in addresses:
+      transactions_per_address[addr]= []
+
+    transaction_ids = block['tx']
+
+    address_chunks = slice_list(addresses, 5)
+    transactions_on_addresses = []
+
+    for chunk in address_chunks:
+      data = safe_blockchain_multiaddress(chunk)
+      if data:
+        txs = data['txs']
+        for tx in txs:
+          if tx['hash'] in transaction_ids:
+            transactions_on_addresses.append(tx['hash'])
+
+    logging.info(transactions_on_addresses)
+
+    for tx in transactions_on_addresses:
+      try:
+        raw_transaction = self.get_raw_transaction(tx)
+      except ProtocolError:
+        continue
+      transaction = self.decode_raw_transaction(raw_transaction)
+      for vout in transaction['vout']:
+        if not 'addresses' in vout['scriptPubKey']:
+          continue
+        addresses_in_vout = set(vout['scriptPubKey']['addresses'])
+        for addr in addresses:
+          if addr in addresses_in_vout:
+            transactions_per_address[addr].append(transaction)
+
+    logging.info(transactions_per_address)
+    return transactions_per_address
+
+  def bitcoind_get_transactions_from_block(self, block, addresses):
     logging.info(addresses)
     transaction_ids = block['tx']
 

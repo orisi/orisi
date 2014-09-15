@@ -3,6 +3,7 @@ import socket
 import urllib2
 import urllib
 import logging
+import json
 
 TIMEOUT = 10
 
@@ -38,4 +39,36 @@ def safe_pushtx(tx, timeout_time = 10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
+def safe_blockchain_multiaddress(addresses, timeout_time = 10):
+  signal.setitimer(signal.ITIMER_REAL, timeout_time)
+  try:
+    url = 'http://blockchain.info/multiaddr?active={}'.format('|'.join(addresses))
+    content = urllib2.urlopen(url, timeout=timeout_time).read()
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return json.loads(content)
+  except:
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return None
+
+def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=10):
+  signal.setitimer(signal.ITIMER_REAL, timeout_time)
+  try:
+    url = 'http://blockchain.info/rawblock/{}'.format(block_hash)
+    content = urllib2.urlopen(url, timeout=timeout_time).read()
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return json.loads(content)
+  except:
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return None
+
+def safe_get_raw_transaction(txid, timeout_time=10):
+  signal.setitimer(signal.ITIMER_REAL, timeout_time)
+  try:
+    url = 'http://blockchain.info/tx/{}?format=hex'.format(txid)
+    content = urllib2.urlopen(url, timeout=timeout_time).read()
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return content
+  except:
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    return None
 

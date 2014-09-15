@@ -272,7 +272,6 @@ class Oracle:
 
         handlers = op_handlers.iteritems()
         for name, handler in handlers:
-          logging.info(name)
           addresses = addresses_per_handler[name]
           handler_transactions = []
           for address in addresses:

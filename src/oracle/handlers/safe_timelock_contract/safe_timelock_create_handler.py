@@ -8,6 +8,7 @@ import datetime
 
 from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
+from random import randrange
 
 TIME_FOR_TRANSACTION = 30 * 60
 TIME_FOR_CONFIRMATION = 20 * 60
@@ -86,7 +87,8 @@ class SafeTimelockCreateHandler(BaseHandler):
       reply_msg = {
         'operation': 'safe_timelock_error',
         'in_reply_to': message['message_id'],
-        'comment': 'mark for this address is currently unavailable - please try again in several minutes'
+        'comment': 'mark for this address is currently unavailable - please try again in several minutes',
+        'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000)))
       }
       logging.info("mark {} unavailable".format(mark))
 
@@ -100,6 +102,7 @@ class SafeTimelockCreateHandler(BaseHandler):
         'contract_id' : address_to_pay_on,
         'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, int(TIME_FOR_TRANSACTION / 60), address_to_pay_on),
         'in_reply_to' : message['message_id'],
+        'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000))),
         'mark': mark,
         'addr': address_to_pay_on,
         'time': TIME_FOR_TRANSACTION}

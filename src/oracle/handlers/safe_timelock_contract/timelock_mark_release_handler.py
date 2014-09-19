@@ -8,6 +8,7 @@ import time
 
 from oracle.oracle_db import KeyValue
 from contract_util import value_to_mark
+from random import randrange
 
 class TimelockMarkReleaseHandler(BaseHandler):
   def __init__(self, oracle):
@@ -38,6 +39,15 @@ class TimelockMarkReleaseHandler(BaseHandler):
 
     self.kv.update('mark_available', '{}#{}'.format(mark, addr), {'available':True})
     logging.info("released mark {} from addr {}".format(mark, addr))
+
+    info_msg = {
+      'operation': 'safe_timelock_released_mark',
+      'in_reply_to': 'none',
+      'message_id': "%s-%s" % ("mark-release", str(randrange(1000000000,9000000000))),
+      'contract_id' : "{}#{}".format(addr, mark),
+    }
+
+    self.oracle.broadcast_with_fastcast(json.dumps(info_msg))
 
   def verify_and_create_timelock(self, output):
     mark, address, value, txid, n = output
@@ -72,6 +82,14 @@ class TimelockMarkReleaseHandler(BaseHandler):
     })
 
     logging.info("found transaction for mark:{} on address:{}".format(mark, address))
+    info_msg = {
+      'operation': 'safe_timelock_found_transaction',
+      'in_reply_to': 'none',
+      'message_id': "%s-%s" % ("locked_transaction", str(randrange(1000000000,9000000000))),
+      'contract_id' : "{}#{}".format(address, mark),
+    }
+
+    self.oracle.broadcast_with_fastcast(json.dumps(info_msg))
 
   def get_observed_addresses(self):
     observed_addresses = self.kv.get_by_section_key('safe_timelock', 'addresses')

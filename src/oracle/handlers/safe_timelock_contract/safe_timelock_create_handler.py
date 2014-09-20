@@ -172,7 +172,7 @@ class SafeTimelockCreateHandler(BaseHandler):
 
     info_msg = {
       'operation': 'safe_timelock_signed',
-      'in_reply_to': message['message_id'],
+      'in_reply_to': '',
       'message_id': "%s-%s" % ("timelock_signature", str(randrange(1000000000,9000000000))),
       'contract_id' : "{}#{}".format(message['address'], message['mark']),
     }

@@ -122,7 +122,7 @@ class BountyCreateHandler(BaseHandler):
       self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
       return
 
-    self.claim_bounty_name(password_hash, bounty_name)
+    self.claim_bounty_name(bounty_name,password_hash)
     # For now oracles are running single-thread so there is no race condition
     self.claim_mark(password_hash, bounty_name, mark, address_to_pay_on, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs)
 

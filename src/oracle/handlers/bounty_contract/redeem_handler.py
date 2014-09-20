@@ -3,12 +3,9 @@ from basehandler import BaseHandler
 import json
 import cjson
 import logging
-import time
-import datetime
-
-from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
 from random import randrange
+from Crypto.Hash import SHA512
 
 class BountyRedeemHandler(BaseHandler):
   def __init__(self, oracle):
@@ -21,7 +18,14 @@ class BountyRedeemHandler(BaseHandler):
 
     return_address = body['return_address']
     password = body['password']
-    password_hash = body['password_hash']
+    bounty_name = body['bounty_name']
+
+    bounty_hash = self.kv.get_by_section_key('bounty_name', bounty_name)
+    if not bounty_hash:
+      logging.info('transaction unknown')
+      return
+
+    password_hash = bounty_hash['password_hash']
 
     bounty_transactions = self.kv.get_by_section_key('bounty_transactions', password_hash)
     if not bounty_transactions:
@@ -40,6 +44,9 @@ class BountyRedeemHandler(BaseHandler):
 
     for bounty_transaction in bounty_transactions["entries"]:
       self.send_to_winner(bounty_transaction, return_address)
+
+    self.kv.update('bounty_transactions', password_hash, {"entries": []})
+
 
   def send_to_winner(self, message, return_address):
     txid = message['txid']

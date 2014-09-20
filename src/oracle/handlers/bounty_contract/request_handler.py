@@ -28,7 +28,7 @@ class BountyCreateHandler(BaseHandler):
     available = mark_data['available']
     return not available
 
-  def claim_mark(self, password_hash, mark, addr, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs):
+  def claim_mark(self, password_hash, bounty_name, mark, addr, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs):
     mark_data = self.kv.get_by_section_key('mark_available', '{}#{}'.format(mark, addr))
     if not mark_data:
       self.kv.store('mark_available', '{}#{}'.format(mark, addr), {'available':True})
@@ -40,6 +40,7 @@ class BountyCreateHandler(BaseHandler):
       'locktime': locktime,
       'oracle_fees': oracle_fees,
       'password_hash': password_hash,
+      'bounty_name': bounty_name,
       'miners_fee_satoshi': miners_fee_satoshi,
       'req_sigs': req_sigs
     })
@@ -66,6 +67,15 @@ class BountyCreateHandler(BaseHandler):
       # Already saved
       pass
 
+  def bounty_name_unavailable(self, bounty_name):
+    bkv = self.kv.get_by_section_key('bounty_name', bounty_name)
+    if not bkv:
+      return False
+    return True
+
+  def claim_bounty_name(self, bounty_name, password_hash):
+    self.kv.store('bounty_name', bounty_name, {"password_hash": password_hash})
+
   def handle_request(self, request):
     message = request.message
 
@@ -84,6 +94,7 @@ class BountyCreateHandler(BaseHandler):
     miners_fee_satoshi = message['miners_fee_satoshi']
     req_sigs = message['req_sigs']
     password_hash = message['password_hash']
+    bounty_name = message['bounty_name']
 
     if self.mark_unavailable(mark, address_to_pay_on):
       reply_msg = {
@@ -98,8 +109,22 @@ class BountyCreateHandler(BaseHandler):
       self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
       return
 
+    if self.bounty_name_unavailable(bounty_name):
+      reply_msg = {
+        'operation': 'bounty_name_error',
+        'in_reply_to': message['message_id'],
+        'comment': 'name taken',
+        'contract_id' : '{}#{}'.format(address_to_pay_on, mark),
+        'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000)))
+      }
+      logging.info("mark {} unavailable".format(mark))
+
+      self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
+      return
+
+    self.claim_bounty_name(password_hash, bounty_name)
     # For now oracles are running single-thread so there is no race condition
-    self.claim_mark(password_hash, mark, address_to_pay_on, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs)
+    self.claim_mark(password_hash, bounty_name, mark, address_to_pay_on, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs)
 
     reply_msg = { 'operation' : 'bounty_created',
         'contract_id' : '{}#{}'.format(address_to_pay_on, mark),

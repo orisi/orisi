@@ -5,6 +5,7 @@ from safe_timelock_contract.safe_timelock_create_handler import SafeTimelockCrea
 from bounty_contract.request_handler import BountyCreateHandler
 from bounty_contract.release_handler import BountyReleaseHandler
 from bounty_contract.redeem_handler import BountyRedeemHandler
+from bounty_contract.query_handler import BountyQueryHandler
 
 
 
@@ -16,6 +17,7 @@ op_handlers = {
     'bounty_create': BountyCreateHandler,
     'bounty_mark_release': BountyReleaseHandler,
     'bounty_redeem': BountyRedeemHandler,
+    'bounty_get_password_hash': BountyQueryHandler,
 }
 
 OPERATION_REQUIRED_FIELDS = {
@@ -23,8 +25,9 @@ OPERATION_REQUIRED_FIELDS = {
     'timelock_mark_release': [],
     'bounty_mark_release': [],
     'safe_timelock_create': ['message_id', 'oracle_fees', 'miners_fee_satoshi','return_address', 'locktime', 'pubkey_list', 'req_sigs'],
-    'bounty_create': ['message_id', 'password_hash', 'oracle_fees', 'miners_fee_satoshi','return_address', 'locktime', 'pubkey_list', 'req_sigs'],
-    'bounty_redeem': ['message_id', 'password_hash', 'password', 'return_address'],
+    'bounty_create': ['message_id', 'bounty_name', 'password_hash', 'oracle_fees', 'miners_fee_satoshi','return_address', 'locktime', 'pubkey_list', 'req_sigs'],
+    'bounty_redeem': ['message_id', 'bounty_name', 'password', 'return_address'],
+    'bounty_get_password_hash': ['message_id', 'bounty_name'],
 }
 
 PROTOCOL_VERSION = '0.12'

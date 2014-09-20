@@ -66,7 +66,9 @@ class BountyReleaseHandler(BaseHandler):
     req_sigs = mark_data['req_sigs']
     password_hash = mark_data['password_hash']
 
-    json_data = cjson.encode({
+
+
+    json_data = {
             'mark': mark,
             'return_address': return_address,
             'password_hash': password_hash,
@@ -76,14 +78,26 @@ class BountyReleaseHandler(BaseHandler):
             'address': address,
             'value': value,
             'txid': txid,
-            'n': n})
+            'n': n}
 
-    self.oracle.task_queue.save({
-        "operation": 'bounty_create',
-        "json_data": json_data,
-        "done": 0,
-        "next_check": locktime
-    })
+    bounty_transactions = self.kv.get_by_section_key('bounty_transactions', password_hash)
+
+    if not bounty_transactions:
+      self.kv.store('bounty_transactions', password_hash, {'entries':[]})
+    bounty_transactions = self.kv.get_by_section_key('bounty_transactions', password_hash)
+
+    bounty_transactions_entries = bounty_transactions['entries']
+    bounty_transactions_entries.append(json_data)
+    bounty_transactions_entries = list(set(bounty_transactions_entries))
+
+    self.kv.update('bounty_transactions', password_hash, {"entries": bounty_transactions_entries})
+
+    # self.oracle.task_queue.save({
+    #     "operation": 'bounty_create',
+    #     "json_data": cjson.encode(json_data),
+    #     "done": 0,
+    #     "next_check": locktime
+    # })
 
     logging.info("found transaction for mark:{} on address:{}".format(mark, address))
     info_msg = {

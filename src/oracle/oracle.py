@@ -281,4 +281,4 @@ class Oracle:
 
         KeyValue(self.db).update('blocks', 'last_block_number', {'last_block':new_block['height']})
 
-      time.sleep(1)
+      time.sleep(10)

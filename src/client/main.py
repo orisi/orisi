@@ -27,7 +27,7 @@ from decimal import Decimal
 START_COMMAND = "./runclient.sh"
 
 # Charter url should be url to json with oracles described. Check out http://oracles.li/timelock-charter.json for example
-CHARTER_URL = 'http://localhost:8000/test.json'
+CHARTER_URL = 'http://client.orisi.org/static/charter.json'
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
 MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
@@ -91,7 +91,7 @@ def timelock(args):
   for o in charter['nodes']:
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
-    oracle_bms.append(o['bm'])
+    #oracle_bms.append(o['bm'])
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
 
@@ -149,7 +149,7 @@ def main2(args):
   for o in charter['nodes']:
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
-    oracle_bms.append(o['bm'])
+    #oracle_bms.append(o['bm'])
 
   oracle_fees[charter['org_address']] = charter['org_fee']
 
@@ -168,14 +168,18 @@ def main2(args):
 
   print "fetching transactions incoming to %s ..." % msig_addr
 
+  import requests
   # for production purposes you might want to fetch the data using bitcoind, but that's expensive
-  address_json = liburl_wrapper.safe_read("https://blockchain.info/address/%s?format=json" % msig_addr, timeout_time=10)
-  try:
-    address_history = json.loads(address_json)
-  except:
-    print "blockchain.info problem"
-    print address_json
-    return
+  print "get"
+  address_json = requests.get("https://blockchain.info/address/%s?format=json" % msig_addr).text
+  #try:
+  print address_json
+  address_history = json.loads(address_json)
+  
+  #except:
+    #print "blockchain.info problem"
+    #print address_json
+    #return
 
   prevtxs = []
   sum_satoshi = 0

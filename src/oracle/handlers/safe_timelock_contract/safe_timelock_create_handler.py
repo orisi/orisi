@@ -8,6 +8,7 @@ import datetime
 
 from contract_util import get_mark_for_address
 from oracle.oracle_db import KeyValue
+from random import randrange
 
 TIME_FOR_TRANSACTION = 30 * 60
 TIME_FOR_CONFIRMATION = 20 * 60
@@ -86,7 +87,9 @@ class SafeTimelockCreateHandler(BaseHandler):
       reply_msg = {
         'operation': 'safe_timelock_error',
         'in_reply_to': message['message_id'],
-        'comment': 'mark for this address is currently unavailable - please try again in several minutes'
+        'comment': 'mark for this address is currently unavailable - please try again in several minutes',
+        'contract_id' : '{}#{}'.format(address_to_pay_on, mark),
+        'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000)))
       }
       logging.info("mark {} unavailable".format(mark))
 
@@ -97,16 +100,17 @@ class SafeTimelockCreateHandler(BaseHandler):
     self.claim_mark(mark, address_to_pay_on, return_address, locktime, oracle_fees, miners_fee_satoshi, req_sigs)
 
     reply_msg = { 'operation' : 'safe_timelock_created',
-        'contract_id' : address_to_pay_on,
+        'contract_id' : '{}#{}'.format(address_to_pay_on, mark),
         'comment': 'mark claimed, use {} as value sufix, you have {} minutes to send cash to address {}'.format(mark, int(TIME_FOR_TRANSACTION / 60), address_to_pay_on),
         'in_reply_to' : message['message_id'],
+        'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000))),
         'mark': mark,
         'addr': address_to_pay_on,
         'time': TIME_FOR_TRANSACTION}
 
     self.oracle.broadcast_with_fastcast(json.dumps(reply_msg))
 
-    message['contract_id'] = address_to_pay_on
+    message['contract_id'] = '{}#{}'.format(address_to_pay_on, mark)
 
     release_time = int(time.time()) + TIME_FOR_TRANSACTION + NUMBER_OF_CONFIRMATIONS * TIME_FOR_CONFIRMATION
 
@@ -165,3 +169,12 @@ class SafeTimelockCreateHandler(BaseHandler):
     assert(future_transaction is not None) # should've been verified gracefully in handle_request
 
     self.oracle.signer.sign(future_transaction, pwtxid, prevtxs, message['req_sigs'])
+
+    info_msg = {
+      'operation': 'safe_timelock_signed',
+      'in_reply_to': '',
+      'message_id': "%s-%s" % ("timelock_signature", str(randrange(1000000000,9000000000))),
+      'contract_id' : "{}#{}".format(message['address'], message['mark']),
+    }
+
+    self.oracle.broadcast_with_fastcast(json.dumps(info_msg))

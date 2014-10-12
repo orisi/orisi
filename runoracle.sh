@@ -3,7 +3,7 @@
 PYTHON_EXEC=python2.7
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 HOME="$DIR/.."
-
+export LC_ALL="en_US.UTF-8"
 
 if [ -z $(pgrep bitcoind) ]
 then

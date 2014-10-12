@@ -8,6 +8,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
+import re
+
 import logging
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.WARNING)
@@ -63,8 +65,8 @@ def generateKey():
   public_key = new_key.publickey().exportKey("DER")
   private_key = new_key.exportKey("DER")
 
-  public_key_base64 = base64.encodestring(public_key)
-  private_key_base64 = base64.encodestring(private_key)
+  public_key_base64 = re.sub(r'\n','',base64.encodestring(public_key))
+  private_key_base64 = re.sub(r'\n','',base64.encodestring(private_key))
 
   return (public_key_base64, private_key_base64)
 

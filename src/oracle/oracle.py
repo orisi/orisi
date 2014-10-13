@@ -220,8 +220,9 @@ class Oracle:
     else:
       self.oracle_address = ORACLE_ADDRESS
 
-    logging.info("my multisig address is %s" % self.oracle_address)
-    logging.info( "my pubkey: %r" % self.btc.validate_address(self.oracle_address)['pubkey'] )
+    logging.info("my fee: %r" % ORACLE_FEE)
+    logging.info("my bitcoin address is %s" % self.oracle_address)
+    logging.info( "my bitcoin pubkey: %r" % self.btc.validate_address(self.oracle_address)['pubkey'] )
 
     while True:
       # Proceed all requests

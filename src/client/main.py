@@ -23,14 +23,27 @@ from shared.fastproto import (
 from math import ceil
 from decimal import Decimal
 
-
 START_COMMAND = "./runclient.sh"
 
-# Charter url should be url to json with oracles described. Check out http://oracles.li/timelock-charter.json for example
-CHARTER_URL = 'http://client.orisi.org/static/charter.json'
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
-MINERS_FEE = 4*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
+MINERS_FEE = 2*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
+
+# if you'd like to use an external charter file, attach a value to the CHARTER_URL. Otherwise CHARTER_JSON will be used.
+CHARTER_URL = None
+CHARTER_JSON = {
+    "version": "2",
+    "org_fee": "0.00003",
+    "miners_fee_satoshi": MINERS_FEE,
+    "org_address": "1PCkVX19uGm2QK1vhcXy9uM4y2jwR4dgbF",
+    "nodes": [
+        {
+            "pubkey": "032f375982e941c2329e587cf197eb6d73177a4ab2d875558f90bcce5e4927244b",
+            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCioTafXO8KzQ4VffQ5eUKScg6wy88GeeufE36PWIjNSsiq/TDQn/EyHPjBc4dR1BpQmlbh/MX2nbJUcn4OmbJQu50JlG+mERd480l7C9yJz4t3bJGnbiEtqcpEpf0NPjKRVniLqmOVLZD2LiIdqyYSSkISfLcwy+JCw/8pn9fxQIDAQAB",
+            "fee": "0.00001"
+        }
+    ]
+}
 
 def fetch_charter(charter_url):
   while True:
@@ -44,13 +57,15 @@ def main(args):
   btc = BitcoinClient()
   tmp_address = btc.validate_address(btc.get_new_address())
 
-  print "fetching charter: %s" % CHARTER_URL
-  charter = fetch_charter(CHARTER_URL)
+  if CHARTER_URL:
+     print "fetching charter: %s" % CHARTER_URL
+     charter = fetch_charter(CHARTER_URL)
+  else:
+    charter = CHARTER_JSON
 
   client_pubkey = tmp_address['pubkey']
   oracle_pubkeys = []
   for o in charter['nodes']:
-#    print json.dumps(o)
     oracle_pubkeys.append(o['pubkey'])
 
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))

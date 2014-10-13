@@ -87,7 +87,7 @@ class SafeTimelockCreateHandler(BaseHandler):
       reply_msg = {
         'operation': 'safe_timelock_error',
         'in_reply_to': message['message_id'],
-        'comment': 'mark for this address is currently unavailable - please try again in several minutes',
+        'comment': 'A marker for this address is currently unavailable. Try again in a couple minutes, or try a different return address. See: https://github.com/orisi/orisi/issues/88',
         'contract_id' : '{}#{}'.format(address_to_pay_on, mark),
         'message_id': "%s-%s" % (address_to_pay_on, str(randrange(1000000000,9000000000)))
       }
@@ -155,9 +155,29 @@ class SafeTimelockCreateHandler(BaseHandler):
 
     message['outputs'] = message['oracle_fees']
 
-    future_transaction = self.try_prepare_raw_transaction(message)
+    logging.debug('outputs: %r' % message['outputs'])
+
+    try:
+      future_transaction = self.try_prepare_raw_transaction(message)
+    except:
+
+      msg_id = "%s-%s" % ("timelock_signature", str(randrange(1000000000,9000000000)))
+      contract_id = "{}#{}".format(message['address'], message['mark'])
+
+      info_msg = {
+        'operation': 'timelock_signing_fail',
+        'in_reply_to': '',
+        'message_id': msg_id,
+        'contract_id' : contract_id,
+      }
+      self.oracle.broadcast_with_fastcast(json.dumps(info_msg))
+
+      logging.exception('problem signing tx: %r ; %r' % (contract_id, msg_id))
+      return
+
     if not future_transaction:
       return
+
     logging.info(future_transaction)
 
     try:

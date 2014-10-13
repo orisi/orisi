@@ -10,60 +10,72 @@ import json
 import datetime
 import time
 
+import logging
+
 from random import randrange
 
 from shared import liburl_wrapper
 from shared.liburl_wrapper import safe_pushtx
-from shared.bitcoind_client.bitcoinclient import BitcoinClient
 from shared.fastproto import (
     generateKey,
     sendMessage,
-    constructMessage)
+    constructMessage,
+    getMessages)
 
 from math import ceil
 from decimal import Decimal
 
 START_COMMAND = "./runclient.sh"
 
+getcontext().prec = 8
+
+# if you'd like to use an external charter file, attach a value to the CHARTER_URL. Otherwise CHARTER_DATA will be used.
+CHARTER_URL = None
+
+# A note on miners_fee:
 # Eligius requires 4096 satoshi fee per 512 bytes of transaction ( http://eligius.st/~gateway/faq-page )
 # With three oracles, the tx fee is around 512 bytes.
-MINERS_FEE = 2*4096 # = fee enough to pay for a tx of 4*512 bytes. a bit higher than required, but we want to support Eligius
+# A note on node info:
+# pubkey: bitcoin pubkey of an oracle, used to generate the multisig address
+# address: bitcoin address to receive the fee
+# fastcast: fastcast public key that the oracle will use to sign the messages
 
-# if you'd like to use an external charter file, attach a value to the CHARTER_URL. Otherwise CHARTER_JSON will be used.
-CHARTER_URL = None
-CHARTER_JSON = {
+CHARTER_DATA = {
     "version": "2",
     "org_fee": "0.00003",
-    "miners_fee_satoshi": MINERS_FEE,
+    "miners_fee_satoshi": 2*4096,
     "org_address": "1PCkVX19uGm2QK1vhcXy9uM4y2jwR4dgbF",
     "nodes": [
         {
             "pubkey": "032f375982e941c2329e587cf197eb6d73177a4ab2d875558f90bcce5e4927244b",
-            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCioTafXO8KzQ4VffQ5eUKScg6wy88GeeufE36PWIjNSsiq/TDQn/EyHPjBc4dR1BpQmlbh/MX2nbJUcn4OmbJQu50JlG+mERd480l7C9yJz4t3bJGnbiEtqcpEpf0NPjKRVniLqmOVLZD2LiIdqyYSSkISfLcwy+JCw/8pn9fxQIDAQAB",
-            "fee": "0.00001"
+
+            "fee": "0.00001",
+            "address": "1Hc1ZCc78Be3M5aA6iqYJcfGVMSAWGRwTQ",
+
+            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCioTafXO8KzQ4VffQ5eUKScg6wy88GeeufE36PWIjNSsiq/TDQn/EyHPjBc4dR1BpQmlbh/MX2nbJUcn4OmbJQu50JlG+mERd480l7C9yJz4t3bJGnbiEtqcpEpf0NPjKRVniLqmOVLZD2LiIdqyYSSkISfLcwy+JCw/8pn9fxQIDAQAB"
         }
     ]
 }
 
-def fetch_charter(charter_url):
-  while True:
-    try:
-      charter_json = liburl_wrapper.safe_read(charter_url, timeout_time=10)
-      return json.loads(charter_json)
-    except:
-      print "retrying..."
 
-def main(args):
-  btc = BitcoinClient()
-  tmp_address = btc.validate_address(btc.get_new_address())
+def fetch_charter():
 
   if CHARTER_URL:
      print "fetching charter: %s" % CHARTER_URL
-     charter = fetch_charter(CHARTER_URL)
+     while True:
+        try:
+          charter_json = liburl_wrapper.safe_read(charter_url, timeout_time=10)
+          return json.loads(charter_json)
+        except:
+          logging.exception('error fetching charter')
+          print "retrying..."
   else:
-    charter = CHARTER_JSON
+    return CHARTER_DATA
 
-  client_pubkey = tmp_address['pubkey']
+
+def main(args):
+  charter = fetch_charter()
+
   oracle_pubkeys = []
   for o in charter['nodes']:
     oracle_pubkeys.append(o['pubkey'])
@@ -72,20 +84,18 @@ def main(args):
 
   print "number of nodes: %i" % len(charter['nodes'])
   print "required signatures: %i" % min_sigs
+
   sum_fees_satoshi = 0
   for o in charter['nodes']:
     sum_fees_satoshi += Decimal(o['fee'])*100000000
   sum_fees_satoshi += Decimal(charter['org_fee'])*100000000
 
 
-  key_list = [client_pubkey] + oracle_pubkeys
-
-  response = btc.create_multisig_address(min_sigs, key_list)
 
   print ""
   print "1. wire the funds to %s" % response['address']
   print "   oracle & org fees: %i satoshi (as detailed in %s)" % (sum_fees_satoshi , CHARTER_URL)
-  print "   miners fee: %i satoshi (see MINERS_FEE in src/client/main.py if you want to lower it)" % MINERS_FEE
+  print "   miners fee: %i satoshi (see CHARTER_DATA in src/client/main.py if you want to lower it)" % charter['miners_fee_satoshi']
   print "2. wait for transaction to get any confirmations"
   print "3. run:"
   print "%s main2 %s <locktime_minutes> <return_address>" % ( START_COMMAND, client_pubkey )
@@ -97,17 +107,26 @@ def timelock(args):
 
   return_address = args[1]
 
-  print "fetching charter: %s" % CHARTER_URL
-  charter = fetch_charter(CHARTER_URL)
+  if CHARTER_URL != None:
+    print "fetching charter: %s" % CHARTER_URL
+  else:
+    print "using built-in charter"
+
+  charter = fetch_charter()
 
   oracle_pubkeys = []
   oracle_fees = {}
   oracle_bms = []
+  oracle_fastcasts = []
+
+  sum_fees_satoshi = Decimal(charter['org_fee']) * 100000000
+
   for o in charter['nodes']:
     oracle_pubkeys.append(o['pubkey'])
     oracle_fees[o['address']] = o['fee']
-    #oracle_bms.append(o['bm'])
-
+    oracle_fastcasts.append(o['fastcast'])
+    sum_fees_satoshi += Decimal(o['fee']) * 100000000
+  
   min_sigs = int(ceil(float(len(oracle_pubkeys))/2))
 
   print "number of nodes: %i" % len(charter['nodes'])
@@ -123,7 +142,7 @@ def timelock(args):
   request['message_id'] = "%s-%s" % (msig_addr, str(randrange(1000000000,9000000000)))
   request['pubkey_list'] = key_list
 
-  request['miners_fee_satoshi'] = MINERS_FEE
+  request['miners_fee_satoshi'] = charter['miners_fee_satoshi']
   request['locktime'] = time.time() + int(args[0])*60
   request['return_address'] = return_address
   request['oracle_fees'] = oracle_fees
@@ -138,13 +157,104 @@ def timelock(args):
   meta_request['epoch'] = time.mktime(datetime.datetime.utcnow().timetuple())
   meta_request['body'] = json.dumps(request)
 
-  print sendMessage(constructMessage(priv, **meta_request))
+  sendMessage(constructMessage(priv, **meta_request))
+
+  print ""
+  print "request sent. awaiting oracle replies..."
+  print "need at least %r of %r oracles to reply to the request to proceed" % (min_sigs, len(charter['nodes']))
+  print "if the request takes over 30 seconds to process, it means that some of the oracles might be offline - contact support@orisi.org ."
+  print ""
+
+  suffix = None
+  msig_addr = None
+  contract_id = None
+  confirmation_count = 0
+
+  while suffix is None:
+    msgs = getMessages()
+    for m in msgs['results']:
+      try:
+        body = json.loads(m['body'])
+      except:
+        logging.exception('fastcast: wrong body for frame_id %r ; ignoring' % m)
+        continue
+
+      if not 'in_reply_to' in body:
+        continue
+
+      if body['in_reply_to'] == request['message_id']:
+        if m['source'] in oracle_fastcasts:
+          oracle_fastcasts.remove(m['source'])
+
+          if 'operation' in body:
+            if body['operation'] == 'safe_timelock_error':
+              print "Operation error! One of the oracles reports:"
+              print body['comment']
+              return
+
+          print "received confirmation from %r" % m['source']
+
+          if suffix == None:
+            suffix = body['mark']
+            msig_addr = body['addr']
+            contract_id = body['contract_id']
+          else:
+            if (msig_addr != body['addr']) or (suffix != body['mark']) or (contract_id != body['contract_id']):
+              logging.error('Oracles didn\'t agree on the timelock address or the marker. Is one of them running a different code?')
+              logging.error('Please investigate.')
+              return
+
+            confirmation_count += 1
+            print "Oracle confirmations: %r of %r required" % (confirmation_count, min_sigs)
+      
+  print ""
+  print "You can now send bitcoin to this address: %s and it will be locked for %r minutes from now." % (msig_addr, int(args[0]))
+  print "IMPORTANT:   the amount you send needs to end with %r satoshi." % suffix
+  print "             e.g. if you want to lock in BTC 0.00030000, you have to send 0.0003%r" % suffix
+  print "  qr code:   http://www.btcfrog.com/qr/bitcoinPNG.php?address=%s&amount=0.0003&label=timelock" % (msig_addr, suffix)
+  print " monitoring: https://blockchain.info/address/%s" % msig_addr
+  print ""
+  print "FEES: oracle & org fees: %i satoshi (as detailed in the charter)" % sum_fees_satoshi
+  print "      miners fee: %i satoshi (yes, it's high - we want to encourage more pools to accept msig)" % charter['miners_fee_satoshi']
+  print ""
+  print "awaiting further oracle communication regarding this contract...."
+  print "(contract_id: %s)" % contract_id
+  print ""
+
+
+  read_messages = []
+  while True:
+    msgs = getMessages()
+    for m in msgs['results']:
+      if m['frame_id'] in read_messages:
+        continue
+      read_messages.append(m['frame_id'])
+
+      try:
+        body = json.loads(m['body'])
+      except:
+        logging.exception('fastcast: wrong body for frame_id %r ; ignoring' % m)
+        continue
+
+      if not "contract_id" in body:
+        continue
+
+      if body['contract_id'] != contract_id:
+        continue
+
+      print body
+
+
+
+
+
 
 def main2(args):
   if len(args)<3:
     print "USAGE: `%s main2 <pubkey_once> <locktime_minutes> <return_address>`" % START_COMMAND
     print "- run `%s main` to obtain pubkey_once" % START_COMMAND
     print "- keep in mind that this is alpha, don't expect oracles to run properly for any extended periods of time"
+    print "- you don't want to lock money for over a week, and use anything above 0.05 BTC for testing"
     return
 
   btc = BitcoinClient()

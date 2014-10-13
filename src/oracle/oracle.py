@@ -41,7 +41,8 @@ class MissingOperationError(Exception):
   pass
 
 # Number of confirmations needed for block to get noticed by Oracle
-CONFIRMATIONS = 3
+CONFIRMATIONS = 0
+# you might want at least 3 on the production environment
 
 class FastcastProtocolError(Exception):
   pass
@@ -128,6 +129,8 @@ class Oracle:
 
   def get_new_block(self):
     last_block_number = self.get_last_block_number()
+
+    logging.debug("last_block_number: %r" % last_block_number)
 
     if last_block_number == 0:
       last_block_number = self.set_last_block()

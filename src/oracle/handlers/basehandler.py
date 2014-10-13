@@ -118,8 +118,9 @@ class BaseHandler:
       logging.debug("BTC amount not high enough to cover expenses")
       return None
 
-    outputs[ message['return_address'] ] = cash_back
+    outputs[ message['return_address'] ] = float(cash_back)
 
+    logging.debug("outputs2: %r" % outputs)
 
     for address in outputs:
       # My heart bleeds when I write it

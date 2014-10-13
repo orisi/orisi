@@ -12,9 +12,9 @@ import re
 
 import logging
 requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.WARNING)
+requests_log.setLevel(logging.DEBUG)
 
-FASTCAST_API_URL = 'http://54.77.58.8?format=json'
+FASTCAST_API_URL = 'http://hub.orisi.org/?format=json'
 
 headers = {'content-type': 'application/json'}
 def decode_data(data):
@@ -73,7 +73,7 @@ def generateKey():
 def tryForever(requestsFunction, *args, **kwargs):
   retry_time = 1
 
-  while 1:
+  while True:
     try:
       r = requestsFunction(*args, **kwargs)
       return r
@@ -88,13 +88,12 @@ def sendMessage(payload):
     """
     Sending a message via api gateway
     """
-    url = 'http://54.77.58.8?format=json'
+    url = 'http://hub.orisi.org/?format=json'
     r = tryForever(requests.post, url, data=payload, headers=headers)
-    print r.text
     return r.text
 
 def getMessages():
-  url = 'http://54.77.58.8?format=json'
+  url = 'http://hub.orisi.org/?format=json'
   r = tryForever(requests.get, url)
   data = json.loads(r.text)
 
@@ -105,10 +104,14 @@ def getMessages():
       req['body'] = decoded_body
 
       if not verify(req['body'], req['signature'], req['source']):
+        logging.warning('fastcast: bad signature for frame: %r; ignoring' % req['frame_id'])
         continue
+
+      req['source'] = re.sub(r'\n','',req['source'])
 
       decoded_results.append(req)
     except:
+      logging.warning('fastcast: problem decoding frame: %r; ignoring' % req['frame_id'])
       continue
 
   data['results'] = decoded_results

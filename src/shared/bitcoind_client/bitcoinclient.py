@@ -97,8 +97,7 @@ class BitcoinClient:
           server_instance = self.server
           connection_function = self.connect
         elif server == 'blockchain_server':
-          server_instance = self.blockchain_server
-          connection_function = self.blockchain_connect
+          return True
         else:
           raise UnknownServerError()
 
@@ -341,7 +340,11 @@ class BitcoinClient:
       max_height = self.blockchain_server.getblockcount()
 
       proper_data = {}
-      proper_data['hash'] = not_proper_data['hash']
+      try:
+        proper_data['hash'] = not_proper_data['hash']
+      except:
+        logging.exception('problematic blockchain data: %r' % not_proper_data)
+
       proper_data['height'] = not_proper_data['height']
       proper_data['size'] = not_proper_data['size']
       proper_data['merkleroot'] = not_proper_data['mrkl_root']

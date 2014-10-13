@@ -138,6 +138,8 @@ class Oracle:
     newer_block = last_block_number + 1
 
     block_hash = self.btc.get_block_hash(newer_block)
+
+    logging.info("block hash: %r" % block_hash)
     if not block_hash:
       return None
 

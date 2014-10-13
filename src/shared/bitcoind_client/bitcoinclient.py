@@ -24,6 +24,7 @@ from decimal import Decimal
 import socket
 
 import logging
+logging.getLogger("requests").setLevel(logging.CRITICAL)
 
 TEST_MODE = BITCOIND_TEST_MODE
 
@@ -97,7 +98,7 @@ class BitcoinClient:
           server_instance = self.server
           connection_function = self.connect
         elif server == 'blockchain_server':
-          return True
+          return fun(self, *args, **kwargs)
         else:
           raise UnknownServerError()
 
@@ -323,7 +324,7 @@ class BitcoinClient:
   def get_block_hash(self, block_number):
     try:
       return self.blockchain_server.getblockhash(block_number)
-    except ProtocolError:
+    except:
       return None
 
   @keep_alive('blockchain_server')

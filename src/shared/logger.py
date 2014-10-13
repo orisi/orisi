@@ -7,7 +7,7 @@ handlers = [
 ]
 
 def init_logger():
-  log_formatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-8.8s] %(message)s")
+  log_formatter = logging.Formatter("%(asctime)s [%(levelname)-8.8s] %(message)s") # removed [%(threadName)-12.12s]
   main_logger = logging.getLogger()
   main_logger.setLevel(logging.DEBUG)
 

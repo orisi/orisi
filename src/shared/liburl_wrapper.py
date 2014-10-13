@@ -58,6 +58,7 @@ def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return json.loads(content)
   except:
+    logging.exception('erorr getting info from block')
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 

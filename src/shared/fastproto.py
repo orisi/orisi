@@ -11,8 +11,7 @@ from Crypto.Hash import SHA256
 import re
 
 import logging
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 FASTCAST_API_URL = 'http://hub.orisi.org/?format=json'
 

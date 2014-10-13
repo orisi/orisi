@@ -23,7 +23,7 @@ from shared.fastproto import (
     getMessages)
 
 from math import ceil
-from decimal import Decimal
+from decimal import Decimal,getcontext
 
 START_COMMAND = "./runclient.sh"
 
@@ -211,7 +211,7 @@ def timelock(args):
   print "You can now send bitcoin to this address: %s and it will be locked for %r minutes from now." % (msig_addr, int(args[0]))
   print "IMPORTANT:   the amount you send needs to end with %r satoshi." % suffix
   print "             e.g. if you want to lock in BTC 0.00030000, you have to send 0.0003%r" % suffix
-  print "  qr code:   http://www.btcfrog.com/qr/bitcoinPNG.php?address=%s&amount=0.0003&label=timelock" % (msig_addr, suffix)
+  print "  qr code:   http://www.btcfrog.com/qr/bitcoinPNG.php?address=%s&amount=0.0003%r&label=timelock" % (msig_addr, suffix)
   print " monitoring: https://blockchain.info/address/%s" % msig_addr
   print ""
   print "FEES: oracle & org fees: %i satoshi (as detailed in the charter)" % sum_fees_satoshi

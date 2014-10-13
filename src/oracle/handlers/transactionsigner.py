@@ -139,21 +139,15 @@ class TransactionSigner(BaseHandler):
     tx_sigs_count += 1
 
     body = { 'pwtxid': pwtxid, 'operation':'sign', 'transaction': signed_transaction, 'sigs': tx_sigs_count, 'req_sigs': req_sigs }
-
     logging.debug('broadcasting: %r' % body)
+    self.oracle.broadcast_with_fastcast(json.dumps(body))
 
     if tx_sigs_count == req_sigs:
-      self.broadcast_transaction(signed_transaction)
-
-    self.oracle.broadcast_with_fastcast(json.dumps(body))
+      safe_pushtx(transaction)
+      self.oracle.btc.send_transaction(transaction)
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)
-
-  def broadcast_transaction(self, transaction):
-    logging.info("Broadcasting transaction")
-    safe_pushtx(transaction)
-    self.oracle.btc.send_transaction(transaction)
 
   def handle_request(self, request):
     body = request.message

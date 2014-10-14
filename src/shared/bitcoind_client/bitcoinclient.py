@@ -399,7 +399,6 @@ class BitcoinClient:
 
       data = safe_blockchain_multiaddress(chunk)
       if data:
-        logging.debug('txs: %r' % data)
         txs = data['txs']
         for tx in txs:
           if tx['hash'] in transaction_ids:

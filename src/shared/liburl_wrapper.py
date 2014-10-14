@@ -43,6 +43,7 @@ def safe_blockchain_multiaddress(addresses, timeout_time = 120):
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
     url = 'http://blockchain.info/multiaddr?active={}'.format('|'.join(addresses))
+    logging.debug('url: %r' % url)
     content = urllib2.urlopen(url, timeout=timeout_time).read()
     signal.setitimer(signal.ITIMER_REAL, 0)
     return json.loads(content)

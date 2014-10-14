@@ -405,6 +405,7 @@ class BitcoinClient:
 
     for tx in transactions_on_addresses:
       try:
+        logging.debug('getting tx from address')
         raw_transaction = self.get_raw_transaction(tx)
       except ProtocolError:
         continue

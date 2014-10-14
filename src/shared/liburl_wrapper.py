@@ -62,7 +62,8 @@ def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
-def safe_get_raw_transaction(txid, timeout_time=10):
+def safe_get_raw_transaction(txid, timeout_time=120):
+  print "getting raw transaction"
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
     url = 'http://blockchain.info/tx/{}?format=hex'.format(txid)

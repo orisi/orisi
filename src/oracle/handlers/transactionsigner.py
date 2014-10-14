@@ -143,8 +143,8 @@ class TransactionSigner(BaseHandler):
     self.oracle.broadcast_with_fastcast(json.dumps(body))
 
     if tx_sigs_count == req_sigs:
-      safe_pushtx(transaction)
-      self.oracle.btc.send_transaction(transaction)
+      safe_pushtx(signed_transaction)
+      self.oracle.btc.send_transaction(signed_transaction)
 
     rq_data['sigs_so_far'] = tx_sigs_count
     self.kv.update('signable', rq_hash, rq_data)

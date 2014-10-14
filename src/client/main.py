@@ -47,12 +47,12 @@ CHARTER_DATA = {
     "org_address": "1PCkVX19uGm2QK1vhcXy9uM4y2jwR4dgbF",
     "nodes": [
         {
-            "pubkey": "032f375982e941c2329e587cf197eb6d73177a4ab2d875558f90bcce5e4927244b",
+            "pubkey": "035e0ef9acb11f30ebb65d8cf9cf5f9db03343b6c041af1d5140d3f2d4e8016885",
 
             "fee": "0.00001",
-            "address": "1Hc1ZCc78Be3M5aA6iqYJcfGVMSAWGRwTQ",
+            "address": "1AwzzwxsgLCRqMwYheVNviqpUHLHMi8iYq",
 
-            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCioTafXO8KzQ4VffQ5eUKScg6wy88GeeufE36PWIjNSsiq/TDQn/EyHPjBc4dR1BpQmlbh/MX2nbJUcn4OmbJQu50JlG+mERd480l7C9yJz4t3bJGnbiEtqcpEpf0NPjKRVniLqmOVLZD2LiIdqyYSSkISfLcwy+JCw/8pn9fxQIDAQAB"
+            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+Ei1gIR7QHL4WGuKAbrt+1FOBaTkZ9JUn1rqFMJFFk7bSkTKxPU+LAyx/1fR/B4PTHSpBnDJh5+GJC0RE/+EKbJFRQ3ReS096ffvNvVfd30jumJzN7YoIex5ftQN3lKN7pvEVqO93g0eCU0iqGy3OjCKuxSo1x81fPtNPidr+dQIDAQAB"
         }
     ]
 }

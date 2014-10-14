@@ -24,7 +24,7 @@ def safe_read(url, timeout_time):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
-def safe_pushtx(tx, timeout_time = 10):
+def safe_pushtx(tx, timeout_time = 120):
   logging.info('pushing to eligius')
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
@@ -39,7 +39,7 @@ def safe_pushtx(tx, timeout_time = 10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
-def safe_blockchain_multiaddress(addresses, timeout_time = 10):
+def safe_blockchain_multiaddress(addresses, timeout_time = 120):
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
     url = 'http://blockchain.info/multiaddr?active={}'.format('|'.join(addresses))
@@ -47,10 +47,11 @@ def safe_blockchain_multiaddress(addresses, timeout_time = 10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return json.loads(content)
   except:
+    logging.warning('timeout on blockchain multiaddress')
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
-def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=10):
+def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=120):
   signal.setitimer(signal.ITIMER_REAL, timeout_time)
   try:
     url = 'http://blockchain.info/rawblock/{}'.format(block_hash)
@@ -58,7 +59,7 @@ def safe_nonbitcoind_blockchain_getblock(block_hash, timeout_time=10):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return json.loads(content)
   except:
-    logging.exception('erorr getting info from block')
+    logging.warning('error getting info from block')
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 
@@ -71,6 +72,7 @@ def safe_get_raw_transaction(txid, timeout_time=120):
     signal.setitimer(signal.ITIMER_REAL, 0)
     return content
   except:
+    logging.warning('timeout on get_raw_transaction')
     signal.setitimer(signal.ITIMER_REAL, 0)
     return None
 

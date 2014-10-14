@@ -394,6 +394,9 @@ class BitcoinClient:
     transactions_on_addresses = []
 
     for chunk in address_chunks:
+      if len(chunk) == 0:
+        continue
+
       data = safe_blockchain_multiaddress(chunk)
       if data:
         logging.debug('txs: %r' % data)

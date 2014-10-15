@@ -43,16 +43,33 @@ CHARTER_URL = None
 CHARTER_DATA = {
     "version": "2",
     "org_fee": "0.00003",
-    "miners_fee_satoshi": 2*4096,
+    "miners_fee_satoshi": 8192,
+    "miners_fee_comment": "2*4096 satoshi. this is enough to pay for Eligius' miners fee for a tx of size up to 2x512 bytes.",
     "org_address": "1PCkVX19uGm2QK1vhcXy9uM4y2jwR4dgbF",
     "nodes": [
         {
+            "name": "kolinko-orisi-1",
+            "description": "test server #1, kolinko@gmail.com",
             "pubkey": "035e0ef9acb11f30ebb65d8cf9cf5f9db03343b6c041af1d5140d3f2d4e8016885",
-
             "fee": "0.00001",
             "address": "1AwzzwxsgLCRqMwYheVNviqpUHLHMi8iYq",
-
             "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+Ei1gIR7QHL4WGuKAbrt+1FOBaTkZ9JUn1rqFMJFFk7bSkTKxPU+LAyx/1fR/B4PTHSpBnDJh5+GJC0RE/+EKbJFRQ3ReS096ffvNvVfd30jumJzN7YoIex5ftQN3lKN7pvEVqO93g0eCU0iqGy3OjCKuxSo1x81fPtNPidr+dQIDAQAB"
+        },
+        {
+            "name": "kolinko-orisi-2",
+            "description": "test server #2, kolinko@gmail.com",
+            "pubkey": "0228ea8ccf3ff65994472ed5252b6fb53a00397af1c23cc5fdc3a53e2fec01e5a5",
+            "fee": "0.00001",
+            "address": "1Q8rKyzHU1kef25ceaLpVT9erunogoCrky",
+            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDjR81Wtx74hyQQYwP9sMCLM/H4NcQXfgOUNebjdqaVhA/xraMvVRs3q25szXaAhaLxGFUBMIbwDlwKhUqDR8giEA2Ly91SZ/ywLy8/VmGREHR52mC9p2o50VazLu9IC9Ffl4jnrItJmY3194Lk/q5cw6ZluGnYTaYiDPTPOn9KsQIDAQAB"
+        },
+        {
+            "name": "kolinko-orisi-3",
+            "description": "test server #3, kolinko@gmail.com",
+            "pubkey": "03cc8ddeaf5068a3f24ab2a7dbc6f571c2f1d70f9c6454e79947567a9670470cf6",
+            "fee": "0.00001",
+            "address": "18RSK6LoM9JukLMgm1WEZJPDq4RDsP4oe4",
+            "fastcast": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCy1gJnXtF1gHctDm600rRHpxd4r64vvcBAsUkrWBHkRRhtth5MYfFrKV7vUi/u1lj5t35Mh9mSQ1bP9Ns6k6islBTVPsatnRsodiOAkqnZPXWfFzigdYP2y8wn02Aw7BU7PuBg3A9CCsCpu+3o8q1X3ZOFrJfRjk3oq0CAHoOu1QIDAQAB"
         }
     ]
 }

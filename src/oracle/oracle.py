@@ -123,6 +123,7 @@ class Oracle:
         satisfied = True
       else:
         last_block_number -= 1
+        print "not enough confirmations - checking previous block %r" % last_block_number
 
     KeyValue(self.db).store('blocks', 'last_block_number', {'last_block':last_block_number})
     return last_block_number
@@ -256,7 +257,11 @@ class Oracle:
         self.task_queue.done(task)
         task = self.task_queue.get_oldest_task()
 
-      new_block = self.get_new_block()
+      try:
+        new_block = self.get_new_block()
+      except:
+        new_block = None
+        logging.exception('problematic block!')
 
       if new_block:
         handlers = op_handlers.iteritems()
